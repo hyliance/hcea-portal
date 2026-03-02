@@ -76,11 +76,30 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // On mount: restore existing session only.
-  // Login/logout trigger profile loads directly — no onAuthStateChange race condition.
+  // On mount: restore session based on remember-me preference.
+  // - "Keep me logged in" checked  → stored in localStorage → persists across browser closes
+  // - "Keep me logged in" unchecked → stored in sessionStorage only → cleared when browser closes
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      loadProfile(session?.user ?? null).finally(() => setLoading(false));
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        const rememberMe   = localStorage.getItem('hcg_remember_me');
+        const sessionAlive = sessionStorage.getItem('hcg_session_only');
+
+        if (rememberMe) {
+          // User chose to stay logged in — always restore
+          await loadProfile(session.user);
+        } else if (sessionAlive) {
+          // Same browser session (hard refresh) — restore
+          await loadProfile(session.user);
+        } else {
+          // New browser session, no remember-me — sign them out
+          await supabase.auth.signOut();
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
     });
   }, [loadProfile]);
 
@@ -89,17 +108,19 @@ export function AuthProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      if (!rememberMe) {
-        sessionStorage.setItem('hcg_session_only', '1');
-      } else {
+      // Track remember-me preference
+      if (rememberMe) {
+        localStorage.setItem('hcg_remember_me', '1');
         sessionStorage.removeItem('hcg_session_only');
+      } else {
+        localStorage.removeItem('hcg_remember_me');
+        sessionStorage.setItem('hcg_session_only', '1');
       }
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       });
       if (authError) throw new Error(authError.message);
-      // Load profile directly from the returned user — no waiting for auth state change
       await loadProfile(data.user);
       return { success: true };
     } catch (err) {
