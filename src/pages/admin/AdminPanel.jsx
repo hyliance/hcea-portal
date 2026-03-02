@@ -10,7 +10,7 @@ import styles from './AdminPanel.module.css';
 const GAMES = Object.keys(GAME_TEAM_SIZES);
 const STATUS_COLORS = { pending: 'gold', approved: 'green', rejected: 'red' };
 
-// â”€â”€ CREATE TOURNAMENT FORM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CREATE TOURNAMENT FORM ────────────────────────────────────────
 function CreateTournamentForm({ onCreated }) {
   const empty = { name:'', game:'', format:'single_elim', date:'', time:'', prize:'', description:'', maxTeams:8, memberOnly:false, minTeamSize:1, maxTeamSize:5 };
   const [form, setForm]       = useState(empty);
@@ -35,7 +35,7 @@ function CreateTournamentForm({ onCreated }) {
   return (
     <div className={styles.formCard}>
       <div className={styles.formTitle}>Create New Tournament</div>
-      {success && <div className={styles.successBox}>âœ“ Tournament created successfully!</div>}
+      {success && <div className={styles.successBox}>✓ Tournament created successfully!</div>}
 
       <div className={styles.formGrid}>
         <div className={styles.fg}>
@@ -91,13 +91,13 @@ function CreateTournamentForm({ onCreated }) {
       </div>
 
       <button className="btn btn-primary" style={{ clipPath:'none', padding:'0.75rem 2.5rem' }} onClick={handleSubmit} disabled={loading}>
-        {loading ? 'Creating...' : 'Create Tournament â†’'}
+        {loading ? 'Creating...' : 'Create Tournament →'}
       </button>
     </div>
   );
 }
 
-// â”€â”€ SCHOLARSHIP APPLICATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── SCHOLARSHIP APPLICATIONS ──────────────────────────────────────
 function ScholarshipApplications() {
   const [apps, setApps]   = useState([]);
   const [loading, setLoading] = useState(true);
@@ -131,8 +131,8 @@ function ScholarshipApplications() {
           <p className={styles.appExcerpt}>"{app.essayExcerpt}..."</p>
           {app.status === 'pending' && (
             <div className={styles.appActions}>
-              <button className={styles.approveBtn} onClick={() => updateStatus(app.id, 'approved')}>âœ“ Approve</button>
-              <button className={styles.rejectBtn} onClick={() => updateStatus(app.id, 'rejected')}>âœ• Reject</button>
+              <button className={styles.approveBtn} onClick={() => updateStatus(app.id, 'approved')}>✓ Approve</button>
+              <button className={styles.rejectBtn} onClick={() => updateStatus(app.id, 'rejected')}>✕ Reject</button>
             </div>
           )}
         </div>
@@ -141,7 +141,7 @@ function ScholarshipApplications() {
   );
 }
 
-// â”€â”€ PLAYERS MANAGEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── PLAYERS MANAGEMENT ────────────────────────────────────────────
 
 const ROLE_CFG = {
   head_admin:   { label: 'Head Admin',   color: '#dc2626', bg: 'rgba(220,38,38,0.12)',  icon: '👑' },
@@ -547,7 +547,7 @@ function CoachesManagement() {
   return (
     <div>
       <div className={styles.rosterMeta}>
-        {active.length} active Â· {hidden.length} hidden
+        {active.length} active · {hidden.length} hidden
       </div>
 
       <div className={styles.coachList}>
@@ -565,16 +565,16 @@ function CoachesManagement() {
               <div className={styles.coachGames}>{c.games.map(g => g.icon).join(' ')}</div>
             </div>
             <div className={styles.coachMeta}>
-              <div>â­ {c.rating.toFixed(1)}</div>
+              <div>⭐ {c.rating.toFixed(1)}</div>
               <div>{c.totalSessions}+ sessions</div>
-              <div>ðŸ“ {c.location}</div>
+              <div>📍 {c.location}</div>
             </div>
             <button
               className={`${styles.actionBtn} ${c.onRoster ? styles.hideBtn : styles.showBtn}`}
               onClick={() => handleToggle(c)}
               disabled={toggling === c.id}
             >
-              {toggling === c.id ? '...' : c.onRoster ? 'ðŸš« Hide from Platform' : 'âœ“ Restore to Platform'}
+              {toggling === c.id ? '...' : c.onRoster ? '🚫 Hide from Platform' : '✓ Restore to Platform'}
             </button>
           </div>
         ))}
@@ -589,7 +589,7 @@ function CoachesManagement() {
   );
 }
 
-// â”€â”€ TOURNAMENT MANAGEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── TOURNAMENT MANAGEMENT ─────────────────────────────────────────
 function TournamentManagement({ tournaments, onStart, onDelete }) {
   return (
     <div className={styles.tourneyList}>
@@ -597,7 +597,7 @@ function TournamentManagement({ tournaments, onStart, onDelete }) {
         <div key={t.id} className={styles.tourneyRow}>
           <div>
             <div className={styles.tourneyName}>{t.name}</div>
-            <div className={styles.tourneyMeta}>{t.game} Â· {t.format} Â· {t.date}</div>
+            <div className={styles.tourneyMeta}>{t.game} · {t.format} · {t.date}</div>
           </div>
           <div className={styles.tourneyStatus}>
             <Badge variant={t.phase === 'bracket' ? 'green' : t.phase === 'complete' ? 'blue' : 'gold'}>
@@ -607,7 +607,7 @@ function TournamentManagement({ tournaments, onStart, onDelete }) {
           </div>
           <div className={styles.tourneyActions}>
             {t.phase === 'registration' && t.registeredTeams.length >= 2 && (
-              <button className={styles.startBtn} onClick={() => onStart(t.id)}>ðŸš€ Start</button>
+              <button className={styles.startBtn} onClick={() => onStart(t.id)}>🚀 Start</button>
             )}
             <button className={styles.deleteBtn} onClick={() => onDelete(t.id)}>Delete</button>
           </div>
@@ -617,8 +617,8 @@ function TournamentManagement({ tournaments, onStart, onDelete }) {
   );
 }
 
-// â”€â”€ MAIN ADMIN PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// â”€â”€â”€ FLAG HISTORY PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── MAIN ADMIN PANEL ──────────────────────────────────────────────
+// ─── FLAG HISTORY PANEL ───────────────────────────────────────────
 function FlagHistoryPanel() {
   const [history, setHistory]       = useState([]);
   const [summary, setSummary]       = useState(null);
@@ -647,7 +647,7 @@ function FlagHistoryPanel() {
 
   useEffect(() => { load(); }, [filterContext, filterCategory]);
 
-  const formatDate = (ts) => ts ? new Date(ts).toLocaleString() : 'â€”';
+  const formatDate = (ts) => ts ? new Date(ts).toLocaleString() : '—';
   const formatDays = (n) => n === 0 ? 'Expires today' : n === 1 ? '1 day left' : `${n} days left`;
 
   return (
@@ -671,7 +671,7 @@ function FlagHistoryPanel() {
 
       {/* Retention policy note */}
       <div style={{ background:'rgba(59,130,246,0.05)', border:'1px solid rgba(59,130,246,0.2)', padding:'0.7rem 1rem', fontSize:'0.82rem', color:'#8ba0c0', lineHeight:1.6 }}>
-        ðŸ“‹ <strong style={{color:'#e8f0ff'}}>Retention Policy:</strong> Resolved flags are kept for <strong style={{color:'#3b82f6'}}>7 days after the associated event ends</strong> (tournament completion date or league end date). Flags without a linked event expire 7 days after resolution. Records are then automatically purged.
+        📋 <strong style={{color:'#e8f0ff'}}>Retention Policy:</strong> Resolved flags are kept for <strong style={{color:'#3b82f6'}}>7 days after the associated event ends</strong> (tournament completion date or league end date). Flags without a linked event expire 7 days after resolution. Records are then automatically purged.
       </div>
 
       {/* Filters */}
@@ -709,17 +709,17 @@ function FlagHistoryPanel() {
             style={{ display:'flex', alignItems:'center', gap:'0.8rem', padding:'0.85rem 1rem', cursor:'pointer', flexWrap:'wrap' }}
             onClick={() => setExpanded(expanded === f.id ? null : f.id)}
           >
-            <span style={{ fontSize:'1rem' }}>ðŸš©</span>
+            <span style={{ fontSize:'1rem' }}>🚩</span>
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:'0.95rem', fontWeight:700, color:'#e8f0ff' }}>
                 Match <code style={{ fontSize:'0.82rem', color:'#8ba0c0' }}>{f.matchId}</code>
-                {' Â· '}
+                {' · '}
                 <span style={{ color: '#3b82f6', textTransform:'capitalize' }}>{f.context}</span>
-                {' Â· '}
+                {' · '}
                 <span style={{ color:'#e8f0ff' }}>{CATEGORY_LABELS[f.category] || f.category}</span>
               </div>
               <div style={{ fontSize:'0.72rem', color:'#6b7fa3', marginTop:'0.15rem' }}>
-                Flagged {formatDate(f.createdAt)} Â· Resolved {formatDate(f.resolvedAt)}
+                Flagged {formatDate(f.createdAt)} · Resolved {formatDate(f.resolvedAt)}
               </div>
             </div>
             <div style={{
@@ -729,9 +729,9 @@ function FlagHistoryPanel() {
               border: `1px solid ${f.daysLeft <= 2 ? 'rgba(239,68,68,0.3)' : f.daysLeft <= 5 ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'}`,
               padding:'0.2rem 0.6rem', flexShrink:0,
             }}>
-              â³ {formatDays(f.daysLeft)}
+              ⏳ {formatDays(f.daysLeft)}
             </div>
-            <span style={{ color:'#6b7fa3', fontSize:'0.8rem' }}>{expanded === f.id ? 'â–²' : 'â–¼'}</span>
+            <span style={{ color:'#6b7fa3', fontSize:'0.8rem' }}>{expanded === f.id ? '▲' : '▼'}</span>
           </div>
 
           {/* Expanded detail */}
@@ -754,7 +754,7 @@ function FlagHistoryPanel() {
                   <div style={{ fontSize:'0.65rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'#6b7fa3', fontWeight:700, marginBottom:'0.3rem' }}>Additional Notes ({f.notes.length})</div>
                   {f.notes.map((n, i) => (
                     <div key={i} style={{ fontSize:'0.82rem', color:'#8ba0c0', padding:'0.35rem 0.7rem', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
-                      {n.text} <span style={{ color:'#6b7fa3', fontSize:'0.7rem' }}>â€” {formatDate(n.ts)}</span>
+                      {n.text} <span style={{ color:'#6b7fa3', fontSize:'0.7rem' }}>— {formatDate(n.ts)}</span>
                     </div>
                   ))}
                 </div>
@@ -762,7 +762,7 @@ function FlagHistoryPanel() {
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.5rem', fontSize:'0.75rem', color:'#6b7fa3', marginTop:'0.2rem' }}>
                 <div>Event ID: <span style={{color:'#8ba0c0'}}>{f.eventId || 'Not linked'}</span></div>
                 <div>Context: <span style={{color:'#8ba0c0',textTransform:'capitalize'}}>{f.context}</span></div>
-                <div>Resolved by: <span style={{color:'#8ba0c0'}}>{f.resolvedBy || 'â€”'}</span></div>
+                <div>Resolved by: <span style={{color:'#8ba0c0'}}>{f.resolvedBy || '—'}</span></div>
                 <div>Expires: <span style={{color: f.daysLeft <= 2 ? '#ef4444' : '#8ba0c0'}}>{formatDate(f.expiresAt)}</span></div>
               </div>
             </div>
@@ -773,7 +773,7 @@ function FlagHistoryPanel() {
   );
 }
 
-// â”€â”€â”€ FLAGGED MATCHES PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── FLAGGED MATCHES PANEL ────────────────────────────────────────
 function FlaggedMatchesPanel() {
   const { user } = useAuth();
   const [flags, setFlags]       = useState([]);
@@ -810,7 +810,7 @@ function FlaggedMatchesPanel() {
   if (flags.length === 0) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>
-        âœ… No flagged matches right now. All clear!
+        ✅ No flagged matches right now. All clear!
       </div>
     );
   }
@@ -826,8 +826,8 @@ function FlaggedMatchesPanel() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: '1rem', fontWeight: 700 }}>
-                ðŸš© Match <code style={{ fontSize: '0.85rem', color: 'var(--silver)' }}>{f.matchId}</code>
-                {' â€” '}
+                🚩 Match <code style={{ fontSize: '0.85rem', color: 'var(--silver)' }}>{f.matchId}</code>
+                {' — '}
                 <span style={{ color: 'var(--red)' }}>{CATEGORY_LABELS[f.category] || f.category}</span>
                 <span style={{ marginLeft: '0.6rem', fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 400, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                   {f.context}
@@ -870,7 +870,7 @@ function FlaggedMatchesPanel() {
                   fontFamily: "'Barlow',sans-serif",
                 }}
               >
-                {resolving === f.id ? '...' : 'âœ“ Resolve'}
+                {resolving === f.id ? '...' : '✓ Resolve'}
               </button>
             </div>
           </div>
@@ -881,13 +881,13 @@ function FlaggedMatchesPanel() {
 }
 
 
-// â”€â”€ GAME MANAGEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const GAME_ICONS = ['ðŸŽ®','âš”ï¸','ðŸ”«','ðŸŽ¯','ðŸ†','ðŸš€','ðŸŽ²','ðŸ’¥','ðŸ—ï¸','ðŸ¦¸','ðŸ€','âš½','ðŸŽ¸','ðŸƒ','ðŸ‰','ðŸŒŸ','ðŸ”¥','ðŸ’¡','ðŸ›¡ï¸','ðŸŽª'];
+// ── GAME MANAGEMENT ───────────────────────────────────────────────────────────
+const GAME_ICONS = ['🎮','⚔️','🔫','🎯','🏆','🚀','🎲','💥','🏗️','🦸','🏀','⚽','🎸','🃏','🐉','🌟','🔥','💡','🛡️','🎪'];
 const GAME_COLORS = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#06b6d4','#ec4899','#f97316','#84cc16','#c89b3c','#ff4655','#00b4d8'];
 const GAME_GENRES = ['MOBA','FPS','Battle Royale','Fighting','Sports','Auto Battler','Hero Shooter','Strategy','RPG','Puzzle','Racing','Card Game'];
 const GAME_PLATFORMS = ['PC','Console','PC/Console','Nintendo Switch','PC/Mobile','PC/Console/Mobile','Mobile'];
 
-// â”€â”€ MAPS TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── MAPS TAB ─────────────────────────────────────────────────────────────────
 const MAP_TYPES = ['Standard','Competitive','MLG','Starter','Counterpick','ARAM','Special','Battle Royale','Convoy','Domination','Convergence','Reload'];
 
 function MapsTab({ game, maps, setMaps, accentColor }) {
@@ -960,7 +960,7 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
     <div className={styles.gmEditBody}>
       <p className={styles.gmHelp}>
         Manage maps for {game.name}. Maps appear in tournament and league creation. Drag rows to reorder.
-        <span className={styles.gmMapSummary}>{activeMaps.length} active Â· {inactiveMaps.length} inactive Â· {maps.length} total</span>
+        <span className={styles.gmMapSummary}>{activeMaps.length} active · {inactiveMaps.length} inactive · {maps.length} total</span>
       </p>
 
       {/* Map list */}
@@ -981,7 +981,7 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
             onDragEnd={() => setDragOver(null)}
           >
             {/* Drag handle */}
-            <div className={styles.gmMapDrag} title="Drag to reorder">â ¿</div>
+            <div className={styles.gmMapDrag} title="Drag to reorder">₿</div>
 
             {/* Active indicator */}
             <div className={`${styles.gmMapActive} ${map.active ? styles.gmMapActiveOn : ''}`}
@@ -989,7 +989,7 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
               title={map.active ? 'Active' : 'Inactive'} />
 
             {editing === map.id ? (
-              /* â”€â”€ INLINE EDIT MODE â”€â”€ */
+              /* ── INLINE EDIT MODE ── */
               <div className={styles.gmMapEditInline}>
                 <input className={styles.gmInput} value={editVals.name}
                   onChange={e => setEditVals(p => ({...p, name: e.target.value}))}
@@ -1002,12 +1002,12 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
                   onChange={e => setEditVals(p => ({...p, notes: e.target.value}))}
                   placeholder="Notes (optional)" />
                 <div className={styles.gmMapEditBtns}>
-                  <button className={styles.gmSeasonToggle} onClick={() => saveEdit(map.id)}>âœ“ Save</button>
+                  <button className={styles.gmSeasonToggle} onClick={() => saveEdit(map.id)}>✓ Save</button>
                   <button className={styles.gmModeRemove} onClick={() => setEditing(null)}>Cancel</button>
                 </div>
               </div>
             ) : (
-              /* â”€â”€ DISPLAY MODE â”€â”€ */
+              /* ── DISPLAY MODE ── */
               <>
                 <div className={styles.gmMapInfo}>
                   <div className={styles.gmMapName} style={!map.active ? { opacity: 0.5 } : {}}>{map.name}</div>
@@ -1018,13 +1018,13 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
                 </div>
 
                 <div className={styles.gmMapActions}>
-                  <button className={styles.gmMapEditBtn} onClick={() => openEdit(map)}>âœï¸ Edit</button>
+                  <button className={styles.gmMapEditBtn} onClick={() => openEdit(map)}>✏️ Edit</button>
                   <button
                     className={`${styles.gmSeasonToggle} ${map.active ? styles.gmSeasonToggleOn : ''}`}
                     onClick={() => toggleActive(map.id)}>
                     {map.active ? 'Active' : 'Inactive'}
                   </button>
-                  <button className={styles.gmSeasonDelete} onClick={() => deleteMap(map.id)}>ðŸ—‘</button>
+                  <button className={styles.gmSeasonDelete} onClick={() => deleteMap(map.id)}>🗑</button>
                 </div>
               </>
             )}
@@ -1054,13 +1054,13 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
               <label>Notes / Modes Available</label>
               <input className={styles.gmInput} value={addForm.notes}
                 onChange={e => setAddForm(p => ({...p, notes: e.target.value}))}
-                placeholder="e.g. Available in all modes Â· Competitive legal"
+                placeholder="e.g. Available in all modes · Competitive legal"
                 onKeyDown={e => e.key === 'Enter' && addMap()} />
             </div>
           </div>
           <div className={styles.gmSeasonActions}>
             <button className={styles.gmAddBtn} onClick={addMap} disabled={saving || !addForm.name.trim()}>
-              {saving ? 'Addingâ€¦' : '+ Add Map'}
+              {saving ? 'Adding…' : '+ Add Map'}
             </button>
             <button className={styles.gmCancelSeason} onClick={() => setShowAdd(false)}>Cancel</button>
           </div>
@@ -1136,23 +1136,23 @@ function GameManagement() {
                       : game.icon}
                   </div>
                   <div className={styles.gmCardBadges}>
-                    {game.featured && <span className={styles.gmBadgeFeatured}>â­ Featured</span>}
-                    {game.hasLadder && <span className={styles.gmBadgeLadder}>ðŸŽ® Ladder</span>}
+                    {game.featured && <span className={styles.gmBadgeFeatured}>⭐ Featured</span>}
+                    {game.hasLadder && <span className={styles.gmBadgeLadder}>🎮 Ladder</span>}
                     {!game.active && <span className={styles.gmBadgeInactive}>Inactive</span>}
                   </div>
                 </div>
                 <div className={styles.gmCardBody}>
                   <div className={styles.gmCardName} style={{ color: game.color }}>{game.name}</div>
-                  <div className={styles.gmCardMeta}>{game.genre} Â· {game.platform}</div>
+                  <div className={styles.gmCardMeta}>{game.genre} · {game.platform}</div>
                   <div className={styles.gmCardMeta}>{game.teamSize.label}</div>
                   <div className={styles.gmCardSeasons}>
                     {game.seasons.length > 0
-                      ? `${game.seasons.length} Season${game.seasons.length !== 1 ? 's' : ''} Â· ${game.seasons.find(s=>s.active) ? 'ðŸŸ¢ Active' : 'âšª No Active Season'}`
+                      ? `${game.seasons.length} Season${game.seasons.length !== 1 ? 's' : ''} · ${game.seasons.find(s=>s.active) ? '🟢 Active' : '⚪ No Active Season'}`
                       : 'No seasons'}
                   </div>
                 </div>
                 <div className={styles.gmCardFoot}>
-                  <button className={styles.gmCardEdit} onClick={e => { e.stopPropagation(); openGame(game); }}>Edit â€º</button>
+                  <button className={styles.gmCardEdit} onClick={e => { e.stopPropagation(); openGame(game); }}>Edit ›</button>
                   <button
                     className={`${styles.gmCardToggle} ${game.active ? styles.gmCardToggleOn : styles.gmCardToggleOff}`}
                     onClick={e => { e.stopPropagation(); toggleActive(game.id); }}>
@@ -1183,7 +1183,7 @@ function GameManagement() {
   );
 }
 
-// â”€â”€ GAME DETAIL EDITOR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── GAME DETAIL EDITOR ────────────────────────────────────────────────────────
 function GameDetailEditor({ game, onBack, onSaved }) {
   const [form, setForm] = useState({
     name: game.name, shortName: game.shortName, genre: game.genre,
@@ -1263,7 +1263,7 @@ function GameDetailEditor({ game, onBack, onSaved }) {
     <div className={styles.gmDetail}>
       {/* Header */}
       <div className={styles.gmDetailHeader}>
-        <button className={styles.gmBackBtn} onClick={onBack}>â† All Games</button>
+        <button className={styles.gmBackBtn} onClick={onBack}>← All Games</button>
         <div className={styles.gmDetailTitle}>
           <div className={styles.gmDetailIcon} style={{ background: form.color + '22', border: `2px solid ${form.color}`, overflow:'hidden' }}>
             {coverImage
@@ -1272,17 +1272,17 @@ function GameDetailEditor({ game, onBack, onSaved }) {
           </div>
           <div>
             <div className={styles.gmDetailName} style={{ color: form.color }}>{form.name}</div>
-            <div className={styles.gmDetailSub}>{form.genre} Â· {form.platform}</div>
+            <div className={styles.gmDetailSub}>{form.genre} · {form.platform}</div>
           </div>
         </div>
         <button className={`${styles.gmSaveBtn} ${saved ? styles.gmSaveBtnSaved : ''}`} onClick={save} disabled={saving}>
-          {saving ? 'Savingâ€¦' : saved ? 'âœ“ Saved!' : 'Save Changes'}
+          {saving ? 'Saving…' : saved ? '✓ Saved!' : 'Save Changes'}
         </button>
       </div>
 
       {/* Edit tabs */}
       <div className={styles.gmEditTabs}>
-        {[['info','ðŸ“‹ Info & Settings'],['modes','ðŸŽ¯ Game Modes'],['maps','ðŸ—ºï¸ Maps'],['seasons','ðŸ“… Seasons']].map(([id,label]) => (
+        {[['info','📋 Info & Settings'],['modes','🎯 Game Modes'],['maps','🗺️ Maps'],['seasons','📅 Seasons']].map(([id,label]) => (
           <button key={id} className={`${styles.gmEditTab} ${editTab===id?styles.gmEditTabOn:''}`}
             onClick={() => setEditTab(id)}>{label}
             {id === 'seasons' && <span className={styles.gmTabBadge}>{seasons.length}</span>}
@@ -1295,7 +1295,7 @@ function GameDetailEditor({ game, onBack, onSaved }) {
       {editTab === 'info' && (
         <div className={styles.gmEditBody}>
 
-          {/* â”€â”€ COVER IMAGE UPLOADER â”€â”€ */}
+          {/* ── COVER IMAGE UPLOADER ── */}
           <div className={styles.gmCoverSection}>
             <div className={styles.gmCoverLabel}>Game Cover / Title Art</div>
             <div className={styles.gmCoverRow}>
@@ -1310,7 +1310,7 @@ function GameDetailEditor({ game, onBack, onSaved }) {
                         await gameApi.removeCoverImage(game.id);
                         setCoverImage('');
                         onSaved({ ...game, coverImage: '' });
-                      }}>âœ• Remove</button>
+                      }}>✕ Remove</button>
                     </div>
                   </>
                 ) : (
@@ -1330,7 +1330,7 @@ function GameDetailEditor({ game, onBack, onSaved }) {
                   onClick={() => coverImageRef.current.click()}
                   disabled={imgUploading}
                 >
-                  {imgUploading ? 'â³ Uploadingâ€¦' : coverImage ? 'ðŸ–¼ï¸ Replace Image' : 'ðŸ“ Upload Cover Art'}
+                  {imgUploading ? '⏳ Uploading…' : coverImage ? '🖼️ Replace Image' : '📁 Upload Cover Art'}
                 </button>
                 <input
                   ref={coverImageRef}
@@ -1355,7 +1355,7 @@ function GameDetailEditor({ game, onBack, onSaved }) {
                   }}
                 />
                 {coverImage && (
-                  <p className={styles.gmCoverHint}>âœ“ Cover image set â€” shown on game cards and throughout the platform.</p>
+                  <p className={styles.gmCoverHint}>✓ Cover image set — shown on game cards and throughout the platform.</p>
                 )}
               </div>
             </div>
@@ -1444,14 +1444,14 @@ function GameDetailEditor({ game, onBack, onSaved }) {
             {modes.length === 0 && <div className={styles.gmEmpty}>No modes added yet.</div>}
             {modes.map((mode, i) => (
               <div key={i} className={styles.gmModeRow}>
-                <div className={styles.gmModeIcon} style={{ background: form.color + '22' }}>ðŸŽ¯</div>
+                <div className={styles.gmModeIcon} style={{ background: form.color + '22' }}>🎯</div>
                 <span className={styles.gmModeName}>{mode}</span>
-                <button className={styles.gmModeRemove} onClick={() => removeMode(i)}>âœ•</button>
+                <button className={styles.gmModeRemove} onClick={() => removeMode(i)}>✕</button>
               </div>
             ))}
           </div>
           <div className={styles.gmModeAdd}>
-            <input className={styles.gmInput} placeholder="Add new mode (e.g. Ranked 5v5)â€¦"
+            <input className={styles.gmInput} placeholder="Add new mode (e.g. Ranked 5v5)…"
               value={newMode} onChange={e => setNewMode(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addMode()}/>
             <button className={styles.gmAddModeBtn} onClick={addMode} disabled={!newMode.trim()}>+ Add</button>
@@ -1484,16 +1484,16 @@ function GameDetailEditor({ game, onBack, onSaved }) {
                 <div className={styles.gmSeasonLeft}>
                   <div className={styles.gmSeasonName}>
                     {season.name}
-                    {season.active && <span className={styles.gmSeasonActiveBadge}>â— Active</span>}
+                    {season.active && <span className={styles.gmSeasonActiveBadge}>● Active</span>}
                   </div>
-                  <div className={styles.gmSeasonDates}>{season.startDate} â€” {season.endDate}</div>
+                  <div className={styles.gmSeasonDates}>{season.startDate} — {season.endDate}</div>
                 </div>
                 <div className={styles.gmSeasonActions}>
                   <button className={`${styles.gmSeasonToggle} ${season.active ? styles.gmSeasonToggleOn : ''}`}
                     onClick={() => toggleSeasonActive(season.id, season.active)}>
                     {season.active ? 'Deactivate' : 'Set Active'}
                   </button>
-                  <button className={styles.gmSeasonDelete} onClick={() => deleteSeason(season.id)}>ðŸ—‘</button>
+                  <button className={styles.gmSeasonDelete} onClick={() => deleteSeason(season.id)}>🗑</button>
                 </div>
               </div>
             ))}
@@ -1539,11 +1539,11 @@ function GameDetailEditor({ game, onBack, onSaved }) {
   );
 }
 
-// â”€â”€ CREATE GAME MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── CREATE GAME MODAL ─────────────────────────────────────────────────────────
 function CreateGameModal({ onClose, onCreated }) {
   const [form, setForm] = useState({
     name: '', shortName: '', genre: 'FPS', platform: 'PC',
-    icon: 'ðŸŽ®', color: '#3b82f6',
+    icon: '🎮', color: '#3b82f6',
     teamSizeMin: 5, teamSizeMax: 5, teamSizeLabel: '5v5',
     featured: false, hasLadder: false,
   });
@@ -1568,7 +1568,7 @@ function CreateGameModal({ onClose, onCreated }) {
     <div className={styles.modalBackdrop} onClick={e => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal} style={{ maxWidth: 540 }}>
         <div className={styles.modalHeader}><span className={styles.modalTitle}>Add New Game</span>
-          <button className={styles.modalClose} onClick={onClose}>âœ•</button></div>
+          <button className={styles.modalClose} onClick={onClose}>✕</button></div>
         <div className={styles.modalBody}>
           <div className={styles.gmFormGrid}>
             <div className={styles.gmField}>
@@ -1641,7 +1641,7 @@ function CreateGameModal({ onClose, onCreated }) {
         <div className={styles.modalFooter}>
           <button className={styles.actionBtn} onClick={onClose}>Cancel</button>
           <button className={styles.promoteBtn} disabled={saving||!form.name.trim()} onClick={submit}>
-            {saving?'Creatingâ€¦':'Add Game'}
+            {saving?'Creating…':'Add Game'}
           </button>
         </div>
       </div>
@@ -1673,25 +1673,25 @@ export default function AdminPanel() {
     setTournaments(prev => prev.filter(t => t.id !== id));
   };
 
-  // â”€â”€ Tab definitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // 'all'        â†’ both head_admin and league_admin see this tab
-  // 'head_admin' â†’ only head_admin (and legacy admin) can see this tab
+  // ── Tab definitions ───────────────────────────────────────────
+  // 'all'        → both head_admin and league_admin see this tab
+  // 'head_admin' → only head_admin (and legacy admin) can see this tab
   // league_admin can access: leagues, tournaments, create, flags, flag_history, social_mod
   // league_admin cannot access: orgs (HCEA), coach_apps, scholarships, players, coaches
   const ALL_TABS = [
-    { id: 'leagues',      label: 'ðŸ… Seasonal Leagues',     access: 'all' },
-    { id: 'tournaments',  label: 'ðŸ† Tournaments',          access: 'all' },
+    { id: 'leagues',      label: '🏅 Seasonal Leagues',     access: 'all' },
+    { id: 'tournaments',  label: '🏆 Tournaments',          access: 'all' },
     { id: 'create',       label: '+ Create Tournament',     access: 'all' },
-    { id: 'flags',        label: 'ðŸš© Flagged Matches',      access: 'all' },
-    { id: 'flag_history', label: 'ðŸ“‹ Flag History',         access: 'all' },
-    { id: 'social_mod',   label: 'ðŸ’¬ Social Moderation',    access: 'all' },
-    // Head admin only â€” HCEA and people management
-    { id: 'orgs',         label: 'ðŸ¢ HCEA Organizations',   access: 'head_admin' },
-    { id: 'coach_apps',   label: 'ðŸŽ“ Coach Applications',   access: 'head_admin' },
-    { id: 'scholarships', label: 'ðŸ… Scholarship Apps',     access: 'head_admin' },
-    { id: 'players',      label: 'ðŸ‘¥ Players',              access: 'head_admin' },
-    { id: 'coaches',      label: 'ðŸŽ“ Coach Roster',         access: 'head_admin' },
-    { id: 'games',        label: 'ðŸŽ® Game Management',       access: 'head_admin' },
+    { id: 'flags',        label: '🚩 Flagged Matches',      access: 'all' },
+    { id: 'flag_history', label: '📋 Flag History',         access: 'all' },
+    { id: 'social_mod',   label: '💬 Social Moderation',    access: 'all' },
+    // Head admin only — HCEA and people management
+    { id: 'orgs',         label: '🏢 HCEA Organizations',   access: 'head_admin' },
+    { id: 'coach_apps',   label: '🎓 Coach Applications',   access: 'head_admin' },
+    { id: 'scholarships', label: '🏅 Scholarship Apps',     access: 'head_admin' },
+    { id: 'players',      label: '👥 Players',              access: 'head_admin' },
+    { id: 'coaches',      label: '🎓 Coach Roster',         access: 'head_admin' },
+    { id: 'games',        label: '🎮 Game Management',       access: 'head_admin' },
   ];
 
   const TABS = ALL_TABS.filter(t =>
@@ -1716,7 +1716,7 @@ export default function AdminPanel() {
         </div>
         <p>
           {isHeadAdmin
-            ? 'Full platform management â€” tournaments, leagues, HCEA organizations, coaching, players.'
+            ? 'Full platform management — tournaments, leagues, HCEA organizations, coaching, players.'
             : 'Manage leagues, tournaments, flagged matches, and social feed moderation.'}
         </p>
       </div>
@@ -1740,7 +1740,7 @@ export default function AdminPanel() {
             <option key={t.id} value={t.id}>{t.label}</option>
           ))}
         </select>
-        <span className={styles.tabSelectArrow}>â–¾</span>
+        <span className={styles.tabSelectArrow}>▾</span>
       </div>
 
       <div className={styles.body}>
@@ -1755,22 +1755,22 @@ export default function AdminPanel() {
         {tab === 'orgs' && <AdminOrgs />}
         {tab === 'scholarships' && <div><div className={styles.sectionTitle}>Scholarship Applications</div><ScholarshipApplications /></div>}
         {tab === 'flags' && <div><div className={styles.sectionTitle}>Flagged Matches</div><FlaggedMatchesPanel /></div>}
-        {tab === 'flag_history' && <div><div className={styles.sectionTitle}>Flag History Â· Retained 1 Week After Event Ends</div><FlagHistoryPanel /></div>}
+        {tab === 'flag_history' && <div><div className={styles.sectionTitle}>Flag History · Retained 1 Week After Event Ends</div><FlagHistoryPanel /></div>}
         {tab === 'social_mod' && (
           <div>
             <div className={styles.sectionTitle}>Social Feed Moderation</div>
             <div style={{padding:'1.5rem',background:'rgba(59,130,246,0.04)',border:'1px solid rgba(59,130,246,0.15)',marginBottom:'1rem'}}>
               <div style={{fontSize:'0.8rem',color:'#8ba0c0',lineHeight:1.7}}>
                 <strong style={{color:'#e8f0ff'}}>Social moderation tools live in the Community Feed.</strong><br/>
-                Navigate to <strong style={{color:'#3b82f6'}}>Community Feed â†’ Social Feed</strong> in the sidebar to view all posts, pin/unpin, flag, timeout users, and delete content.<br/>
+                Navigate to <strong style={{color:'#3b82f6'}}>Community Feed → Social Feed</strong> in the sidebar to view all posts, pin/unpin, flag, timeout users, and delete content.<br/>
                 Flagged posts from the feed also appear in <strong style={{color:'#3b82f6'}}>Flagged Matches</strong> for cross-reference on match-related disputes.
               </div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'1rem'}}>
               {[
-                {icon:'ðŸ“Œ',label:'Pin/Unpin Posts',desc:'Pinned posts float to the top of all users\' feeds.'},
-                {icon:'ðŸš©',label:'Flag & Remove',desc:'Flag or delete posts violating community guidelines.'},
-                {icon:'â±',label:'User Timeouts',desc:'Temporarily restrict users from posting (15minâ€“7 days).'},
+                {icon:'📌',label:'Pin/Unpin Posts',desc:'Pinned posts float to the top of all users\' feeds.'},
+                {icon:'🚩',label:'Flag & Remove',desc:'Flag or delete posts violating community guidelines.'},
+                {icon:'⏱',label:'User Timeouts',desc:'Temporarily restrict users from posting (15min–7 days).'},
               ].map(item => (
                 <div key={item.label} style={{padding:'1rem',background:'rgba(0,0,0,0.2)',border:'1px solid rgba(255,255,255,0.07)'}}>
                   <div style={{fontSize:'1.4rem',marginBottom:'0.4rem'}}>{item.icon}</div>
