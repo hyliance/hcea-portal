@@ -1090,11 +1090,23 @@ export const contactApi = {
 export const adminApi = {
   // Fetch all profiles from Supabase — shows every real registered user
   getPlayers: async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, email, school, grade, role, created_at')
-      .order('created_at', { ascending: false });
-    if (error) { console.error('getPlayers error:', error.message); return []; }
+    // Get current session token so Supabase knows the caller is authenticated
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) { console.warn('getPlayers: no active session'); return []; }
+
+    const res = await fetch(
+      `${process.env.REACT_APP_SUPABASE_URL}/rest/v1/profiles?select=id,first_name,last_name,email,school,grade,role,created_at&order=created_at.desc`,
+      {
+        headers: {
+          'apikey':        process.env.REACT_APP_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${token}`,
+          'Content-Type':  'application/json',
+        },
+      }
+    );
+    if (!res.ok) { console.error('getPlayers error:', res.status, await res.text()); return []; }
+    const data = await res.json();
     return (data || []).map(p => ({
       id:               p.id,
       name:             `${p.first_name || ''} ${p.last_name || ''}`.trim() || p.email,
@@ -1108,35 +1120,40 @@ export const adminApi = {
   },
 
   updatePlayer: async (userId, updates) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', userId);
-    if (error) return { success: false, error: error.message };
-    return { success: true };
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return { success: false, error: 'Not authenticated' };
+    const res = await fetch(
+      `${process.env.REACT_APP_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
+      { method: 'PATCH', headers: { 'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify(updates) }
+    );
+    return res.ok ? { success: true } : { success: false, error: await res.text() };
   },
 
   deletePlayer: async (userId) => {
-    const { error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', userId);
-    if (error) return { success: false, error: error.message };
-    return { success: true };
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return { success: false, error: 'Not authenticated' };
+    const res = await fetch(
+      `${process.env.REACT_APP_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
+      { method: 'DELETE', headers: { 'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
+    );
+    return res.ok ? { success: true } : { success: false, error: await res.text() };
   },
 
   // Head admin only — promote player to league_admin or revoke back to player
   setPlayerRole: async (userId, role) => {
-    // Supabase enum values are all lowercase: player, coach, org_manager, league_admin, head_admin
     const valid = ['player', 'coach', 'org_manager', 'league_admin', 'head_admin'];
     const dbRole = role.toLowerCase();
     if (!valid.includes(dbRole)) return { success: false, error: 'Invalid role.' };
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role: dbRole })
-      .eq('id', userId);
-    if (error) return { success: false, error: error.message };
-    return { success: true };
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return { success: false, error: 'Not authenticated' };
+    const res = await fetch(
+      `${process.env.REACT_APP_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
+      { method: 'PATCH', headers: { 'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify({ role: dbRole }) }
+    );
+    return res.ok ? { success: true } : { success: false, error: await res.text() };
   },
 };
 
