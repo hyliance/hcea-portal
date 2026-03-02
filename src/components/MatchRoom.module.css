@@ -307,3 +307,28 @@
   letter-spacing: 0.06em;
   font-style: italic;
 }
+
+/* ── SCORE INPUT ROW ── */
+.scoreInputRow        { display:flex; align-items:center; justify-content:center; gap:1rem; margin:1rem 0 0.4rem; }
+.scoreInputGroup      { display:flex; flex-direction:column; align-items:center; gap:0.4rem; }
+.scoreInputLabel      { font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--silver,#8899b4); text-align:center; max-width:120px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.scoreInput           { width:72px; text-align:center; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.12); color:#e8f0ff; font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:0.05em; padding:0.3rem 0.5rem; outline:none; transition:border-color 0.15s; -moz-appearance:textfield; }
+.scoreInput::-webkit-outer-spin-button,
+.scoreInput::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.scoreInput:focus     { border-color:rgba(59,130,246,0.5); }
+.scoreInputDash       { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:rgba(255,255,255,0.2); margin-top:1.4rem; }
+.scoreInputHint       { font-size:0.72rem; color:rgba(255,255,255,0.3); text-align:center; font-style:italic; margin-bottom:0.4rem; }
+
+/* ── SCORE INPUT FIELDS ─────────────────────────────────────────────────────── */
+.scoreInputRow    { display:flex; align-items:center; justify-content:center; gap:1rem; margin:1rem 0 0.25rem; }
+.scoreInputGroup  { display:flex; flex-direction:column; align-items:center; gap:0.35rem; }
+.scoreInputLabel  { font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#6b7fa3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
+.scoreInput       { width:72px; text-align:center; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#e8f0ff; font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:700; padding:0.4rem 0.3rem; outline:none; transition:border-color 0.15s; -moz-appearance:textfield; }
+.scoreInput::-webkit-outer-spin-button,
+.scoreInput::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.scoreInput:focus { border-color:#3b82f6; background:rgba(59,130,246,0.08); }
+.scoreInputDash   { font-size:1.4rem; font-weight:700; color:#4a5a72; margin-top:1.2rem; }
+.scoreInputHint   { text-align:center; font-size:0.7rem; color:#4a5a72; margin-bottom:0.75rem; }
+
+/* Score shown in game history */
+.gameScore        { font-family:'Barlow Condensed',sans-serif; font-size:0.85rem; font-weight:700; color:#60a5fa; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); padding:0.1rem 0.5rem; margin:0 0.25rem; letter-spacing:0.05em; }
