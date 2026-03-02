@@ -332,7 +332,7 @@ export default function Coaches({ onBookWithCoach }) {
             <p>Edit your public profile, games, availability, and rates.</p>
           </div>
           <div style={{ display:'flex', gap:'0.6rem' }}>
-            <button className={`btn ${editMode ? 'btn-primary' : 'btn-ghost'}`} style={{ clipPath:'none', padding:'0.55rem 1.2rem', fontSize:'0.85rem' }} onClick={() => setEditMode(true)}>✏️ Edit Profile</button>
+            <button className={`btn ${editMode ? 'btn-primary' : 'btn-ghost'}`} style={{ clipPath:'none', padding:'0.55rem 1.2rem', fontSize:'0.85rem' }} onClick={() => setEditMode(true)}>✏️ Edit Profile &amp; Availability</button>
             <button className={`btn ${!editMode ? 'btn-primary' : 'btn-ghost'}`} style={{ clipPath:'none', padding:'0.55rem 1.2rem', fontSize:'0.85rem' }} onClick={() => setEditMode(false)}>👁 Preview</button>
           </div>
         </div>
@@ -345,13 +345,13 @@ export default function Coaches({ onBookWithCoach }) {
           // Preview mode — show their card + full directory
           <div className={styles.grid}>
             {coaches.map(coach => (
-              <CoachCard key={coach.id} coach={coach} onViewProfile={setProfileCoach} onBookNow={() => {}} />
+              <CoachCard key={coach.id} coach={coach} onViewProfile={setProfileCoach} onBookNow={onBookWithCoach} />
             ))}
           </div>
         )}
 
         {profileCoach && (
-          <CoachProfileModal coach={profileCoach} onClose={() => setProfileCoach(null)} onBook={() => setProfileCoach(null)} />
+          <CoachProfileModal coach={profileCoach} onClose={() => setProfileCoach(null)} onBook={(c) => { setProfileCoach(null); onBookWithCoach && onBookWithCoach(c || profileCoach); }} />
         )}
       </div>
     );
