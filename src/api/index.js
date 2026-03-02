@@ -1096,10 +1096,10 @@ export const adminApi = {
     if (!token) { console.warn('getPlayers: no active session'); return []; }
 
     const res = await fetch(
-      `${process.env.REACT_APP_SUPABASE_URL}/rest/v1/profiles?select=id,first_name,last_name,email,school,grade,role,created_at&order=created_at.desc`,
+      `${'https://yelicgqkqerpmmifhewn.supabase.co'}/rest/v1/profiles?select=id,first_name,last_name,email,school,grade,role,created_at&order=created_at.desc`,
       {
         headers: {
-          'apikey':        process.env.REACT_APP_SUPABASE_ANON_KEY,
+          'apikey':        'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi',
           'Authorization': `Bearer ${token}`,
           'Content-Type':  'application/json',
         },
@@ -1124,8 +1124,8 @@ export const adminApi = {
     const token = session?.access_token;
     if (!token) return { success: false, error: 'Not authenticated' };
     const res = await fetch(
-      `${process.env.REACT_APP_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
-      { method: 'PATCH', headers: { 'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify(updates) }
+      `${'https://yelicgqkqerpmmifhewn.supabase.co'}/rest/v1/profiles?id=eq.${userId}`,
+      { method: 'PATCH', headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify(updates) }
     );
     return res.ok ? { success: true } : { success: false, error: await res.text() };
   },
@@ -1135,8 +1135,8 @@ export const adminApi = {
     const token = session?.access_token;
     if (!token) return { success: false, error: 'Not authenticated' };
     const res = await fetch(
-      `${process.env.REACT_APP_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
-      { method: 'DELETE', headers: { 'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
+      `${'https://yelicgqkqerpmmifhewn.supabase.co'}/rest/v1/profiles?id=eq.${userId}`,
+      { method: 'DELETE', headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
     );
     return res.ok ? { success: true } : { success: false, error: await res.text() };
   },
@@ -1150,8 +1150,8 @@ export const adminApi = {
     const token = session?.access_token;
     if (!token) return { success: false, error: 'Not authenticated' };
     const res = await fetch(
-      `${process.env.REACT_APP_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
-      { method: 'PATCH', headers: { 'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify({ role: dbRole }) }
+      `${'https://yelicgqkqerpmmifhewn.supabase.co'}/rest/v1/profiles?id=eq.${userId}`,
+      { method: 'PATCH', headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify({ role: dbRole }) }
     );
     return res.ok ? { success: true } : { success: false, error: await res.text() };
   },
