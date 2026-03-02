@@ -1101,7 +1101,7 @@ export const adminApi = {
       email:            p.email,
       school:           p.school || '',
       grade:            p.grade  || '',
-      role:             p.role   || 'player',
+      role:             p.role ? p.role.toLowerCase() : 'player',
       membershipActive: false,
       joinedAt:         p.created_at ? p.created_at.slice(0, 10) : '',
     }));
@@ -1127,11 +1127,13 @@ export const adminApi = {
 
   // Head admin only — promote player to league_admin or revoke back to player
   setPlayerRole: async (userId, role) => {
-    const valid = ['player', 'league_admin', 'admin', 'head_admin', 'coach', 'org_manager'];
-    if (!valid.includes(role)) return { success: false, error: 'Invalid role.' };
+    // Supabase enum values are all lowercase: player, coach, org_manager, league_admin, head_admin
+    const valid = ['player', 'coach', 'org_manager', 'league_admin', 'head_admin'];
+    const dbRole = role.toLowerCase();
+    if (!valid.includes(dbRole)) return { success: false, error: 'Invalid role.' };
     const { error } = await supabase
       .from('profiles')
-      .update({ role })
+      .update({ role: dbRole })
       .eq('id', userId);
     if (error) return { success: false, error: error.message };
     return { success: true };
