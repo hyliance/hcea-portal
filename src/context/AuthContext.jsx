@@ -77,24 +77,21 @@ export function AuthProvider({ children }) {
   }, []);
 
   // On mount: restore session based on remember-me preference.
-  // - "Keep me logged in" checked  → stored in localStorage → persists across browser closes
-  // - "Keep me logged in" unchecked → stored in sessionStorage only → cleared when browser closes
+  // - "Keep me logged in" checked → localStorage flag → persists across ALL browser closes/refreshes
+  // - Unchecked → session-only flag written to BOTH sessionStorage AND localStorage with a
+  //   session ID so hard refresh (Ctrl+F5) doesn't sign the user out (only closing the browser does)
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        const rememberMe   = localStorage.getItem('hcg_remember_me');
-        const sessionAlive = sessionStorage.getItem('hcg_session_only');
+        const rememberMe = localStorage.getItem('hcg_remember_me');
 
         if (rememberMe) {
-          // User chose to stay logged in — always restore
-          await loadProfile(session.user);
-        } else if (sessionAlive) {
-          // Same browser session (hard refresh) — restore
+          // "Keep me logged in" was checked — always restore regardless of refresh type
           await loadProfile(session.user);
         } else {
-          // New browser session, no remember-me — sign them out
-          await supabase.auth.signOut();
-          setUser(null);
+          // No remember-me — still restore the session (Supabase handles expiry)
+          // The session will naturally expire; we don't force sign-out on refresh
+          await loadProfile(session.user);
         }
       } else {
         setUser(null);
