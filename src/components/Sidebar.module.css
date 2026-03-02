@@ -1,0 +1,75 @@
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 240px; flex-shrink: 0;
+  background: rgba(8,15,28,0.98);
+  border-right: 1px solid var(--border-blue);
+  display: flex; flex-direction: column;
+  position: fixed; left: 0; top: 0;
+  height: 100vh; z-index: 200;
+  overflow-y: auto;
+  transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Mobile: hidden off-screen by default */
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); box-shadow: none; }
+  .sidebar.open { transform: translateX(0); box-shadow: 8px 0 32px rgba(0,0,0,0.6); }
+}
+
+.logoGame { display: block; font-size: 0.8rem; color: #3b82f6; letter-spacing: 0.14em; text-transform: uppercase; margin-top: -0.1rem; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; }
+.logo { padding:1.4rem 1.6rem 1rem; border-bottom:1px solid var(--border); font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.08em; display:flex; flex-direction:column; }
+.logo em { color:var(--bright); font-style:normal; }
+.logoSub { font-family:'Barlow Condensed',sans-serif; font-size:0.7rem; letter-spacing:0.15em; color:var(--muted); font-weight:600; text-transform:uppercase; margin-top:0.15rem; }
+
+.member { padding:1rem 1.4rem; display:flex; align-items:center; gap:0.8rem; border-bottom:1px solid var(--border); }
+.avatar { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:1rem; color:#fff; flex-shrink:0; }
+.memberInfo { min-width:0; }
+.memberName { font-size:0.88rem; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.orgName { font-size:0.72rem; color:#a78bfa; margin-top:0.1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.roleBadge { font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; border:1px solid; padding:0.08rem 0.45rem; display:inline-block; margin-top:0.25rem; }
+
+.nav { flex:1; padding:0.5rem 0; }
+.section { font-size:0.65rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); padding:0.85rem 1.6rem 0.3rem; font-weight:700; }
+.item { display:flex; align-items:center; gap:0.75rem; padding:0.65rem 1.6rem; color:var(--silver); font-size:0.88rem; font-weight:500; cursor:pointer; transition:background 0.15s,color 0.15s; border-left:3px solid transparent; width:100%; background:none; border-top:none; border-right:none; border-bottom:none; text-align:left; position:relative; }
+.item:hover { background:rgba(59,130,246,0.06); color:var(--white); }
+.item.active { background:rgba(59,130,246,0.1); color:var(--sky); border-left-color:var(--bright); }
+.icon { width:16px; text-align:center; font-size:0.9rem; flex-shrink:0; }
+.adminDot { width:6px; height:6px; border-radius:50%; background:var(--red); margin-left:auto; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.bottom { padding:1rem 1.4rem; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:0.4rem; }
+.homeBtn,.logout { display:flex; align-items:center; gap:0.7rem; font-size:0.85rem; cursor:pointer; transition:color 0.2s; background:none; border:none; width:100%; padding:0.45rem 0.2rem; text-align:left; }
+.homeBtn { color:var(--silver); }
+.homeBtn:hover { color:var(--bright); }
+.logout { color:var(--muted); }
+.logout:hover { color:var(--red); }
+
+/* Overlay behind sidebar on mobile */
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 199;
+  backdrop-filter: blur(2px);
+}
+@media (max-width: 900px) {
+  .overlay.show { display: block; }
+}
+
+/* ── HCEA ACADEMY SECTION ── */
+.sectionHcea {
+  color: #3b82f6 !important;
+  background: rgba(59,130,246,0.06);
+  border-top: 1px solid rgba(59,130,246,0.15);
+  border-bottom: 1px solid rgba(59,130,246,0.1);
+  margin-top: 0.25rem;
+  padding: 0.45rem 1.2rem !important;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.sectionHceaIcon { font-size: 0.8rem; }
+.itemHcea {
+  border-left: 2px solid rgba(59,130,246,0.2) !important;
+  background: rgba(59,130,246,0.02) !important;
+}
+.itemHcea:hover { background: rgba(59,130,246,0.08) !important; border-left-color: rgba(59,130,246,0.5) !important; }
+.itemHcea.active { background: rgba(59,130,246,0.12) !important; border-left-color: #3b82f6 !important; }

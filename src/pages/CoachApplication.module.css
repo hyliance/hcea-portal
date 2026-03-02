@@ -1,0 +1,150 @@
+.wrap       { display:flex; flex-direction:column; gap:1.4rem; max-width:800px; }
+.pageHeader h2 { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:0.04em; }
+.pageTitle  { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:0.04em; margin:0; }
+.pageSub    { font-size:0.9rem; color:#8ba0c0; margin:0.3rem 0 0; }
+
+/* ── PROGRESS ── */
+.progressWrap { display:flex; flex-direction:column; gap:0.8rem; }
+.progressTrack { height:3px; background:rgba(255,255,255,0.07); position:relative; }
+.progressFill  { height:100%; background:linear-gradient(90deg,#1d4ed8,#3b82f6); transition:width 0.4s ease; }
+.stepPills     { display:flex; gap:0.4rem; flex-wrap:wrap; }
+.stepPill      { display:flex; align-items:center; gap:0.35rem; padding:0.3rem 0.7rem; font-size:0.72rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; border:1px solid rgba(255,255,255,0.08); color:#6b7fa3; transition:all 0.15s; cursor:default; }
+.stepPillDone  { border-color:rgba(59,130,246,0.3); color:#3b82f6; cursor:pointer; }
+.stepPillDone:hover { background:rgba(59,130,246,0.08); }
+.stepPillActive { border-color:#3b82f6; color:#e8f0ff; background:rgba(59,130,246,0.1); }
+.stepPillIcon  { font-size:0.85rem; }
+.stepPillLabel { font-family:'Barlow Condensed',sans-serif; font-size:0.8rem; }
+@media(max-width:640px){ .stepPillLabel { display:none; } .stepPill { padding:0.35rem 0.55rem; } }
+
+/* ── STEP CARD ── */
+.stepCard       { background:#0d1b2e; border:1px solid rgba(59,130,246,0.2); display:flex; flex-direction:column; }
+.stepCardHeader { padding:1.2rem 1.6rem; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:0.25rem; }
+.stepNum        { font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase; color:#6b7fa3; font-weight:700; }
+.stepTitle      { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:0.04em; color:#e8f0ff; }
+
+.stepBody       { padding:1.4rem 1.6rem; display:flex; flex-direction:column; gap:1.2rem; }
+.stepIntro      { font-size:0.88rem; color:#8ba0c0; line-height:1.65; padding:0.7rem 1rem; background:rgba(59,130,246,0.04); border-left:3px solid rgba(59,130,246,0.3); }
+
+/* ── FORM ELEMENTS ── */
+.formGrid2     { display:grid; grid-template-columns:1fr 1fr; gap:0.9rem; }
+.fullCol       { grid-column:1/-1; }
+.field         { display:flex; flex-direction:column; gap:0.35rem; }
+.fieldLabel    { font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:#6b7fa3; font-weight:700; }
+.fieldHint     { font-weight:400; text-transform:none; letter-spacing:0; margin-left:0.4rem; color:#4b6282; font-size:0.68rem; }
+.fieldHintBlock { font-size:0.78rem; color:#4b6282; margin-top:0.15rem; }
+.fieldGroup    { display:flex; flex-direction:column; gap:0.6rem; }
+
+.field input,
+.field select,
+.field textarea { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#e8f0ff; padding:0.65rem 0.85rem; font-family:'Barlow',sans-serif; font-size:0.9rem; outline:none; width:100%; transition:border-color 0.2s; resize:vertical; }
+.field input:focus,
+.field select:focus,
+.field textarea:focus { border-color:#3b82f6; }
+.field select option  { background:#0d1b2e; }
+
+.dollarInput   { display:flex; align-items:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); transition:border-color 0.2s; }
+.dollarInput:focus-within { border-color:#3b82f6; }
+.dollarInput span { padding:0 0.7rem; color:#6b7fa3; font-size:0.9rem; font-weight:700; border-right:1px solid rgba(255,255,255,0.07); flex-shrink:0; }
+.dollarInput input { border:none; background:transparent; }
+
+/* ── CHIPS ── */
+.gameChips  { display:flex; flex-wrap:wrap; gap:0.4rem; }
+.gameChip   { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#8ba0c0; font-size:0.8rem; font-weight:700; padding:0.35rem 0.85rem; cursor:pointer; transition:all 0.15s; font-family:'Barlow',sans-serif; }
+.gameChip:hover { border-color:rgba(59,130,246,0.4); color:#e8f0ff; }
+.gameChipOn { border-color:#3b82f6 !important; background:rgba(59,130,246,0.12) !important; color:#e8f0ff !important; }
+.rankGrid   { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; }
+
+.dayChips   { display:flex; gap:0.35rem; flex-wrap:wrap; }
+.dayChip    { width:46px; height:46px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#8ba0c0; font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.15s; font-family:'Barlow',sans-serif; }
+.dayChip:hover { border-color:rgba(59,130,246,0.4); color:#e8f0ff; }
+.dayChipOn  { border-color:#3b82f6 !important; background:rgba(59,130,246,0.15) !important; color:#e8f0ff !important; }
+
+/* ── RATE SECTION ── */
+.rateSection    { display:flex; flex-direction:column; gap:0.9rem; }
+.rateNote       { background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); padding:0.75rem 1rem; font-size:0.82rem; color:#8ba0c0; line-height:1.6; }
+.rateSplit      { background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.2); padding:0.75rem 1rem; display:flex; flex-direction:column; gap:0.4rem; }
+.rateSplitRow   { display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; color:#8ba0c0; }
+.rateTotal      { font-weight:700; color:#e8f0ff; }
+.rateEarnings   { font-weight:700; color:#10b981; font-size:1rem; }
+
+/* ── REFERENCES ── */
+.refsHeader     { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; }
+.addRefBtn      { background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.3); color:#3b82f6; font-size:0.8rem; font-weight:700; padding:0.4rem 0.9rem; cursor:pointer; font-family:'Barlow',sans-serif; white-space:nowrap; flex-shrink:0; transition:background 0.15s; }
+.addRefBtn:hover { background:rgba(59,130,246,0.16); }
+.noRefs         { font-size:0.82rem; color:#4b6282; font-style:italic; padding:0.6rem; text-align:center; border:1px dashed rgba(255,255,255,0.07); }
+.refCard        { background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); padding:0.9rem 1rem; display:flex; gap:0.8rem; align-items:flex-start; }
+.refCardNum     { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; color:#3b82f6; flex-shrink:0; margin-top:0.1rem; }
+.refFields      { flex:1; display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; }
+.removeRefBtn   { background:none; border:none; color:#6b7fa3; font-size:0.9rem; cursor:pointer; padding:0.2rem; flex-shrink:0; transition:color 0.15s; margin-top:0.1rem; }
+.removeRefBtn:hover { color:#ef4444; }
+
+/* ── STATEMENT & AGREEMENTS ── */
+.wordCount      { font-size:0.72rem; font-weight:700; margin-top:0.3rem; letter-spacing:0.06em; }
+.agreementSection { display:flex; flex-direction:column; gap:0.8rem; margin-top:0.5rem; }
+.agreementTitle  { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8ba0c0; padding-bottom:0.4rem; border-bottom:1px solid rgba(255,255,255,0.07); }
+.checkboxRow     { display:flex; align-items:flex-start; gap:0.75rem; padding:0.75rem; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); cursor:pointer; transition:border-color 0.15s; }
+.checkboxRow:hover { border-color:rgba(59,130,246,0.25); }
+.checkboxRow input { margin-top:3px; flex-shrink:0; width:16px; height:16px; cursor:pointer; accent-color:#3b82f6; }
+.checkboxLabel  { font-size:0.88rem; font-weight:700; color:#e8f0ff; }
+.checkboxHint   { font-size:0.78rem; color:#6b7fa3; margin-top:0.2rem; line-height:1.5; }
+
+/* ── STEP FOOTER ── */
+.stepFooter      { padding:1rem 1.6rem; border-top:1px solid rgba(255,255,255,0.07); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.15); gap:1rem; }
+.stepFooterRight { display:flex; align-items:center; gap:0.8rem; }
+.stepCounter     { font-size:0.72rem; color:#4b6282; letter-spacing:0.1em; }
+.backBtn   { background:none; border:1px solid rgba(255,255,255,0.1); color:#8ba0c0; font-family:'Barlow Condensed',sans-serif; font-size:0.9rem; font-weight:700; letter-spacing:0.08em; padding:0.6rem 1.4rem; cursor:pointer; transition:all 0.15s; }
+.backBtn:hover { border-color:rgba(255,255,255,0.25); color:#e8f0ff; }
+.nextBtn   { background:#1d4ed8; border:none; color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:0.95rem; font-weight:700; letter-spacing:0.1em; padding:0.65rem 2rem; cursor:pointer; transition:background 0.15s; }
+.nextBtn:hover { background:#3b82f6; }
+.submitBtn { background:linear-gradient(135deg,#059669,#1d4ed8); border:none; color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; letter-spacing:0.1em; padding:0.65rem 2rem; cursor:pointer; transition:opacity 0.15s; }
+.submitBtn:hover:not(:disabled) { opacity:0.9; }
+.submitBtn:disabled { opacity:0.5; cursor:not-allowed; }
+
+/* ── ERROR BANNER ── */
+.errorBanner { margin:0 1.6rem; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); padding:0.75rem 1rem; display:flex; flex-direction:column; gap:0.25rem; }
+.errorBanner div { font-size:0.82rem; color:#ef4444; }
+
+/* ── SUCCESS PAGE ── */
+.successPage    { background:#0d1b2e; border:1px solid rgba(16,185,129,0.3); padding:2.5rem; text-align:center; display:flex; flex-direction:column; align-items:center; gap:1rem; }
+.successIcon    { font-size:3rem; }
+.successTitle   { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:0.04em; color:#10b981; }
+.successPage p  { font-size:0.9rem; color:#8ba0c0; line-height:1.65; max-width:520px; }
+.successSteps   { display:flex; flex-direction:column; gap:0.5rem; width:100%; max-width:380px; margin-top:0.5rem; }
+.successStep    { display:flex; align-items:center; gap:0.8rem; padding:0.6rem 1rem; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15); text-align:left; font-size:0.85rem; color:#8ba0c0; }
+.successStep span { background:#10b981; color:#000; font-weight:900; font-size:0.75rem; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+/* ── STATUS PAGE ── */
+.statusPage     { display:flex; flex-direction:column; gap:1.2rem; }
+.statusCard     { background:#0d1b2e; border:2px solid var(--status-color,#3b82f6); padding:2rem; display:flex; flex-direction:column; align-items:center; gap:0.8rem; text-align:center; }
+.statusIcon     { font-size:2.8rem; }
+.statusTitle    { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:0.04em; color:var(--status-color,#3b82f6); }
+.statusDesc     { font-size:0.9rem; color:#8ba0c0; line-height:1.65; max-width:500px; }
+.reviewNote     { background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.2); padding:0.9rem 1.2rem; width:100%; max-width:500px; text-align:left; }
+.reviewNoteLabel { font-size:0.68rem; letter-spacing:0.12em; text-transform:uppercase; color:#3b82f6; font-weight:700; margin-bottom:0.35rem; }
+.reviewNoteText  { font-size:0.88rem; color:#e8f0ff; line-height:1.6; font-style:italic; }
+.statusMeta     { display:flex; flex-direction:column; gap:0.3rem; width:100%; max-width:380px; border-top:1px solid rgba(255,255,255,0.07); padding-top:0.8rem; }
+.statusMeta div { display:flex; justify-content:space-between; font-size:0.8rem; color:#6b7fa3; }
+.statusMeta div span:last-child { color:#8ba0c0; font-weight:700; }
+.appId          { font-family:monospace; font-size:0.75rem; }
+.reapplyBtn     { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#ef4444; font-family:'Barlow Condensed',sans-serif; font-size:0.95rem; font-weight:700; letter-spacing:0.1em; padding:0.6rem 1.6rem; cursor:pointer; margin-top:0.5rem; }
+
+/* ── SUBMITTED SUMMARY ── */
+.submittedSummary       { background:#0d1b2e; border:1px solid rgba(255,255,255,0.08); padding:1.4rem; }
+.summaryTitle           { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#8ba0c0; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.07); }
+.summaryGrid            { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+.summarySection         { display:flex; flex-direction:column; gap:0.4rem; }
+.summarySectionTitle    { font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:#3b82f6; font-weight:700; margin-bottom:0.2rem; }
+.summaryRow             { display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; font-size:0.82rem; padding:0.25rem 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.summaryLabel           { color:#6b7fa3; flex-shrink:0; }
+.summaryValue           { color:#e8f0ff; font-weight:700; text-align:right; }
+.summaryStatement       { margin-top:1.2rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.07); }
+.summaryStatementLabel  { font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:#6b7fa3; font-weight:700; margin-bottom:0.5rem; }
+.summaryStatementText   { font-size:0.88rem; color:#8ba0c0; font-style:italic; line-height:1.7; }
+
+@media(max-width:640px){
+  .formGrid2,.summaryGrid,.rankGrid,.refFields { grid-template-columns:1fr; }
+  .stepBody { padding:1rem 1rem; }
+  .stepCardHeader { padding:1rem; }
+  .stepFooter { padding:0.9rem 1rem; }
+  .errorBanner { margin:0 1rem; }
+}

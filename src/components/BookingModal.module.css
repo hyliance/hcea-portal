@@ -1,0 +1,160 @@
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,0.82); backdrop-filter:blur(8px); z-index:900; display:flex; align-items:center; justify-content:center; padding:1rem; overflow-y:auto; }
+.modal { background:var(--navy2); border:1px solid var(--border-blue); width:100%; max-width:600px; display:flex; flex-direction:column; animation:up 0.3s ease; max-height:92vh; }
+@keyframes up { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+/* HEAD */
+.head { display:flex; justify-content:space-between; align-items:flex-start; padding:1.5rem 1.5rem 0; flex-shrink:0; }
+.title { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:0.04em; line-height:1; }
+.sub { font-size:0.82rem; color:var(--bright); margin-top:0.3rem; }
+.closeBtn { background:none; border:none; color:var(--muted); font-size:1rem; cursor:pointer; transition:color 0.2s; flex-shrink:0; padding:0.2rem; }
+.closeBtn:hover { color:var(--white); }
+
+/* STEP BAR */
+.steps { display:flex; padding:1.2rem 1.5rem; border-bottom:1px solid var(--border); flex-shrink:0; gap:0; }
+.stepItem { display:flex; align-items:center; gap:0.35rem; flex:1; min-width:0; }
+.stepItem:not(:last-child)::after { content:''; flex:1; height:1px; background:var(--border); margin:0 0.25rem; }
+.stepDot { width:20px; height:20px; border-radius:50%; background:var(--border); color:var(--muted); font-size:0.67rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s; }
+.stepLabel { font-size:0.67rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); white-space:nowrap; overflow:hidden; }
+.stepActive .stepDot { background:var(--accent); color:#fff; }
+.stepActive .stepLabel { color:var(--white); }
+.stepDone .stepDot { background:var(--green); color:#fff; }
+.stepDone .stepLabel { color:var(--green); }
+
+/* BODY */
+.body { padding:1.5rem; display:flex; flex-direction:column; gap:1.2rem; overflow-y:auto; flex:1; }
+.stepTitle { font-family:'Barlow Condensed',sans-serif; font-size:1.15rem; font-weight:700; letter-spacing:0.04em; }
+.stepSub { font-family:'Barlow',sans-serif; font-size:0.82rem; font-weight:400; color:var(--muted); letter-spacing:0; }
+.fieldLabel { font-size:0.72rem; letter-spacing:0.13em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+.opt { text-transform:none; font-weight:400; letter-spacing:0; }
+
+/* ── STEP 0: GAMES ── */
+.gameGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:0.6rem; }
+.gameCard { background:var(--card); border:1px solid var(--border); padding:0.8rem 0.5rem; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:0.3rem; transition:all 0.15s; }
+.gameCard:hover { border-color:var(--border-blue); background:rgba(29,78,216,0.07); }
+.gameCardOn { border-color:var(--bright) !important; background:rgba(29,78,216,0.18) !important; }
+.gameIcon { font-size:1.5rem; }
+.gameLabel { font-size:0.7rem; font-weight:700; text-align:center; color:var(--silver); line-height:1.25; }
+.gameCardOn .gameLabel { color:var(--white); }
+
+.focusBox { background:rgba(29,78,216,0.06); border:1px solid var(--border-blue); padding:1rem; }
+.focusGrid { display:flex; flex-wrap:wrap; gap:0.45rem; margin-top:0.6rem; }
+.focusChip { background:none; border:1px solid var(--border); color:var(--muted); font-size:0.78rem; font-weight:600; padding:0.28rem 0.75rem; cursor:pointer; transition:all 0.15s; font-family:'Barlow',sans-serif; }
+.focusChip:hover { border-color:var(--border-blue); color:var(--sky); }
+.focusChipOn { border-color:var(--bright) !important; color:var(--white) !important; background:rgba(29,78,216,0.2) !important; }
+
+/* ── STEP 1: COACHES ── */
+.noCoaches { color:var(--muted); font-size:0.95rem; padding:2rem; text-align:center; background:var(--card); border:1px solid var(--border); }
+.coachList { display:flex; flex-direction:column; gap:0.7rem; }
+.coachCard { display:flex; align-items:center; gap:1rem; padding:1rem 1.2rem; background:var(--card); border:1px solid var(--border); cursor:pointer; transition:all 0.15s; }
+.coachCard:hover { border-color:var(--border-blue); }
+.coachCardOn { border-color:var(--bright) !important; background:rgba(29,78,216,0.1) !important; }
+.coachAvatar { width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:1.3rem; color:#fff; flex-shrink:0; }
+.coachInfo { flex:1; min-width:0; }
+.coachName { font-family:'Barlow Condensed',sans-serif; font-size:1.2rem; font-weight:700; line-height:1.1; }
+.coachTitle { font-size:0.72rem; color:var(--bright); letter-spacing:0.1em; text-transform:uppercase; margin:0.1rem 0 0.35rem; }
+.coachGameDetail { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem; }
+.rankBadge { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); color:var(--gold); font-size:0.7rem; font-weight:700; padding:0.12rem 0.5rem; letter-spacing:0.06em; }
+.specText { font-size:0.8rem; color:var(--silver); }
+.coachStats { font-size:0.75rem; color:var(--muted); display:flex; gap:0.4rem; flex-wrap:wrap; }
+.coachPricing { text-align:right; flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:0.25rem; }
+.coachRate { font-family:'Bebas Neue',sans-serif; font-size:1.7rem; color:var(--bright); line-height:1; }
+.coachRate small { font-family:'Barlow',sans-serif; font-size:0.72rem; color:var(--muted); margin-left:2px; }
+.memberTag { font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--green); font-weight:700; }
+.checkCircle { width:22px; height:22px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:0.72rem; color:transparent; transition:all 0.15s; margin-top:0.25rem; }
+.checkCircleOn { background:var(--green); border-color:var(--green); color:#fff; }
+
+/* Coach bio preview */
+.coachBioPreview { background:rgba(29,78,216,0.06); border:1px solid var(--border-blue); padding:1.1rem 1.3rem; }
+.bioPreviewLabel { font-size:0.72rem; letter-spacing:0.13em; text-transform:uppercase; color:var(--bright); font-weight:700; margin-bottom:0.5rem; }
+.bioPreviewText { font-size:0.88rem; color:var(--silver); line-height:1.7; margin-bottom:0.8rem; }
+.accoladesRow { display:flex; flex-direction:column; gap:0.35rem; }
+.accoladeChip { font-size:0.82rem; color:var(--silver); display:flex; align-items:flex-start; gap:0.5rem; }
+
+/* ── STEP 2: SCHEDULE ── */
+.durationRow { display:grid; grid-template-columns:repeat(3,1fr); gap:0.6rem; }
+.durCard { background:var(--card); border:1px solid var(--border); padding:0.9rem 0.7rem; cursor:pointer; text-align:center; transition:all 0.15s; }
+.durCard:hover { border-color:var(--border-blue); }
+.durCardOn { border-color:var(--bright) !important; background:rgba(29,78,216,0.15) !important; }
+.durLabel { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; margin-bottom:0.2rem; }
+.durPrice { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:var(--bright); line-height:1; }
+.durMember { font-size:0.65rem; color:var(--green); font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-top:0.15rem; }
+
+.calWrap { background:rgba(255,255,255,0.02); border:1px solid var(--border); padding:1rem; }
+.calHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.7rem; }
+.calMonth { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; letter-spacing:0.06em; }
+.calNav { background:none; border:1px solid var(--border); color:var(--silver); width:26px; height:26px; cursor:pointer; font-size:0.9rem; transition:color 0.15s; }
+.calNav:hover { color:var(--bright); border-color:var(--border-blue); }
+.calLegend { display:flex; gap:1rem; margin-bottom:0.6rem; font-size:0.72rem; color:var(--silver); }
+.calLegend span { display:flex; align-items:center; gap:0.3rem; }
+.ldot { width:6px; height:6px; border-radius:50%; }
+.ldotAvail { background:var(--green); }
+.ldotNone { background:var(--muted); }
+.calGrid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.dayHdr { font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); text-align:center; padding:0.2rem 0; }
+.day { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.8rem; color:var(--muted); position:relative; border-radius:2px; transition:all 0.15s; }
+.dayPast { opacity:0.3; }
+.dayAvail { color:var(--white); cursor:pointer; background:rgba(16,185,129,0.09); border:1px solid rgba(16,185,129,0.22); }
+.dayAvail:hover { background:rgba(16,185,129,0.22); transform:scale(1.08); }
+.daySel { background:var(--accent) !important; color:#fff !important; border-color:var(--bright) !important; transform:scale(1.1); }
+.dayToday { font-weight:700; color:var(--white); }
+.calDot { width:3px; height:3px; border-radius:50%; background:var(--green); position:absolute; bottom:2px; }
+
+.slotSection { display:flex; flex-direction:column; gap:0.5rem; }
+.slotGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:0.4rem; }
+.slotBtn { background:var(--card); border:1px solid var(--border); color:var(--silver); font-size:0.8rem; font-weight:600; padding:0.45rem; cursor:pointer; transition:all 0.15s; font-family:'Barlow',sans-serif; }
+.slotBtn:hover { border-color:var(--border-blue); color:var(--white); }
+.slotBtnOn { border-color:var(--bright) !important; background:rgba(29,78,216,0.15) !important; color:var(--white) !important; }
+
+.textarea { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--white); padding:0.7rem 0.9rem; font-family:'Barlow',sans-serif; font-size:0.92rem; outline:none; resize:vertical; width:100%; transition:border-color 0.2s; margin-top:0.4rem; }
+.textarea:focus { border-color:var(--accent); }
+
+/* ── STEP 3: PAYMENT ── */
+.orderBox { background:rgba(8,15,28,0.8); border:1px solid var(--border-blue); padding:1rem 1.2rem; display:flex; flex-direction:column; gap:0.45rem; }
+.orderRow { display:flex; justify-content:space-between; align-items:center; font-size:0.88rem; color:var(--silver); }
+.orderLabel { color:var(--muted); font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; }
+.orderDiscount { color:var(--green); font-weight:600; }
+.orderTotal { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:var(--white); border-top:1px solid var(--border); padding-top:0.5rem; margin-top:0.2rem; }
+.cardForm { display:flex; flex-direction:column; gap:0.8rem; }
+.stripeNote { font-size:0.78rem; color:var(--muted); background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:0.55rem 0.9rem; }
+.fg { display:flex; flex-direction:column; gap:0.3rem; }
+.fg label { font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+.fg input { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--white); padding:0.65rem 0.9rem; font-family:'Barlow',sans-serif; font-size:0.95rem; outline:none; transition:border-color 0.2s; width:100%; }
+.fg input:focus { border-color:var(--accent); }
+.cardRow { display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; }
+.errorBox { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); color:var(--red); padding:0.65rem 1rem; font-size:0.85rem; }
+
+/* ── CONFIRMED ── */
+.confirmed { padding:2.5rem 1.5rem; text-align:center; display:flex; flex-direction:column; align-items:center; gap:1rem; }
+.confirmIcon { font-size:3rem; animation:pop 0.4s ease; }
+@keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+.confirmTitle { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; color:var(--green); letter-spacing:0.04em; }
+.confirmSub { color:var(--silver); font-size:0.98rem; line-height:1.65; max-width:400px; }
+.confirmDetails { background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.2); padding:1rem 1.5rem; display:flex; flex-direction:column; gap:0.5rem; font-size:0.88rem; color:var(--silver); text-align:left; width:100%; max-width:360px; }
+.confirmNote { font-size:0.82rem; color:var(--muted); font-style:italic; max-width:360px; }
+
+/* ── FOOTER ── */
+.footer { display:flex; justify-content:space-between; padding:1rem 1.5rem; border-top:1px solid var(--border); background:rgba(8,15,28,0.5); flex-shrink:0; }
+.spinner { display:inline-flex; align-items:center; gap:0.5rem; }
+.spinner::before { content:''; width:13px; height:13px; border:2px solid rgba(255,255,255,0.25); border-top-color:#fff; border-radius:50%; animation:spin 0.65s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+@media (max-width:560px) {
+  .gameGrid    { grid-template-columns:repeat(3,1fr); }
+  .durationRow { grid-template-columns:1fr; }
+  .slotGrid    { grid-template-columns:repeat(2,1fr); }
+  .stepLabel   { display:none; }
+  .cardRow     { grid-template-columns:1fr; }
+}
+
+/* Pre-selected coach banner */
+.preselectedBanner { display:flex; align-items:center; gap:1rem; background:rgba(29,78,216,0.08); border:1px solid var(--border-blue); padding:1rem 1.2rem; }
+.preselectedAvatar { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:1.1rem; color:#fff; flex-shrink:0; }
+.preselectedLabel  { font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+.preselectedName   { font-family:'Barlow Condensed',sans-serif; font-size:1.2rem; font-weight:700; line-height:1.1; }
+.preselectedTitle  { font-size:0.75rem; color:var(--bright); text-transform:uppercase; letter-spacing:0.08em; margin-top:0.1rem; }
+@media (max-width:600px) {
+  .modal { max-height:100vh; border-radius:0; }
+  .stepBody { padding:1rem; }
+  .calGrid { gap:2px; }
+  .calCell { width:34px; height:34px; font-size:0.8rem; }
+}

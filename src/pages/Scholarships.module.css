@@ -1,0 +1,33 @@
+.hceaBadge {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase; color: #3b82f6;
+  background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25);
+  padding: 0.25rem 0.85rem; margin-bottom: 1rem;
+}
+.header { margin-bottom: 1.5rem; }
+.header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 0.04em; }
+.header p { color: var(--silver); font-size: 0.92rem; margin-top: 0.2rem; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.5rem; }
+.card { background: var(--card); border: 1px solid var(--border); padding: 2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.gold { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.03); }
+.tag { display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(245,158,11,0.3); padding: 0.18rem 0.65rem; align-self: flex-start; }
+.name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 700; line-height: 1.2; }
+.amount { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; line-height: 1; color: var(--bright); }
+.gold .amount { color: var(--gold); }
+.amountNote { font-size: 0.8rem; color: var(--muted); }
+.desc { color: var(--silver); font-size: 0.88rem; line-height: 1.65; margin-top: 0.4rem; }
+.reqs { margin-top: 0.8rem; }
+.reqsTitle { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 0.5rem; }
+.reqItem { font-size: 0.85rem; color: var(--silver); margin-bottom: 0.35rem; }
+.reqItem::first-letter { color: var(--bright); }
+.deadline { font-size: 0.78rem; color: var(--muted); font-weight: 600; margin-top: 0.4rem; }
+.statusBox { background: rgba(29,78,216,0.06); border: 1px solid var(--border-blue); padding: 1.2rem 1.5rem; }
+.statusLabel { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bright); font-weight: 700; margin-bottom: 0.3rem; }
+.statusText { color: var(--silver); font-size: 0.9rem; line-height: 1.6; }
+.statusText a { color: var(--sky); }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+@media (max-width:600px) {
+  .card { padding:1.2rem; }
+  .tag { font-size:0.65rem; }
+}

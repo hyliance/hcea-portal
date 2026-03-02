@@ -1,0 +1,56 @@
+.wrap { display:flex; flex-direction:column; gap:1.8rem; }
+
+/* Hero */
+.hero { display:flex; gap:1.5rem; align-items:flex-start; background:var(--navy2); border:1px solid var(--border-blue); padding:1.5rem 2rem; }
+.heroIcon { font-size:2.5rem; flex-shrink:0; margin-top:0.2rem; }
+.heroInfo { flex:1; min-width:0; }
+.orgName  { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:0.04em; line-height:1; }
+.orgMeta  { display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; color:var(--silver); margin:0.4rem 0 0.7rem; flex-wrap:wrap; }
+.activeTag { color:var(--green); font-weight:700; }
+.orgDesc  { font-size:0.9rem; color:var(--silver); line-height:1.65; }
+
+/* Stats */
+.statsRow { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
+.statCard { background:var(--card); border:1px solid var(--border); padding:1.2rem 1rem; cursor:pointer; transition:all 0.15s; text-align:center; display:flex; flex-direction:column; align-items:center; gap:0.4rem; }
+.statCard:hover { border-color:var(--border-blue); background:rgba(29,78,216,0.06); }
+.statIcon { font-size:1.5rem; }
+.statVal  { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--bright); line-height:1; }
+.statLabel { font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+
+/* Sections */
+.section { display:flex; flex-direction:column; gap:0.9rem; }
+.sectionTitle { font-family:'Barlow Condensed',sans-serif; font-size:0.9rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--silver); display:flex; justify-content:space-between; align-items:center; }
+.viewAll { background:none; border:none; color:var(--bright); font-size:0.8rem; cursor:pointer; font-family:'Barlow',sans-serif; transition:color 0.15s; }
+.viewAll:hover { color:var(--sky); }
+
+/* Action grid */
+.actionGrid { display:grid; grid-template-columns:repeat(2,1fr); gap:0.8rem; }
+.actionCard { background:var(--card); border:1px solid var(--border); padding:1rem 1.2rem; cursor:pointer; transition:all 0.15s; text-align:left; display:flex; align-items:center; gap:1rem; }
+.actionCard:hover { border-color:var(--border-blue); background:rgba(29,78,216,0.06); }
+.actionIcon { font-size:1.6rem; flex-shrink:0; }
+.actionLabel { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; }
+.actionSub { font-size:0.78rem; color:var(--muted); margin-top:0.15rem; }
+
+/* Player preview */
+.playerPreviewList { display:flex; flex-direction:column; gap:0.5rem; }
+.playerPreviewRow  { display:flex; align-items:center; gap:1rem; padding:0.8rem 1rem; background:var(--card); border:1px solid var(--border); transition:border-color 0.15s; }
+.playerPreviewRow:hover { border-color:var(--border-blue); }
+.playerAvatar { width:36px; height:36px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:0.9rem; color:#fff; flex-shrink:0; }
+.playerPreviewInfo { flex:1; min-width:0; }
+.playerPreviewName { font-weight:700; font-size:0.92rem; }
+.playerPreviewMeta { font-size:0.75rem; color:var(--muted); margin-top:0.1rem; }
+.playerPreviewTags { display:flex; gap:0.4rem; flex-wrap:wrap; }
+.loginTag { font-size:0.68rem; font-weight:700; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); color:var(--gold); padding:0.1rem 0.45rem; letter-spacing:0.06em; }
+.teamTag  { font-size:0.68rem; font-weight:700; background:rgba(29,78,216,0.1); border:1px solid var(--border-blue); color:var(--sky); padding:0.1rem 0.45rem; letter-spacing:0.06em; }
+
+@media (max-width:700px) {
+  .statsRow   { grid-template-columns:repeat(2,1fr); }
+  .actionGrid { grid-template-columns:1fr; }
+  .hero       { flex-direction:column; }
+}
+@media (max-width:480px) {
+  .hero { flex-direction:column; padding:1rem; gap:0.8rem; }
+  .statsRow { grid-template-columns:repeat(2,1fr); gap:0.6rem; }
+  .actionGrid { grid-template-columns:1fr; }
+  .orgName { font-size:1.5rem; }
+}

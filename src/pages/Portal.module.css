@@ -1,0 +1,58 @@
+.portal { display:flex; min-height:100vh; }
+
+.main { margin-left:240px; flex:1; min-height:100vh; background:var(--navy); min-width:0; overflow-x:hidden; }
+@media (max-width:900px) { .main { margin-left:0; } }
+
+/* Top bar */
+.topbar {
+  background:rgba(8,15,28,0.95); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border-blue);
+  padding:0.85rem 1.5rem 0.85rem 2rem;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:50;
+}
+@media (max-width:900px) { .topbar { padding:0.85rem 1rem; } }
+
+.topbarLeft { display:flex; align-items:center; gap:0.9rem; }
+.topbarTitle { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.05em; }
+
+/* Hamburger — only visible on mobile */
+.hamburger {
+  display: none;
+  flex-direction: column; gap: 5px;
+  background: none; border: none; cursor: pointer; padding: 4px;
+  flex-shrink: 0;
+}
+.hamburger span { display:block; width:22px; height:2px; background:var(--silver); border-radius:1px; transition:all 0.2s; }
+@media (max-width:900px) { .hamburger { display:flex; } }
+
+.homeBtn { background:none; border:none; font-size:1.1rem; cursor:pointer; opacity:0.5; transition:opacity 0.2s,transform 0.2s; padding:0.2rem; line-height:1; }
+.homeBtn:hover { opacity:1; transform:scale(1.15); }
+@media (max-width:900px) { .homeBtn { display:none; } }
+
+.topbarRight { display:flex; align-items:center; gap:0.8rem; }
+.rolePill { font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; border:1px solid; padding:0.12rem 0.55rem; }
+.topbarName { font-size:0.85rem; color:var(--silver); }
+@media (max-width:600px) { .topbarName { display:none; } .rolePill { display:none; } }
+
+.topbarAvatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:0.85rem; color:#fff; flex-shrink:0; }
+
+/* Main content area */
+.content { padding:2rem 2.5rem; overflow-x:hidden; min-width:0; width:100%; box-sizing:border-box; }
+@media (max-width:900px) { .content { padding:1.2rem 1rem; } }
+@media (max-width:480px) { .content { padding:1rem 0.75rem; } }
+
+/* ── HCG/HCEA TOPBAR BRANDING ── */
+.topbarBrand { display: flex; align-items: center; gap: 0.5rem; }
+.topbarBrandHcg {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.85rem; letter-spacing: 0.14em;
+  color: #3b82f6; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25);
+  padding: 0.1rem 0.5rem;
+}
+.topbarBrandHcea {
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.85rem; letter-spacing: 0.14em;
+  color: #10b981; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);
+  padding: 0.1rem 0.5rem;
+}
+.topbarSep { color: rgba(255,255,255,0.2); font-size: 0.9rem; }
+.topbarHcea { border-bottom-color: rgba(16,185,129,0.3) !important; background: rgba(16,185,129,0.03) !important; }

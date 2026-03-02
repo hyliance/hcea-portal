@@ -1,0 +1,36 @@
+.dstat {
+  background: var(--card); border: 1px solid var(--border); padding: 1.4rem 1.6rem; position: relative; overflow: hidden;
+}
+.dstat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--bright)); }
+.dstatLabel { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+.dstatNum { font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem; line-height: 1; color: var(--white); }
+.dstatSub { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; }
+.dstatTrend { font-size: 0.75rem; font-weight: 600; margin-top: 0.3rem; }
+.trendUp { color: var(--green); }
+.trendGold { color: var(--gold); }
+
+.badge { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.65rem; }
+.badge_blue { background: rgba(29,78,216,0.15); color: var(--bright); border: 1px solid var(--border-blue); }
+.badge_green { background: rgba(16,185,129,0.1); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.badge_gold { background: rgba(245,158,11,0.1); color: var(--gold); border: 1px solid rgba(245,158,11,0.25); }
+.badge_red { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.badge_member { background: rgba(59,130,246,0.12); color: var(--bright); border: 1px solid var(--border-blue); }
+
+.sectionHeader { margin-bottom: 3rem; }
+.eyebrow { font-family: 'Barlow Condensed', sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--bright); margin-bottom: 0.6rem; }
+.h2 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.4rem, 5vw, 3.8rem); letter-spacing: 0.04em; line-height: 1; }
+.h2 em { color: var(--bright); font-style: normal; }
+.lead { color: var(--silver); font-size: 1.05rem; line-height: 1.75; max-width: 540px; margin-top: 0.8rem; }
+
+.spinnerWrap { display: flex; align-items: center; justify-content: center; padding: 3rem; }
+.spinner { width: 32px; height: 32px; border: 2px solid var(--border-blue); border-top-color: var(--bright); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.card { background: var(--card); border: 1px solid var(--border); padding: 2rem; transition: border-color 0.2s, transform 0.2s; }
+.card:hover { border-color: var(--border-blue); }
+.cardFeatured { border-color: var(--border-blue); background: rgba(29,78,216,0.05); }
+.cardGold { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.03); }
+
+.clink { display: flex; align-items: center; gap: 1rem; color: var(--silver); font-size: 0.97rem; margin-bottom: 0.9rem; transition: color 0.2s; text-decoration: none; }
+.clink:hover { color: var(--sky); }
+.clinkIcon { width: 38px; height: 38px; background: rgba(29,78,216,0.12); border: 1px solid var(--border-blue); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.95rem; }

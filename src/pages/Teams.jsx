@@ -1,0 +1,323 @@
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { teamsApi, GAME_TEAM_SIZES } from '../api';
+import { Spinner, Badge } from '../components/UI';
+import RoleGate from '../components/RoleGate';
+import styles from './Teams.module.css';
+
+const GAMES = ['League of Legends','Valorant','Rocket League','Fortnite','Smash Bros.','Marvel Rivals'];
+
+function MemberAvatar({ member, size = 36 }) {
+  return (
+    <div className={styles.memberAvatar} style={{ width: size, height: size, background: member.avatarColor, fontSize: size * 0.38 }}>
+      {member.initials}
+    </div>
+  );
+}
+
+function TeamCard({ team, myTeams, userId, onInvite, onLeave, onDelete, onViewRoster }) {
+  const isMine    = team.members.some(m => m.id === userId);
+  const isCaptain = team.captainId === userId;
+  const full      = team.members.length >= team.maxSize;
+
+  return (
+    <div className={`${styles.teamCard} ${isMine ? styles.teamCardMine : ''}`}>
+      {isMine && <div className={styles.myTeamBadge}>Your Team</div>}
+      <div className={styles.teamHead}>
+        <div>
+          <div className={styles.teamName}>{team.name}</div>
+          <div className={styles.teamGame}>{team.game}</div>
+        </div>
+        <div className={styles.teamRecord}>
+          <span className={styles.wins}>{team.wins}W</span>
+          <span className={styles.sep}>/</span>
+          <span className={styles.losses}>{team.losses}L</span>
+        </div>
+      </div>
+
+      <div className={styles.rosterRow}>
+        <div className={styles.avatarStack}>
+          {team.members.slice(0, 5).map(m => <MemberAvatar key={m.id} member={m} />)}
+          {team.members.length > 5 && <div className={styles.moreMembers}>+{team.members.length - 5}</div>}
+        </div>
+        <div className={styles.rosterCount}>
+          {team.members.length}/{team.maxSize} players
+        </div>
+      </div>
+
+      <div className={styles.teamMeta}>
+        <span className={`${styles.sizeTag} ${full ? styles.sizeTagFull : styles.sizeTagOpen}`}>
+          {full ? '🔒 Full' : `${team.maxSize - team.members.length} spot${team.maxSize - team.members.length !== 1 ? 's' : ''} open`}
+        </span>
+        <span className={styles.captainTag}>Captain: {team.captainName}</span>
+      </div>
+
+      <div className={styles.teamActions}>
+        <button className="btn btn-ghost" style={{ flex:1, fontSize:'0.8rem', clipPath:'none', padding:'0.5rem' }} onClick={() => onViewRoster(team)}>
+          View Roster
+        </button>
+        <RoleGate allow="player">
+          {isMine ? (
+            isCaptain ? (
+              <>
+                <button className="btn btn-ghost" style={{ flex:1, fontSize:'0.8rem', clipPath:'none', padding:'0.5rem' }} onClick={() => onInvite(team)}>
+                  + Invite
+                </button>
+                <button className={styles.dangerBtn} onClick={() => onDelete(team)}>Delete</button>
+              </>
+            ) : (
+              <button className={styles.dangerBtn} onClick={() => onLeave(team)}>Leave</button>
+            )
+          ) : !full ? (
+            <div className={styles.joinInfo}>Invite-only</div>
+          ) : null}
+        </RoleGate>
+      </div>
+    </div>
+  );
+}
+
+function RosterModal({ team, userId, onClose, onKick }) {
+  return (
+    <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className={styles.modal}>
+        <div className={styles.modalHead}>
+          <div>
+            <div className={styles.modalTitle}>{team.name}</div>
+            <div className={styles.modalSub}>{team.game} · {team.members.length}/{team.maxSize} players</div>
+          </div>
+          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+        </div>
+
+        <div className={styles.rosterList}>
+          {team.members.map(m => (
+            <div key={m.id} className={styles.rosterMember}>
+              <MemberAvatar member={m} size={42} />
+              <div className={styles.rosterInfo}>
+                <div className={styles.rosterName}>{m.name}</div>
+                <div className={styles.rosterRole}>{m.role}</div>
+              </div>
+              {m.id === team.captainId && <span className={styles.captainBadge}>👑 Captain</span>}
+              {team.captainId === userId && m.id !== userId && (
+                <button className={styles.kickBtn} onClick={() => onKick(team.id, m.id)}>Remove</button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {(team.pendingInvites || []).length > 0 && (
+          <div className={styles.pendingSection}>
+            <div className={styles.pendingTitle}>Pending Invites</div>
+            {team.pendingInvites.map((inv, i) => (
+              <div key={i} className={styles.pendingItem}>📧 {inv.email} <span>Sent {new Date(inv.sentAt).toLocaleDateString()}</span></div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CreateTeamModal({ user, onClose, onCreate }) {
+  const [name, setName]   = useState('');
+  const [game, setGame]   = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleCreate = async () => {
+    if (!name.trim()) return setError('Team name is required.');
+    if (!game) return setError('Please select a game.');
+    setLoading(true);
+    const res = await teamsApi.create({
+      name: name.trim(), game,
+      captainId: user.id, captainName: `${user.firstName} ${user.lastName}`,
+      captainInitials: user.initials, captainColor: user.avatarColor,
+    });
+    setLoading(false);
+    if (res.success) onCreate(res.team);
+    else setError(res.error || 'Failed to create team.');
+  };
+
+  return (
+    <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className={styles.modal} style={{ maxWidth: 460 }}>
+        <div className={styles.modalHead}>
+          <div className={styles.modalTitle}>Create a Team</div>
+          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+        </div>
+        <div className={styles.createBody}>
+          <div className={styles.fg}>
+            <label>Team Name</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Rapid City Reapers" />
+          </div>
+          <div className={styles.fg}>
+            <label>Game</label>
+            <select value={game} onChange={e => setGame(e.target.value)}>
+              <option value="">Select a game...</option>
+              {GAMES.map(g => (
+                <option key={g} value={g}>{g} ({GAME_TEAM_SIZES[g]?.label})</option>
+              ))}
+            </select>
+          </div>
+          {game && (
+            <div className={styles.sizeNote}>
+              Team size for {game}: <strong>{GAME_TEAM_SIZES[game]?.label}</strong>
+            </div>
+          )}
+          {error && <div className={styles.errorBox}>{error}</div>}
+          <button className="btn btn-primary" style={{ clipPath:'none', padding:'0.75rem', width:'100%' }} onClick={handleCreate} disabled={loading}>
+            {loading ? 'Creating...' : 'Create Team →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InviteModal({ team, onClose, onInvite }) {
+  const [email, setEmail]   = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent]     = useState(false);
+
+  const handleInvite = async () => {
+    if (!email.trim()) return;
+    setLoading(true);
+    await teamsApi.invitePlayer(team.id, email.trim());
+    setLoading(false);
+    setSent(true);
+    setEmail('');
+    if (onInvite) onInvite();
+  };
+
+  return (
+    <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className={styles.modal} style={{ maxWidth: 420 }}>
+        <div className={styles.modalHead}>
+          <div>
+            <div className={styles.modalTitle}>Invite a Player</div>
+            <div className={styles.modalSub}>{team.name} · {team.members.length}/{team.maxSize} players</div>
+          </div>
+          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+        </div>
+        <div className={styles.createBody}>
+          {sent && <div className={styles.successBox}>✓ Invite sent! They'll receive an email to join.</div>}
+          <div className={styles.fg}>
+            <label>Player Email</label>
+            <input value={email} onChange={e => setEmail(e.target.value)} placeholder="player@email.com" type="email" />
+          </div>
+          <button className="btn btn-primary" style={{ clipPath:'none', padding:'0.75rem', width:'100%' }} onClick={handleInvite} disabled={loading || team.members.length >= team.maxSize}>
+            {team.members.length >= team.maxSize ? 'Team is Full' : loading ? 'Sending...' : 'Send Invite →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Teams() {
+  const { user, isAdmin } = useAuth();
+  const [teams, setTeams]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [filterGame, setFilterGame] = useState('all');
+  const [showCreate, setShowCreate] = useState(false);
+  const [inviteTeam, setInviteTeam] = useState(null);
+  const [rosterTeam, setRosterTeam] = useState(null);
+
+  const load = () => teamsApi.getAll().then(d => { setTeams(d); setLoading(false); });
+  useEffect(() => { load(); }, []);
+
+  const filtered = filterGame === 'all' ? teams : teams.filter(t => t.game === filterGame);
+
+  const myTeams = teams.filter(t => t.members.some(m => m.id === user?.id));
+
+  const handleDelete = async (team) => {
+    if (!window.confirm(`Delete "${team.name}"? This cannot be undone.`)) return;
+    await teamsApi.delete(team.id);
+    setTeams(prev => prev.filter(t => t.id !== team.id));
+  };
+
+  const handleLeave = async (team) => {
+    if (!window.confirm(`Leave "${team.name}"?`)) return;
+    await teamsApi.removeMember(team.id, user.id);
+    load();
+  };
+
+  const handleKick = async (teamId, memberId) => {
+    if (!window.confirm('Remove this player from the team?')) return;
+    await teamsApi.removeMember(teamId, memberId);
+    load();
+    setRosterTeam(prev => prev ? { ...prev, members: prev.members.filter(m => m.id !== memberId) } : null);
+  };
+
+  return (
+    <div className={styles.wrap}>
+      {/* HEADER */}
+      <div className={styles.header}>
+        <div>
+          <h2>Teams</h2>
+          <p>Create a team, invite your teammates, and register for tournaments together.</p>
+        </div>
+        <RoleGate allow={['player','admin']}>
+          <button className="btn btn-primary" onClick={() => setShowCreate(true)}>+ Create Team</button>
+        </RoleGate>
+      </div>
+
+      {/* MY TEAMS */}
+      {myTeams.length > 0 && (
+        <div className={styles.myTeamsSection}>
+          <div className={styles.sectionTitle}>Your Teams</div>
+          <div className={styles.grid}>
+            {myTeams.map(t => (
+              <TeamCard key={t.id} team={t} myTeams={myTeams} userId={user?.id}
+                onInvite={setInviteTeam} onLeave={handleLeave} onDelete={handleDelete}
+                onViewRoster={setRosterTeam}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* GAME FILTER */}
+      <div className={styles.filters}>
+        <button className={`${styles.filterBtn} ${filterGame==='all' ? styles.filterOn : ''}`} onClick={() => setFilterGame('all')}>All Games</button>
+        {GAMES.map(g => (
+          <button key={g} className={`${styles.filterBtn} ${filterGame===g ? styles.filterOn : ''}`} onClick={() => setFilterGame(g)}>{g}</button>
+        ))}
+      </div>
+
+      {/* ALL TEAMS */}
+      <div className={styles.sectionTitle}>
+        All Teams {filterGame !== 'all' ? `— ${filterGame}` : ''}
+        <span className={styles.count}>{filtered.length}</span>
+      </div>
+
+      {loading ? <Spinner /> : filtered.length === 0 ? (
+        <div className={styles.empty}>
+          <div className={styles.emptyIcon}>🎮</div>
+          <div>No teams yet for {filterGame === 'all' ? 'any game' : filterGame}.</div>
+          <div style={{ fontSize:'0.85rem', color:'var(--muted)', marginTop:'0.3rem' }}>Be the first — create a team!</div>
+        </div>
+      ) : (
+        <div className={styles.grid}>
+          {filtered.map(t => (
+            <TeamCard key={t.id} team={t} myTeams={myTeams} userId={user?.id}
+              onInvite={setInviteTeam} onLeave={handleLeave} onDelete={handleDelete}
+              onViewRoster={setRosterTeam}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* MODALS */}
+      {showCreate && (
+        <CreateTeamModal user={user} onClose={() => setShowCreate(false)} onCreate={team => { setTeams(prev => [team, ...prev]); setShowCreate(false); }} />
+      )}
+      {inviteTeam && (
+        <InviteModal team={inviteTeam} onClose={() => setInviteTeam(null)} onInvite={load} />
+      )}
+      {rosterTeam && (
+        <RosterModal team={rosterTeam} userId={user?.id} onClose={() => setRosterTeam(null)} onKick={handleKick} />
+      )}
+    </div>
+  );
+}

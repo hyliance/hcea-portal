@@ -1,0 +1,64 @@
+.wrap { display:flex; flex-direction:column; gap:1.2rem; }
+.header { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; }
+.title  { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:0.04em; }
+.sub    { font-size:0.82rem; color:var(--muted); margin-top:0.2rem; }
+.empty  { background:var(--card); border:1px dashed var(--border); padding:2rem; text-align:center; color:var(--muted); font-size:0.9rem; }
+
+.orgList { display:flex; flex-direction:column; gap:0.8rem; }
+.orgCard { background:var(--card); border:1px solid var(--border); overflow:hidden; transition:border-color 0.2s; }
+.orgCard:hover { border-color:var(--border-blue); }
+.orgHead { display:flex; justify-content:space-between; align-items:flex-start; padding:1.2rem 1.4rem; gap:1rem; flex-wrap:wrap; }
+.orgName { font-family:'Barlow Condensed',sans-serif; font-size:1.25rem; font-weight:700; }
+.orgMeta { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:var(--silver); margin:0.3rem 0; flex-wrap:wrap; }
+.orgType { background:rgba(124,58,237,0.1); border:1px solid rgba(124,58,237,0.25); color:#a78bfa; font-size:0.7rem; font-weight:700; padding:0.1rem 0.5rem; letter-spacing:0.06em; }
+.orgDesc { font-size:0.85rem; color:var(--muted); line-height:1.6; margin-top:0.3rem; }
+.orgActions { display:flex; gap:0.5rem; flex-shrink:0; }
+.editBtn    { background:none; border:1px solid var(--border); color:var(--silver); font-size:0.8rem; padding:0.3rem 0.8rem; cursor:pointer; font-family:'Barlow',sans-serif; transition:all 0.15s; }
+.editBtn:hover { border-color:var(--border-blue); color:var(--white); }
+.deleteBtn  { background:none; border:1px solid rgba(239,68,68,0.25); color:var(--red); font-size:0.8rem; padding:0.3rem 0.8rem; cursor:pointer; font-family:'Barlow',sans-serif; }
+
+.managerRow { display:flex; align-items:flex-start; gap:0.9rem; padding:0.9rem 1.4rem; border-top:1px solid var(--border); background:rgba(255,255,255,0.02); flex-wrap:wrap; }
+.managerIcon { font-size:1.3rem; flex-shrink:0; }
+.managerLabel { font-size:0.65rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+.managerName  { font-weight:700; font-size:0.92rem; margin-top:0.1rem; }
+.managerEmail { font-size:0.78rem; color:var(--muted); }
+.loginHint    { margin-left:auto; display:flex; align-items:center; gap:0.4rem; font-size:0.78rem; color:var(--muted); background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); padding:0.4rem 0.8rem; }
+.loginHint code { font-family:monospace; color:var(--gold); }
+.loginHintIcon { }
+
+.orgFooter { padding:0.5rem 1.4rem; border-top:1px solid var(--border); }
+.createdAt  { font-size:0.72rem; color:var(--muted); }
+
+/* Modal */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,0.82); backdrop-filter:blur(8px); z-index:950; display:flex; align-items:center; justify-content:center; padding:1rem; overflow-y:auto; }
+.modal   { background:var(--navy2); border:1px solid var(--border-blue); width:100%; max-width:600px; max-height:92vh; display:flex; flex-direction:column; animation:up 0.25s ease; }
+@keyframes up { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+.modalHead { display:flex; justify-content:space-between; align-items:flex-start; padding:1.3rem 1.5rem; border-bottom:1px solid var(--border); flex-shrink:0; }
+.modalTitle { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:0.04em; }
+.modalSub   { font-size:0.78rem; color:var(--muted); margin-top:0.2rem; line-height:1.5; }
+.closeBtn   { background:none; border:none; color:var(--muted); font-size:1rem; cursor:pointer; }
+.modalBody  { flex:1; overflow-y:auto; padding:1.3rem 1.5rem; display:flex; flex-direction:column; gap:1rem; }
+.modalFooter { display:flex; justify-content:space-between; padding:1rem 1.5rem; border-top:1px solid var(--border); flex-shrink:0; }
+.formGrid   { display:grid; grid-template-columns:1fr 1fr; gap:0.9rem; }
+.fgFull     { grid-column:1/-1; }
+.fg         { display:flex; flex-direction:column; gap:0.35rem; }
+.fg label   { font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+.fg input,.fg select,.fg textarea { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--white); padding:0.65rem 0.85rem; font-family:'Barlow',sans-serif; font-size:0.9rem; outline:none; transition:border-color 0.2s; width:100%; resize:vertical; }
+.fg input:focus,.fg select:focus,.fg textarea:focus { border-color:var(--accent); }
+.fg select option { background:var(--navy2); }
+.sectionLabel { font-size:0.72rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+.sectionHint  { font-family:'Barlow',sans-serif; text-transform:none; font-weight:400; letter-spacing:0; font-size:0.72rem; color:var(--muted); }
+.sectionHint code { font-family:monospace; color:var(--sky); }
+.managerNote  { background:rgba(29,78,216,0.08); border:1px solid var(--border-blue); color:var(--sky); padding:0.7rem 0.9rem; font-size:0.82rem; line-height:1.6; }
+.errorBox     { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); color:var(--red); padding:0.65rem 1rem; font-size:0.85rem; }
+
+@media (max-width:560px) { .formGrid { grid-template-columns:1fr; } }
+@media (max-width:600px) {
+  .header { flex-direction:column; align-items:flex-start; }
+  .orgHead { flex-direction:column; }
+  .orgActions { flex-direction:row; }
+  .managerRow { flex-wrap:wrap; }
+  .loginHint { width:100%; margin-left:0; }
+  .formGrid { grid-template-columns:1fr; }
+  .modal { max-width:100%; max-height:100vh; }
+}

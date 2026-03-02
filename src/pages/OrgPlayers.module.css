@@ -1,0 +1,107 @@
+.wrap { display:flex; flex-direction:column; gap:1.5rem; }
+.header { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem; }
+.header h2 { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:0.04em; }
+.header p  { color:var(--silver); font-size:0.88rem; margin-top:0.2rem; }
+
+/* Filter bar */
+.filterBar   { display:flex; gap:0.8rem; flex-wrap:wrap; }
+.searchInput { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--white); padding:0.6rem 1rem; font-family:'Barlow',sans-serif; font-size:0.9rem; outline:none; flex:1; min-width:200px; transition:border-color 0.2s; }
+.searchInput:focus { border-color:var(--accent); }
+.gameFilter  { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--white); padding:0.6rem 0.9rem; font-family:'Barlow',sans-serif; font-size:0.88rem; outline:none; cursor:pointer; }
+.gameFilter option { background:var(--navy2); }
+
+/* Player cards */
+.playerList { display:flex; flex-direction:column; gap:0.6rem; }
+.playerCard { background:var(--card); border:1px solid var(--border); overflow:hidden; transition:border-color 0.2s; }
+.playerCard:hover { border-color:var(--border-blue); }
+.playerCardOpen { border-color:var(--border-blue); }
+.cardMain { display:flex; align-items:center; gap:1rem; padding:1rem 1.2rem; cursor:pointer; flex-wrap:wrap; }
+.cardAvatar { width:42px; height:42px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:1rem; color:#fff; flex-shrink:0; }
+.cardInfo { min-width:130px; }
+.cardName { font-family:'Barlow Condensed',sans-serif; font-size:1.1rem; font-weight:700; }
+.cardTag  { font-size:0.72rem; color:var(--bright); margin:0.1rem 0; }
+.cardMeta { font-size:0.75rem; color:var(--muted); }
+.cardGames { display:flex; flex-wrap:wrap; gap:0.3rem; flex:1; }
+.gameTag   { font-size:0.7rem; font-weight:700; background:rgba(124,58,237,0.1); border:1px solid rgba(124,58,237,0.25); color:#a78bfa; padding:0.1rem 0.5rem; letter-spacing:0.05em; }
+.gameTagMore { font-size:0.7rem; color:var(--muted); padding:0.1rem 0.4rem; }
+.cardBadges { display:flex; gap:0.4rem; flex-wrap:wrap; }
+.expandArrow { color:var(--muted); font-size:0.7rem; flex-shrink:0; margin-left:auto; }
+
+/* Expanded detail */
+.cardExpanded { padding:1rem 1.2rem; border-top:1px solid var(--border); background:rgba(255,255,255,0.02); }
+.expandGrid   { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:1rem; margin-bottom:1rem; }
+.expandFull   { grid-column:1/-1; }
+.expandBlock  { display:flex; flex-direction:column; gap:0.2rem; font-size:0.88rem; color:var(--silver); }
+.expandLabel  { font-size:0.68rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:0.2rem; }
+.expandSub    { font-size:0.78rem; color:var(--muted); }
+.notesText    { font-style:italic; color:var(--silver); line-height:1.6; }
+.expandActions { display:flex; gap:0.6rem; }
+.deleteBtn    { background:none; border:1px solid rgba(239,68,68,0.25); color:var(--red); font-size:0.8rem; font-weight:700; padding:0.4rem 1rem; cursor:pointer; font-family:'Barlow',sans-serif; transition:background 0.15s; }
+.deleteBtn:hover { background:rgba(239,68,68,0.08); }
+
+/* Empty */
+.empty      { background:var(--card); border:1px dashed var(--border); padding:3rem; text-align:center; }
+.emptyIcon  { font-size:2.5rem; margin-bottom:0.6rem; }
+.emptyTitle { font-family:'Barlow Condensed',sans-serif; font-size:1.3rem; font-weight:700; color:var(--white); }
+
+/* MODAL */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,0.82); backdrop-filter:blur(8px); z-index:900; display:flex; align-items:center; justify-content:center; padding:1rem; overflow-y:auto; }
+.modal   { background:var(--navy2); border:1px solid var(--border-blue); width:100%; max-width:580px; max-height:92vh; display:flex; flex-direction:column; animation:up 0.25s ease; }
+@keyframes up { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.modalHead { display:flex; justify-content:space-between; align-items:flex-start; padding:1.3rem 1.5rem; border-bottom:1px solid var(--border); flex-shrink:0; }
+.modalTitle { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:0.04em; }
+.modalSub   { font-size:0.78rem; color:var(--muted); margin-top:0.2rem; }
+.closeBtn   { background:none; border:none; color:var(--muted); font-size:1rem; cursor:pointer; padding:0.2rem; }
+.closeBtn:hover { color:var(--white); }
+.modalTabs  { display:flex; border-bottom:1px solid var(--border); flex-shrink:0; overflow-x:auto; }
+.mtab       { flex:1; background:none; border:none; border-bottom:2px solid transparent; color:var(--muted); padding:0.7rem 0.5rem; font-family:'Barlow Condensed',sans-serif; font-size:0.82rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.mtab:hover { color:var(--silver); }
+.mtabOn     { color:var(--white); border-bottom-color:var(--bright); }
+.modalBody  { flex:1; overflow-y:auto; padding:1.3rem 1.5rem; }
+.modalFooter { display:flex; justify-content:space-between; padding:1rem 1.5rem; border-top:1px solid var(--border); flex-shrink:0; }
+
+/* Form elements */
+.formGrid   { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.formSection { display:flex; flex-direction:column; gap:1rem; }
+.fgFull     { grid-column:1/-1; }
+.fg         { display:flex; flex-direction:column; gap:0.35rem; }
+.fg label   { font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+.fg input, .fg select, .fg textarea { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--white); padding:0.65rem 0.85rem; font-family:'Barlow',sans-serif; font-size:0.92rem; outline:none; transition:border-color 0.2s; width:100%; resize:vertical; }
+.fg input:focus, .fg select:focus, .fg textarea:focus { border-color:var(--accent); }
+.fg select option { background:var(--navy2); }
+.opt        { text-transform:none; font-weight:400; letter-spacing:0; font-size:0.65rem; }
+.fieldHint  { font-size:0.72rem; color:var(--muted); font-style:italic; }
+.errorBox   { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); color:var(--red); padding:0.65rem 1rem; font-size:0.85rem; margin-bottom:0.5rem; }
+.sectionNote { font-size:0.85rem; color:var(--silver); line-height:1.6; }
+.privacyNote { background:rgba(29,78,216,0.08); border:1px solid var(--border-blue); color:var(--sky); padding:0.7rem 1rem; font-size:0.82rem; }
+
+/* Game picker */
+.gamePickerGrid { display:flex; flex-wrap:wrap; gap:0.45rem; }
+.gamePick    { background:var(--card); border:1px solid var(--border); color:var(--muted); font-size:0.8rem; font-weight:600; padding:0.4rem 0.8rem; cursor:pointer; transition:all 0.15s; font-family:'Barlow',sans-serif; }
+.gamePick:hover { border-color:var(--border-blue); color:var(--white); }
+.gamePickOn  { border-color:var(--bright) !important; background:rgba(124,58,237,0.12) !important; color:#a78bfa !important; }
+.selectedGames { font-size:0.8rem; color:var(--silver); font-style:italic; }
+
+/* Login toggle */
+.loginToggleCard { display:flex; justify-content:space-between; align-items:center; gap:1rem; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:1rem 1.2rem; }
+.loginToggleLabel { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; margin-bottom:0.3rem; }
+.loginToggleSub   { font-size:0.78rem; color:var(--silver); line-height:1.6; }
+.toggleSwitch { width:46px; height:26px; border-radius:13px; background:var(--border); border:none; cursor:pointer; position:relative; flex-shrink:0; transition:background 0.2s; }
+.toggleOn     { background:var(--accent); }
+.toggleThumb  { position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:transform 0.2s; }
+.toggleOn .toggleThumb { transform:translateX(20px); }
+.loginFields  { display:flex; flex-direction:column; gap:1rem; }
+.loginPreview { background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:0.8rem 1rem; display:flex; flex-direction:column; gap:0.3rem; }
+.loginPreviewLabel { font-size:0.68rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:0.2rem; }
+.loginPreview code { font-family:monospace; font-size:0.85rem; color:var(--sky); }
+.noLoginNote  { background:rgba(255,255,255,0.03); border:1px dashed var(--border); color:var(--muted); padding:1rem 1.2rem; font-size:0.88rem; line-height:1.6; }
+
+@media (max-width:560px) { .formGrid { grid-template-columns:1fr; } }
+@media (max-width:480px) {
+  .cardMain { flex-wrap:wrap; gap:0.6rem; }
+  .cardGames { width:100%; }
+  .modal { max-width:100%; max-height:100vh; }
+  .formGrid { grid-template-columns:1fr; }
+  .gamePickerGrid { gap:0.35rem; }
+  .gamePick { font-size:0.75rem; padding:0.35rem 0.65rem; }
+}

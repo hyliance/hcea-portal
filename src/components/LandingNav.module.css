@@ -1,0 +1,96 @@
+.nav {
+  position: fixed; top: 0; width: 100%; z-index: 500;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 3rem;
+  background: rgba(8,15,28,0.88);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border-blue);
+}
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.55rem; letter-spacing: 0.08em; white-space: nowrap;
+}
+.logo em { color: var(--bright); font-style: normal; }
+.links {
+  display: flex; gap: 1.4rem; list-style: none; align-items: center; flex-wrap: wrap;
+}
+.links a {
+  color: var(--silver); text-decoration: none;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.9rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; transition: color 0.2s;
+}
+.links a:hover { color: var(--sky); }
+.hamburger {
+  display: none; flex-direction: column; gap: 5px; background: none;
+  border: none; cursor: pointer; padding: 4px;
+}
+.hamburger span { display: block; width: 24px; height: 2px; background: var(--silver); transition: all 0.2s; }
+
+@media (max-width: 900px) {
+  .nav { padding: 1rem 1.5rem; }
+  .hamburger { display: flex; }
+  .links {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    background: rgba(8,15,28,0.97); backdrop-filter: blur(14px);
+    flex-direction: column; padding: 1.5rem; gap: 1rem;
+    border-bottom: 1px solid var(--border-blue);
+  }
+  .links.open { display: flex; }
+}
+
+/* ── HCG ADDITIONS ── */
+.logoWord { color: var(--silver); font-size: 1.2rem; letter-spacing: 0.04em; }
+
+.dropdownWrap { position: relative; }
+.dropdownTrigger {
+  display: flex; align-items: center; gap: 0.3rem;
+  background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25);
+  color: #3b82f6; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.88rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 0.3rem 0.75rem; cursor: pointer; transition: all 0.15s;
+}
+.dropdownTrigger:hover, .dropdownTriggerOpen {
+  background: rgba(59,130,246,0.16); border-color: rgba(59,130,246,0.5);
+}
+.dropdownCaret { font-size: 0.7rem; transition: transform 0.15s; }
+.dropdownTriggerOpen .dropdownCaret { transform: rotate(180deg); }
+.hceaLabel { font-size: 0.85rem; }
+
+.dropdown {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: #0a1525; border: 1px solid rgba(59,130,246,0.3);
+  min-width: 240px; z-index: 600; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.dropdownHeader { padding: 0.75rem 1rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.dropdownBrand { font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700; color: #e8f0ff; letter-spacing: 0.08em; }
+.dropdownSub { font-size: 0.7rem; color: #6b7fa3; margin-top: 0.15rem; }
+.dropdownItem {
+  display: block; padding: 0.55rem 1rem;
+  color: #8ba0c0; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em;
+  text-decoration: none; transition: all 0.15s; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.dropdownItem:last-child { border-bottom: none; }
+.dropdownItem:hover { color: #e8f0ff; background: rgba(59,130,246,0.08); padding-left: 1.3rem; }
+
+/* Book a Session CTA link in nav */
+.navBookBtn {
+  display: inline-block;
+  background: rgba(59,130,246,0.12);
+  border: 1px solid rgba(59,130,246,0.4);
+  color: #93c5fd !important;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.82rem !important;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.85rem !important;
+  transition: background 0.15s, border-color 0.15s, color 0.15s !important;
+  text-decoration: none;
+}
+.navBookBtn:hover {
+  background: rgba(59,130,246,0.25) !important;
+  border-color: rgba(59,130,246,0.7) !important;
+  color: #fff !important;
+}

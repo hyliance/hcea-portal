@@ -1,0 +1,85 @@
+.wrap { display:flex; flex-direction:column; gap:1.5rem; }
+.header h2 { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:0.04em; }
+.header p  { color:var(--silver); font-size:0.92rem; margin-top:0.2rem; }
+
+.tabs { display:flex; gap:0; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.tab  { background:none; border:none; border-bottom:2px solid transparent; color:var(--muted); padding:0.75rem 1.2rem; font-family:'Barlow Condensed',sans-serif; font-size:0.9rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.tab:hover { color:var(--silver); }
+.tabOn { color:var(--white); border-bottom-color:var(--bright); }
+.body { min-height:400px; }
+.sectionTitle { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--silver); margin-bottom:1rem; padding-bottom:0.4rem; border-bottom:1px solid var(--border); }
+.empty { color:var(--muted); text-align:center; padding:2rem; }
+
+/* CREATE FORM */
+.formCard { background:var(--card); border:1px solid var(--border); padding:1.5rem; display:flex; flex-direction:column; gap:1.2rem; }
+.formTitle { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:0.04em; }
+.successBox { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); color:var(--green); padding:0.7rem 1rem; font-size:0.88rem; }
+.formGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
+.fg { display:flex; flex-direction:column; gap:0.35rem; }
+.fgFull { grid-column:1/-1; }
+.fg label { font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+.fg input,.fg select,.fg textarea { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--white); padding:0.65rem 0.8rem; font-family:'Barlow',sans-serif; font-size:0.9rem; outline:none; transition:border-color 0.2s; width:100%; resize:vertical; }
+.fg input:focus,.fg select:focus,.fg textarea:focus { border-color:var(--accent); }
+.fg select option { background:var(--navy2); }
+.formatDesc { font-size:0.75rem; color:var(--muted); margin-top:0.2rem; font-style:italic; }
+.sizeNote { font-size:0.82rem; color:var(--bright); padding:0.5rem 0; }
+.checkRow { display:flex; align-items:center; gap:0.5rem; grid-column:1/-1; }
+.checkRow input { width:auto; padding:0; }
+.checkRow label { font-size:0.88rem; color:var(--silver); letter-spacing:0; text-transform:none; font-weight:400; }
+
+/* SCHOLARSHIP APPS */
+.appList { display:flex; flex-direction:column; gap:0.8rem; }
+.appCard { background:var(--card); border:1px solid var(--border); padding:1.2rem 1.4rem; }
+.appHead { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.7rem; gap:1rem; flex-wrap:wrap; }
+.appName { font-family:'Barlow Condensed',sans-serif; font-size:1.15rem; font-weight:700; }
+.appSchool { font-size:0.78rem; color:var(--muted); margin-top:0.1rem; }
+.appScholarship { font-size:0.78rem; color:var(--bright); margin-top:0.2rem; }
+.appRight { text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:0.3rem; }
+.appDate { font-size:0.72rem; color:var(--muted); }
+.appExcerpt { font-size:0.88rem; color:var(--silver); font-style:italic; line-height:1.6; margin-bottom:0.8rem; }
+.appActions { display:flex; gap:0.6rem; }
+.approveBtn { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:var(--green); font-size:0.82rem; font-weight:700; padding:0.4rem 1rem; cursor:pointer; font-family:'Barlow',sans-serif; transition:background 0.15s; }
+.approveBtn:hover { background:rgba(16,185,129,0.2); }
+.rejectBtn { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); color:var(--red); font-size:0.82rem; font-weight:700; padding:0.4rem 1rem; cursor:pointer; font-family:'Barlow',sans-serif; transition:background 0.15s; }
+.rejectBtn:hover { background:rgba(239,68,68,0.15); }
+
+/* PLAYERS TABLE */
+.playerTable { display:flex; flex-direction:column; gap:0; border:1px solid var(--border); }
+.tableHead { display:grid; grid-template-columns:1.5fr 2fr 1.5fr 1fr 1fr 1fr; gap:1rem; padding:0.7rem 1rem; background:rgba(255,255,255,0.03); font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+.tableRow { display:grid; grid-template-columns:1.5fr 2fr 1.5fr 1fr 1fr 1fr; gap:1rem; padding:0.9rem 1rem; border-top:1px solid var(--border); align-items:center; font-size:0.88rem; color:var(--silver); transition:background 0.15s; }
+.tableRow:hover { background:rgba(255,255,255,0.02); }
+.playerName { font-weight:700; color:var(--white); }
+.playerEmail { font-size:0.8rem; }
+.playerActions { display:flex; gap:0.4rem; }
+.actionBtn { background:none; border:1px solid var(--border); color:var(--silver); font-size:0.75rem; padding:0.25rem 0.7rem; cursor:pointer; font-family:'Barlow',sans-serif; transition:all 0.15s; }
+.actionBtn:hover { border-color:var(--border-blue); color:var(--white); }
+
+/* COACHES */
+.coachList { display:flex; flex-direction:column; gap:0.7rem; }
+.coachRow { display:flex; align-items:center; gap:1rem; padding:1rem 1.2rem; background:var(--card); border:1px solid var(--border); }
+.coachAvatar { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:1.1rem; color:#fff; flex-shrink:0; }
+.coachInfo { flex:1; }
+.coachName { font-family:'Barlow Condensed',sans-serif; font-size:1.1rem; font-weight:700; }
+.coachTitle { font-size:0.75rem; color:var(--bright); text-transform:uppercase; letter-spacing:0.08em; }
+.coachGames { font-size:1rem; margin-top:0.2rem; }
+.coachMeta { display:flex; flex-direction:column; gap:0.2rem; font-size:0.78rem; color:var(--muted); text-align:right; }
+.editNote { background:rgba(29,78,216,0.08); border:1px solid var(--border-blue); color:var(--sky); padding:0.8rem 1rem; font-size:0.85rem; }
+
+/* TOURNAMENTS LIST */
+.tourneyList { display:flex; flex-direction:column; gap:0.6rem; }
+.tourneyRow { display:flex; align-items:center; gap:1.2rem; padding:1rem 1.2rem; background:var(--card); border:1px solid var(--border); flex-wrap:wrap; }
+.tourneyName { font-family:'Barlow Condensed',sans-serif; font-size:1.1rem; font-weight:700; }
+.tourneyMeta { font-size:0.78rem; color:var(--muted); margin-top:0.15rem; }
+.tourneyStatus { display:flex; align-items:center; gap:0.6rem; margin-left:auto; font-size:0.8rem; color:var(--muted); }
+.tourneyActions { display:flex; gap:0.5rem; }
+.startBtn { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:var(--green); font-size:0.82rem; font-weight:700; padding:0.35rem 0.9rem; cursor:pointer; font-family:'Barlow',sans-serif; }
+.deleteBtn { background:none; border:1px solid rgba(239,68,68,0.25); color:var(--red); font-size:0.82rem; font-weight:700; padding:0.35rem 0.9rem; cursor:pointer; font-family:'Barlow',sans-serif; }
+
+@media (max-width:900px) {
+  .formGrid { grid-template-columns:repeat(2,1fr); }
+  .tableHead,.tableRow { grid-template-columns:1fr 1fr 1fr; }
+  .tableHead span:nth-child(n+4),.tableRow span:nth-child(n+4) { display:none; }
+}
+@media (max-width:600px) {
+  .formGrid { grid-template-columns:1fr; }
+}

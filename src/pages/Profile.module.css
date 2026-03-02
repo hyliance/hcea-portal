@@ -1,0 +1,84 @@
+.header { margin-bottom: 1.5rem; }
+.header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 0.04em; }
+.header p { color: var(--silver); font-size: 0.92rem; margin-top: 0.2rem; }
+.grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem; }
+.profileCard { background: var(--card); border: 1px solid var(--border); padding: 2rem; }
+/* ── Avatar upload ── */
+.avatarWrap {
+  position: relative;
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+.avatarWrap:focus-visible { outline: 2px solid var(--bright); outline-offset: 3px; }
+.avatarBig {
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: #fff;
+  transition: filter 0.2s;
+}
+.avatarImg {
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  object-fit: cover; display: block;
+  border: 2px solid rgba(59,130,246,0.3);
+  transition: filter 0.2s;
+}
+/* Hover/drag overlay */
+.avatarOverlay {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 0.15rem;
+  opacity: 0; transition: opacity 0.18s;
+  pointer-events: none;
+}
+.avatarWrap:hover .avatarOverlay,
+.avatarDragging .avatarOverlay { opacity: 1; }
+.avatarWrap:hover .avatarBig,
+.avatarWrap:hover .avatarImg,
+.avatarDragging .avatarBig,
+.avatarDragging .avatarImg { filter: brightness(0.6); }
+.avatarDragging .avatarOverlay { background: rgba(59,130,246,0.55); }
+.avatarOverlayIcon { font-size: 1.3rem; line-height: 1; }
+.avatarOverlayText {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #fff;
+}
+.removeAvatarBtn {
+  background: none; border: none;
+  color: var(--muted); font-size: 0.75rem; font-family: 'Barlow', sans-serif;
+  cursor: pointer; padding: 0; margin-top: -0.5rem; margin-bottom: 0.75rem;
+  transition: color 0.15s; display: block;
+}
+.removeAvatarBtn:hover { color: var(--red); }
+.avatarError {
+  font-size: 0.75rem; color: var(--red);
+  margin-top: -0.5rem; margin-bottom: 0.5rem;
+  max-width: 200px;
+}
+.name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.7rem; font-weight: 700; letter-spacing: 0.03em; }
+.role { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bright); margin-top: 0.2rem; }
+.since { font-size: 0.82rem; color: var(--muted); margin-top: 0.4rem; }
+.statsGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; margin-top: 1.5rem; }
+.statItem { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 0.9rem; }
+.statLabel { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.statVal { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--bright); line-height: 1; margin-top: 0.1rem; }
+.detailsCard { background: var(--card); border: 1px solid var(--border); padding: 2rem; display: flex; flex-direction: column; gap: 1rem; }
+.sectionTitle { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--silver); padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+.fieldRow { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.gameTags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.gameTag { background: rgba(29,78,216,0.12); border: 1px solid var(--border-blue); color: var(--sky); font-size: 0.8rem; font-weight: 600; padding: 0.25rem 0.7rem; cursor: pointer; transition: background 0.15s; font-family: 'Barlow', sans-serif; }
+.gameTag:hover { background: rgba(29,78,216,0.25); }
+.gameTag.active { background: var(--accent); border-color: var(--bright); color: #fff; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .fieldRow { grid-template-columns: 1fr; } }
+@media (max-width:600px) {
+  .statsGrid { grid-template-columns:repeat(2,1fr); }
+  .avatarBig { width:60px; height:60px; font-size:1.7rem; }
+  .name { font-size:1.4rem; }
+}

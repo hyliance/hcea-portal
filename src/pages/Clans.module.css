@@ -1,0 +1,125 @@
+/* ── CLANS PAGE ── */
+.wrap   { display: flex; flex-direction: column; gap: 1.4rem; }
+.header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; }
+.title  { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 0.04em; }
+.sub    { font-size: 0.88rem; color: var(--silver); margin-top: 0.2rem; }
+
+/* Controls */
+.controls  { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem; }
+.tabBar    { display: flex; gap: 0.4rem; }
+.tabBtn    { background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.38rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: all 0.15s; }
+.tabBtn:hover { border-color: var(--border-blue); color: var(--silver); }
+.tabBtnOn { border-color: var(--bright) !important; color: var(--white) !important; background: rgba(59,130,246,0.08) !important; }
+.tabCount { background: rgba(255,255,255,0.1); font-size: 0.68rem; padding: 0.05rem 0.4rem; border-radius: 99px; }
+
+.filters    { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.searchInput,.gameSelect {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--white);
+  font-family: 'Barlow', sans-serif; font-size: 0.88rem; padding: 0.42rem 0.75rem; outline: none;
+  transition: border-color 0.2s;
+}
+.searchInput { min-width: 200px; }
+.searchInput:focus,.gameSelect:focus { border-color: var(--accent); }
+
+/* Layout split when detail open */
+.layout      { display: block; }
+.layoutSplit { display: grid; grid-template-columns: 1fr 380px; gap: 1.2rem; align-items: start; }
+
+/* Clan card grid */
+.grid  { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+.empty { background: var(--card); border: 1px dashed var(--border); padding: 2.5rem; text-align: center; color: var(--muted); font-size: 0.9rem; grid-column: 1/-1; }
+
+/* Clan Card */
+.clanCard        { background: var(--card); border: 1px solid var(--border); cursor: pointer; transition: border-color 0.2s, transform 0.15s; overflow: hidden; }
+.clanCard:hover  { border-color: var(--border-blue); transform: translateY(-1px); }
+.clanCardMember  { border-color: rgba(5,150,105,0.4) !important; }
+.clanCardBanner  { position: relative; height: 72px; display: flex; align-items: flex-end; padding: 0.5rem 0.7rem; }
+.clanCardLogo    { width: 42px; height: 42px; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.2); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: #fff; letter-spacing: 0.06em; flex-shrink: 0; }
+.clanVerified    { position: absolute; top: 0.4rem; right: 0.5rem; background: rgba(5,150,105,0.85); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.4rem; }
+.clanMemberBadge { position: absolute; bottom: 0.4rem; right: 0.5rem; background: rgba(5,150,105,0.85); color: #fff; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.1rem 0.45rem; }
+.clanCardBody    { padding: 0.75rem; }
+.clanCardName    { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.04em; color: var(--white); }
+.clanCardGame    { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+.clanCardDesc    { font-size: 0.8rem; color: var(--silver); line-height: 1.5; margin: 0.4rem 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.clanCardFoot    { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.6rem; flex-wrap: wrap; }
+.clanCardMembers { font-size: 0.75rem; color: var(--muted); }
+.clanCardRecord  { font-size: 0.75rem; font-weight: 700; color: var(--silver); }
+.clanCardOpen    { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(5,150,105,0.1); border: 1px solid rgba(5,150,105,0.3); color: #10b981; padding: 0.1rem 0.45rem; }
+
+/* Detail Panel */
+.detailPanel    { background: var(--card); border: 1px solid var(--border-blue); position: sticky; top: 1rem; }
+.detailBanner   { position: relative; padding: 1.4rem 1rem 1rem; min-height: 100px; display: flex; align-items: flex-end; gap: 0.8rem; }
+.detailClose    { position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(0,0,0,0.4); border: none; color: #fff; font-size: 0.9rem; width: 26px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.detailClose:hover { background: rgba(0,0,0,0.7); }
+.detailBannerLogo { width: 56px; height: 56px; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.25); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: #fff; letter-spacing: 0.06em; flex-shrink: 0; }
+.detailBannerInfo { flex: 1; }
+.detailName      { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 700; letter-spacing: 0.04em; color: #fff; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.verifiedBadge   { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; background: rgba(5,150,105,0.8); color: #fff; padding: 0.15rem 0.5rem; }
+.detailMeta      { font-size: 0.78rem; color: rgba(255,255,255,0.6); margin-top: 0.2rem; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.detailBody      { padding: 1rem; display: flex; flex-direction: column; gap: 0.8rem; }
+.detailDesc      { font-size: 0.88rem; color: var(--silver); line-height: 1.65; }
+.detailSection   { display: flex; flex-direction: column; gap: 0.6rem; }
+.detailSectionTitle { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+
+/* Roster */
+.rosterList { display: flex; flex-direction: column; gap: 0.4rem; }
+.rosterRow   { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.rosterRow:last-child { border-bottom: none; }
+.rosterAvatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 0.65rem; color: #fff; flex-shrink: 0; }
+.rosterInfo   { flex: 1; min-width: 0; }
+.rosterName   { font-size: 0.85rem; font-weight: 700; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rosterMeta   { font-size: 0.68rem; color: var(--muted); }
+.rosterRole   { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: rgba(255,255,255,0.05); padding: 0.1rem 0.5rem; flex-shrink: 0; }
+.rosterActions { display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0; }
+.roleSelect   { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--white); font-family: 'Barlow', sans-serif; font-size: 0.78rem; padding: 0.2rem 0.4rem; outline: none; }
+.kickBtn      { background: none; border: 1px solid rgba(239,68,68,0.3); color: var(--red); font-size: 0.72rem; padding: 0.2rem 0.5rem; cursor: pointer; transition: all 0.15s; }
+.kickBtn:hover { background: rgba(239,68,68,0.1); }
+.leaveBtn     { background: none; border: 1px solid rgba(239,68,68,0.35); color: var(--red); font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.06em; padding: 0.4rem 1rem; cursor: pointer; transition: all 0.15s; }
+.leaveBtn:hover { background: rgba(239,68,68,0.08); }
+
+/* Record */
+.recordGrid { display: flex; gap: 0; }
+.recordStat { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0.6rem 0; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06); }
+.recordStat + .recordStat { border-left: none; }
+.recordStat span  { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--bright); line-height: 1; }
+.recordStat small { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 0.1rem; }
+
+/* Social links */
+.socialLinks { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.socialLink  { background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--silver); font-size: 0.8rem; padding: 0.3rem 0.8rem; text-decoration: none; transition: all 0.15s; }
+.socialLink:hover { border-color: var(--border-blue); color: var(--white); background: rgba(59,130,246,0.08); }
+
+/* Modal */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 900; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal   { background: #0d1b2e; border: 1px solid rgba(59,130,246,0.25); width: 100%; max-width: 520px; display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; }
+.modalHead { padding: 1.2rem 1.4rem; border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
+.modalTitle { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 700; letter-spacing: 0.06em; color: var(--white); }
+.modalSub   { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+.closeBtn   { background: none; border: none; color: var(--muted); font-size: 1rem; cursor: pointer; padding: 0.1rem 0.3rem; }
+.modalBody  { padding: 1.2rem 1.4rem; overflow-y: auto; flex: 1; }
+.modalFoot  { padding: 1rem 1.4rem; border-top: 1px solid rgba(255,255,255,0.07); display: flex; justify-content: flex-end; gap: 0.6rem; flex-shrink: 0; }
+.cancelBtn  { background: none; border: 1px solid var(--border); color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.06em; padding: 0.45rem 1.1rem; cursor: pointer; transition: all 0.15s; }
+.cancelBtn:hover { border-color: var(--border-blue); color: var(--silver); }
+.errorBox   { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); color: var(--red); font-size: 0.85rem; padding: 0.6rem 0.8rem; margin-bottom: 1rem; }
+.formGrid   { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+.fg label   { display: block; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem; }
+.fg input,.fg select,.fg textarea {
+  width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  color: var(--white); font-family: 'Barlow', sans-serif; font-size: 0.9rem;
+  padding: 0.55rem 0.75rem; outline: none; transition: border-color 0.2s;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus { border-color: var(--accent); }
+.fgFull     { grid-column: 1 / -1; }
+.checkLabel { display: flex !important; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--silver) !important; }
+.checkLabel input { width: auto !important; }
+
+@media (max-width: 900px) {
+  .layoutSplit { grid-template-columns: 1fr; }
+  .detailPanel { position: static; }
+  .grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .grid { grid-template-columns: 1fr; }
+  .formGrid { grid-template-columns: 1fr; }
+  .controls { flex-direction: column; align-items: stretch; }
+}

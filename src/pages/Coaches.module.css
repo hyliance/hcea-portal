@@ -1,0 +1,133 @@
+.wrap  { display: flex; flex-direction: column; gap: 1.5rem; }
+.header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 0.04em; }
+.header p  { color: var(--silver); font-size: 0.92rem; margin-top: 0.2rem; }
+
+/* FILTERS */
+.filters   { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.filterBtn { background: var(--card); border: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; padding: 0.4rem 1rem; cursor: pointer; transition: all 0.15s; font-family: 'Barlow', sans-serif; }
+.filterBtn:hover  { border-color: var(--border-blue); color: var(--white); }
+.filterActive     { background: rgba(29,78,216,0.15) !important; border-color: var(--bright) !important; color: var(--white) !important; }
+
+/* GRID */
+.grid  { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 1.5rem; }
+.empty { color: var(--muted); padding: 3rem; text-align: center; background: var(--card); border: 1px solid var(--border); }
+
+/* CARD */
+.card { background: var(--card); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 0; transition: border-color 0.2s, transform 0.2s; overflow: hidden; }
+.card:hover { border-color: var(--border-blue); transform: translateY(-2px); }
+
+.cardHead { display: flex; gap: 1rem; align-items: flex-start; padding: 1.5rem 1.5rem 1.2rem; border-bottom: 1px solid var(--border); }
+.avatar { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: #fff; flex-shrink: 0; }
+.headInfo { flex: 1; }
+.coachName  { font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 700; letter-spacing: 0.03em; line-height: 1.1; }
+.coachTitle { font-size: 0.8rem; color: var(--bright); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.15rem; margin-bottom: 0.3rem; }
+.headMeta   { display: flex; flex-direction: column; gap: 0.4rem; text-align: right; }
+.metaItem   { display: flex; flex-direction: column; }
+.metaLabel  { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.metaVal    { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: var(--white); line-height: 1; }
+
+/* STARS */
+.stars      { display: flex; align-items: center; gap: 2px; }
+.starFilled { color: var(--gold); font-size: 0.85rem; }
+.starEmpty  { color: var(--border); font-size: 0.85rem; }
+.ratingNum  { font-size: 0.78rem; font-weight: 700; color: var(--silver); margin-left: 4px; }
+
+/* CARD SECTIONS */
+.cardSection  { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
+.sectionLabel { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 0.7rem; }
+
+/* GAMES ROW */
+.gamesRow  { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.gameChip  { display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 0.4rem 0.7rem; }
+.chipGame  { font-size: 0.82rem; font-weight: 600; color: var(--white); line-height: 1.2; }
+.chipRank  { font-size: 0.7rem; color: var(--bright); }
+
+/* AVAILABILITY */
+.dayPills  { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.dayPill   { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; padding: 0.22rem 0.55rem; border: 1px solid transparent; }
+.dayPillOn { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: var(--green); }
+.dayPillOff{ background: rgba(255,255,255,0.02); border-color: var(--border); color: var(--muted); }
+.hoursNote { font-size: 0.8rem; color: var(--muted); }
+
+/* PRICING */
+.pricingRow  { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+.priceBox    { background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 0.6rem 0.9rem; }
+.priceBoxLabel { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 0.15rem; }
+.priceBoxVal { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--bright); line-height: 1; }
+.priceBoxVal small { font-family: 'Barlow', sans-serif; font-size: 0.75rem; color: var(--muted); margin-left: 2px; }
+
+/* ACTIONS */
+.cardActions { display: flex; gap: 0.8rem; padding: 1.2rem 1.5rem; background: rgba(255,255,255,0.01); }
+
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+/* ── COACH EDIT PANEL ── */
+.editPanel { display:flex; flex-direction:column; gap:0; border:1px solid var(--border-blue); background:var(--navy2); }
+.editHeader { display:flex; justify-content:space-between; align-items:center; padding:1.3rem 1.5rem; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:1rem; }
+.editTitle  { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:0.04em; }
+.editSub    { font-size:0.8rem; color:var(--muted); margin-top:0.2rem; }
+.editActions { display:flex; align-items:center; gap:1rem; }
+.savedNote  { color:var(--green); font-size:0.85rem; font-weight:700; }
+
+.editTabs   { display:flex; border-bottom:1px solid var(--border); overflow-x:auto; }
+.editTab    { background:none; border:none; border-bottom:2px solid transparent; color:var(--muted); padding:0.75rem 1.2rem; font-family:'Barlow Condensed',sans-serif; font-size:0.88rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.editTab:hover { color:var(--silver); }
+.editTabOn  { color:var(--white); border-bottom-color:var(--bright); }
+
+.editBody   { padding:1.5rem; }
+.editSection { display:flex; flex-direction:column; gap:1.1rem; }
+.editLabel  { font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+
+.formRow    { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; }
+.fg         { display:flex; flex-direction:column; gap:0.35rem; }
+.fg label   { font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+.fg input, .fg textarea, .fg select { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--white); padding:0.65rem 0.85rem; font-family:'Barlow',sans-serif; font-size:0.92rem; outline:none; transition:border-color 0.2s; width:100%; resize:vertical; }
+.fg input:focus, .fg textarea:focus { border-color:var(--accent); }
+
+/* Games tab */
+.gameToggleGrid { display:flex; flex-wrap:wrap; gap:0.5rem; }
+.gameToggle     { background:var(--card); border:1px solid var(--border); color:var(--muted); font-size:0.82rem; font-weight:600; padding:0.45rem 0.9rem; cursor:pointer; transition:all 0.15s; font-family:'Barlow',sans-serif; display:flex; align-items:center; gap:0.4rem; }
+.gameToggle:hover { border-color:var(--border-blue); color:var(--white); }
+.gameToggleOn   { border-color:var(--bright) !important; background:rgba(29,78,216,0.15) !important; color:var(--white) !important; }
+.gameDetails    { display:flex; flex-direction:column; gap:0.8rem; }
+.gameDetailRow  { display:grid; grid-template-columns:140px 1fr 1fr; gap:0.8rem; align-items:end; background:rgba(255,255,255,0.02); border:1px solid var(--border); padding:0.8rem; }
+.gameDetailName { font-family:'Barlow Condensed',sans-serif; font-size:0.95rem; font-weight:700; color:var(--white); }
+
+/* Availability tab */
+.dayToggleRow { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.4rem; }
+.dayToggle    { background:var(--card); border:1px solid var(--border); color:var(--muted); font-size:0.82rem; font-weight:700; width:52px; padding:0.45rem 0; cursor:pointer; transition:all 0.15s; font-family:'Barlow',sans-serif; text-align:center; }
+.dayToggle:hover { border-color:var(--border-blue); color:var(--white); }
+.dayToggleOn  { border-color:var(--bright) !important; background:rgba(29,78,216,0.15) !important; color:var(--white) !important; }
+.timeSlotGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:0.4rem; margin-top:0.4rem; }
+.timeSlot     { background:var(--card); border:1px solid var(--border); color:var(--muted); font-size:0.78rem; font-weight:600; padding:0.4rem; cursor:pointer; transition:all 0.15s; font-family:'Barlow',sans-serif; text-align:center; }
+.timeSlot:hover { border-color:var(--border-blue); color:var(--white); }
+.timeSlotOn   { border-color:var(--bright) !important; background:rgba(29,78,216,0.15) !important; color:var(--white) !important; }
+
+/* Accolades tab */
+.accoladeRow  { display:flex; align-items:center; gap:0.6rem; }
+.emojiInput   { width:52px !important; text-align:center; font-size:1.2rem; padding:0.45rem !important; }
+.accoladeText { flex:1; }
+.removeBtn    { background:none; border:1px solid rgba(239,68,68,0.25); color:var(--red); width:32px; height:32px; cursor:pointer; font-size:0.8rem; flex-shrink:0; }
+.addBtn       { background:none; border:1px dashed var(--border); color:var(--muted); font-size:0.82rem; padding:0.5rem 1rem; cursor:pointer; transition:all 0.15s; font-family:'Barlow',sans-serif; align-self:flex-start; }
+.addBtn:hover { border-color:var(--border-blue); color:var(--sky); }
+
+/* Rates tab */
+.ratePreview      { background:rgba(255,255,255,0.02); border:1px solid var(--border); padding:1rem 1.2rem; display:flex; flex-direction:column; gap:0.5rem; }
+.ratePreviewLabel { font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); font-weight:700; margin-bottom:0.3rem; }
+.ratePreviewRow   { display:flex; align-items:center; gap:0.7rem; font-size:0.95rem; color:var(--silver); }
+.rateTag          { font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:var(--green); padding:0.1rem 0.5rem; }
+.rateTagStd       { font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--muted); padding:0.1rem 0.5rem; }
+
+.noProfile { background:var(--card); border:1px solid var(--border); padding:2rem; text-align:center; color:var(--muted); }
+@media (max-width:600px) {
+  .editPanel { border-left:none; border-right:none; }
+  .editTabs { overflow-x:auto; }
+  .editTab { padding:0.65rem 0.8rem; font-size:0.8rem; }
+  .gameDetailRow { grid-template-columns:1fr; gap:0.6rem; }
+  .formRow { grid-template-columns:1fr; }
+  .timeSlotGrid { grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:480px) {
+  .cardHead { flex-wrap:wrap; gap:0.6rem; }
+  .headMeta { flex-direction:row; gap:1rem; }
+}
