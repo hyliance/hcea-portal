@@ -1,7 +1,7 @@
-// ────────────────────────────────────────────────────────────────────────────
-//  api/index.js – HCEA Backend Service Layer
+```n// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  api/index.js â€“ HCEA Backend Service Layer
 //  All mock data lives here. Replace each function body with real fetch() calls.
-// ────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 import { supabase } from '../supabaseClient';
 
@@ -18,9 +18,9 @@ async function request(path, options = {}) {
   return res.json();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  GAME TEAM SIZE CONFIG
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const GAME_TEAM_SIZES = {
   'League of Legends': { min: 5, max: 5,  label: '5v5' },
   'Valorant':          { min: 5, max: 5,  label: '5v5' },
@@ -39,16 +39,16 @@ export const BRACKET_FORMATS = [
   { id: 'group_stage',  label: 'Group Stage + Playoffs', desc: 'Groups feed into a single-elim playoff bracket.' },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  GAME MANAGEMENT API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let MOCK_GAMES = [
   {
     id: 'game_lol',    name: 'League of Legends', shortName: 'LoL',
     genre: 'MOBA',     platform: 'PC',
     teamSize: { min: 5, max: 5, label: '5v5' },
     active: true, featured: true, hasLadder: false,
-    icon: '⚔️',  color: '#c89b3c',
+    icon: 'âš”ï¸',  color: '#c89b3c',
     coverImage: '',
     modes: ['Summoners Rift (5v5)', 'ARAM', 'Arena'],
     maps: [
@@ -65,7 +65,7 @@ let MOCK_GAMES = [
     genre: 'FPS',      platform: 'PC',
     teamSize: { min: 5, max: 5, label: '5v5' },
     active: true, featured: true, hasLadder: false,
-    icon: '🔫',  color: '#ff4655',
+    icon: 'ðŸ”«',  color: '#ff4655',
     coverImage: '',
     modes: ['Standard (5v5)', 'Spike Rush', 'Deathmatch'],
     maps: [
@@ -85,7 +85,7 @@ let MOCK_GAMES = [
     genre: 'Auto Battler', platform: 'PC/Mobile',
     teamSize: { min: 1, max: 1, label: '1v1 (FFA)' },
     active: true, featured: true, hasLadder: false,
-    icon: '🎲',  color: '#7c3aed',
+    icon: 'ðŸŽ²',  color: '#7c3aed',
     coverImage: '',
     modes: ['Standard', 'Double Up'],
     maps: [],
@@ -98,7 +98,7 @@ let MOCK_GAMES = [
     genre: 'Sports',   platform: 'PC/Console',
     teamSize: { min: 2, max: 3, label: '2v2 or 3v3' },
     active: true, featured: false, hasLadder: false,
-    icon: '🚀',  color: '#00b4d8',
+    icon: 'ðŸš€',  color: '#00b4d8',
     coverImage: '',
     modes: ['3v3 Soccar', '2v2 Soccar', '1v1 Duel', 'Rumble'],
     maps: [
@@ -114,7 +114,7 @@ let MOCK_GAMES = [
     genre: 'Battle Royale', platform: 'PC/Console/Mobile',
     teamSize: { min: 1, max: 4, label: '1-4 players' },
     active: true, featured: false, hasLadder: false,
-    icon: '🏗️',  color: '#f59e0b',
+    icon: 'ðŸ—ï¸',  color: '#f59e0b',
     coverImage: '',
     modes: ['Battle Royale', 'Zero Build', 'Reload'],
     maps: [
@@ -128,7 +128,7 @@ let MOCK_GAMES = [
     genre: 'Fighting', platform: 'Nintendo Switch',
     teamSize: { min: 1, max: 1, label: '1v1' },
     active: true, featured: false, hasLadder: false,
-    icon: '💥',  color: '#ef4444',
+    icon: 'ðŸ’¥',  color: '#ef4444',
     coverImage: '',
     modes: ['1v1 Tournament', 'Crews', 'Amateur Bracket'],
     maps: [
@@ -147,7 +147,7 @@ let MOCK_GAMES = [
     genre: 'Hero Shooter', platform: 'PC/Console',
     teamSize: { min: 5, max: 6, label: '5v5 or 6v6' },
     active: true, featured: false, hasLadder: false,
-    icon: '🦸',  color: '#dc2626',
+    icon: 'ðŸ¦¸',  color: '#dc2626',
     coverImage: '',
     modes: ['Domination', 'Convoy', 'Convergence', 'Conquest'],
     maps: [
@@ -163,7 +163,7 @@ let MOCK_GAMES = [
     genre: 'FPS',      platform: 'PC (MCC)',
     teamSize: { min: 2, max: 4, label: '2v2 or 4v4' },
     active: true, featured: true, hasLadder: true,
-    icon: '🎯',  color: '#00b4d8',
+    icon: 'ðŸŽ¯',  color: '#00b4d8',
     coverImage: '',
     modes: ['MLG Slayer', 'MLG CTF', 'MLG Team Shotty Snipers', 'MLG KotH'],
     maps: [
@@ -172,7 +172,7 @@ let MOCK_GAMES = [
       { id: 'map_h3_heretic',   name: 'Heretic',    type: 'MLG',  active: true, image: '', notes: 'Slayer, CTF, TS' },
       { id: 'map_h3_isolation', name: 'Isolation',  type: 'MLG',  active: true, image: '', notes: 'CTF, KotH only' },
       { id: 'map_h3_narrows',   name: 'Narrows',    type: 'MLG',  active: true, image: '', notes: 'Slayer, CTF, TS' },
-      { id: 'map_h3_pit',       name: 'The Pit',    type: 'MLG',  active: true, image: '', notes: 'All modes – most played' },
+      { id: 'map_h3_pit',       name: 'The Pit',    type: 'MLG',  active: true, image: '', notes: 'All modes â€“ most played' },
       { id: 'map_h3_onslaught', name: 'Onslaught',  type: 'MLG',  active: true, image: '', notes: 'Slayer, CTF, TS' },
       { id: 'map_h3_amplified', name: 'Amplified',  type: 'MLG',  active: true, image: '', notes: 'Slayer, CTF, KotH' },
     ],
@@ -212,7 +212,7 @@ export const gameApi = {
       active: true,
       featured: data.featured || false,
       hasLadder: data.hasLadder || false,
-      icon: data.icon || '🎮',
+      icon: data.icon || 'ðŸŽ®',
       color: data.color || '#3b82f6',
       modes: data.modes || [],
       seasons: [],
@@ -360,9 +360,9 @@ export function getGameNames() {
   return MOCK_GAMES.filter(g => g.active).map(g => g.name);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  TEAMS API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let MOCK_TEAMS = [
   {
     id: 'team_001', name: 'Rapid City Reapers', game: 'League of Legends',
@@ -459,15 +459,15 @@ export const teamsApi = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  TOURNAMENTS API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let MOCK_TOURNAMENTS = [
   {
     id: 't1', name: 'Team Fight Tactics Open', game: 'Team Fight Tactics',
     format: 'single_elim', status: 'open', phase: 'registration',
     date: 'Mar 1, 2026', time: '5:00 PM CST', prize: '3,500 RP',
-    description: 'Open to all skill levels. FFA style – top 4 advance each round.',
+    description: 'Open to all skill levels. FFA style â€“ top 4 advance each round.',
     memberOnly: false, maxTeams: 16, registeredTeams: ['team_solo_1','team_solo_2','team_solo_3'],
     minTeamSize: 1, maxTeamSize: 1,
     bracketData: null, matches: [],
@@ -627,9 +627,9 @@ export const tournamentsApi = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  COACHES API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let MOCK_COACHES = [
   {
     id: 'coach_zach', userId: null,
@@ -637,24 +637,24 @@ let MOCK_COACHES = [
     initials: 'ZW', accentColor: '#1d4ed8', experience: '20+ Years',
     location: 'Rapid City, SD',
     rating: 5.0, totalSessions: 200,
-    bio: "Zach Walters is the founder of High Caliber Esports Academy and one of South Dakota's most experienced esports coaches. With over 20 years competing, coaching, and consulting in the esports industry, Zach brings unmatched strategic depth and a passion for developing the next generation of players.\n\nLast season, Zach coached the Sioux Falls Lincoln High School League of Legends team to a South Dakota State Championship. He continues to coach students across South Dakota through Fenworks and has consulted for multiple nonprofit youth organizations including the Pierre Area Boys & Girls Club and Sioux Falls Boys & Girls Clubs.\n\nZach's coaching philosophy centers on building not just game skills, but life skills – communication, resilience, and leadership that translate beyond the screen.",
-    philosophy: "I believe every player has a ceiling they haven't reached yet. My job is to help you find it – through honest feedback, structured improvement, and a genuine investment in your growth.",
+    bio: "Zach Walters is the founder of High Caliber Esports Academy and one of South Dakota's most experienced esports coaches. With over 20 years competing, coaching, and consulting in the esports industry, Zach brings unmatched strategic depth and a passion for developing the next generation of players.\n\nLast season, Zach coached the Sioux Falls Lincoln High School League of Legends team to a South Dakota State Championship. He continues to coach students across South Dakota through Fenworks and has consulted for multiple nonprofit youth organizations including the Pierre Area Boys & Girls Club and Sioux Falls Boys & Girls Clubs.\n\nZach's coaching philosophy centers on building not just game skills, but life skills â€“ communication, resilience, and leadership that translate beyond the screen.",
+    philosophy: "I believe every player has a ceiling they haven't reached yet. My job is to help you find it â€“ through honest feedback, structured improvement, and a genuine investment in your growth.",
     games: [
-      { id: 'lol',    label: 'League of Legends', icon: '⚔️', rank: 'Diamond II',    specialty: 'Mid Lane / Macro Play' },
-      { id: 'val',    label: 'Valorant',           icon: '🎯', rank: 'Immortal',       specialty: 'IGL / Agent Composition' },
-      { id: 'tft',    label: 'Team Fight Tactics', icon: '♟️', rank: 'Master',         specialty: 'Economy & Positioning' },
-      { id: 'rl',     label: 'Rocket League',      icon: '🚀', rank: 'Diamond',        specialty: 'Rotations & Mechanics' },
-      { id: 'smash',  label: 'Smash Bros.',        icon: '💥', rank: 'Tournament Vet', specialty: 'Neutral & Punish Game' },
-      { id: 'fn',     label: 'Fortnite',           icon: '🏗️', rank: 'Competitive',   specialty: 'Zone Strategy & Building' },
-      { id: 'rivals', label: 'Marvel Rivals',      icon: '🦸', rank: 'Top 500',        specialty: 'Team Comps & Ult Tracking' },
+      { id: 'lol',    label: 'League of Legends', icon: 'âš”ï¸', rank: 'Diamond II',    specialty: 'Mid Lane / Macro Play' },
+      { id: 'val',    label: 'Valorant',           icon: 'ðŸŽ¯', rank: 'Immortal',       specialty: 'IGL / Agent Composition' },
+      { id: 'tft',    label: 'Team Fight Tactics', icon: 'â™Ÿï¸', rank: 'Master',         specialty: 'Economy & Positioning' },
+      { id: 'rl',     label: 'Rocket League',      icon: 'ðŸš€', rank: 'Diamond',        specialty: 'Rotations & Mechanics' },
+      { id: 'smash',  label: 'Smash Bros.',        icon: 'ðŸ’¥', rank: 'Tournament Vet', specialty: 'Neutral & Punish Game' },
+      { id: 'fn',     label: 'Fortnite',           icon: 'ðŸ—ï¸', rank: 'Competitive',   specialty: 'Zone Strategy & Building' },
+      { id: 'rivals', label: 'Marvel Rivals',      icon: 'ðŸ¦¸', rank: 'Top 500',        specialty: 'Team Comps & Ult Tracking' },
     ],
     accolades: [
-      { icon: '🏆', text: 'SD State LoL Championship Coach – Sioux Falls Lincoln HS (2024)' },
-      { icon: '🎓', text: 'Founder – High Caliber Esports Academy, LLC' },
-      { icon: '🤝', text: 'Partner Coach – Pierre, Sioux Falls & Watertown Boys & Girls Clubs' },
-      { icon: '📡', text: 'Active Coach – Fenworks Statewide Esports Network' },
-      { icon: '⭐', text: '20+ years competing & coaching in professional esports' },
-      { icon: '🎮', text: 'Consulted for 10+ K-12 and collegiate esports programs' },
+      { icon: 'ðŸ†', text: 'SD State LoL Championship Coach â€“ Sioux Falls Lincoln HS (2024)' },
+      { icon: 'ðŸŽ“', text: 'Founder â€“ High Caliber Esports Academy, LLC' },
+      { icon: 'ðŸ¤', text: 'Partner Coach â€“ Pierre, Sioux Falls & Watertown Boys & Girls Clubs' },
+      { icon: 'ðŸ“¡', text: 'Active Coach â€“ Fenworks Statewide Esports Network' },
+      { icon: 'â­', text: '20+ years competing & coaching in professional esports' },
+      { icon: 'ðŸŽ®', text: 'Consulted for 10+ K-12 and collegiate esports programs' },
     ],
     social: { twitter: 'https://twitter.com', twitch: 'https://twitch.tv' },
     availableDays: [1, 2, 3, 4, 5],
@@ -682,8 +682,8 @@ export const coachesApi = {
       return { success: true, coachId: MOCK_COACHES[existingIdx].id };
     }
     const GAME_ICONS_MAP = {
-      'League of Legends':'⚔️', 'Valorant':'🎯', 'Team Fight Tactics':'♟️',
-      'Rocket League':'🚀', 'Fortnite':'🏗️', 'Smash Bros.':'💥', 'Marvel Rivals':'🦸',
+      'League of Legends':'âš”ï¸', 'Valorant':'ðŸŽ¯', 'Team Fight Tactics':'â™Ÿï¸',
+      'Rocket League':'ðŸš€', 'Fortnite':'ðŸ—ï¸', 'Smash Bros.':'ðŸ’¥', 'Marvel Rivals':'ðŸ¦¸',
     };
     const GAME_ID_MAP = {
       'League of Legends':'lol','Valorant':'val','Team Fight Tactics':'tft',
@@ -703,11 +703,11 @@ export const coachesApi = {
       philosophy: app.philosophy || '',
       games: (app.primaryGames || []).map(g => ({
         id: GAME_ID_MAP[g] || g.toLowerCase().replace(/\s+/g,'-'),
-        label: g, icon: GAME_ICONS_MAP[g] || '🎮',
+        label: g, icon: GAME_ICONS_MAP[g] || 'ðŸŽ®',
         rank: (app.gameRanks || {})[g] || '',
         specialty: '',
       })),
-      accolades: app.certifications ? [{ icon: '🎓', text: app.certifications }] : [],
+      accolades: app.certifications ? [{ icon: 'ðŸŽ“', text: app.certifications }] : [],
       social: {},
       availableDays: app.availableDays || [1,2,3,4,5],
       availableHours: ['4:00 PM CST', '5:30 PM CST', '7:00 PM CST'],
@@ -742,9 +742,9 @@ export const coachesApi = {
   update: async (coachId, updates) => { await delay(400); return { success: true }; },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  SESSIONS API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const fmtDate = (iso) => {
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -815,9 +815,9 @@ export const sessionsApi = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  SCHOLARSHIPS API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let MOCK_APPLICATIONS = [
   { id: 'app_001', scholarshipId: 'sch2', userId: 'user_001', playerName: 'Alex Rivera', school: 'Rapid City Stevens HS', status: 'pending', submittedAt: '2025-02-15', essayExcerpt: 'I believe esports has shaped my leadership...' },
   { id: 'app_002', scholarshipId: 'sch1', userId: 'user_010', playerName: 'Casey Park',  school: 'Aberdeen Central HS',   status: 'approved', submittedAt: '2025-02-01', essayExcerpt: 'As a Native American student, I...' },
@@ -827,8 +827,8 @@ export const scholarshipsApi = {
   getAll: async () => {
     await delay(300);
     return [
-      { id: 'sch1', tag: 'Native American Students', name: 'Terrance C. Walters Memorial Scholarship Fund', amount: '$1,000', amountNote: 'Growing to $5,000 · Awarded to 5 students', deadline: 'May 1, 2026', featured: false, description: "For Native American students who have excelled academically and in their school's esports program.", requirements: ['Active HCEA membership', 'Demonstrated academic excellence', 'Reference letter from school esports head coach'] },
-      { id: 'sch2', tag: 'Leadership Excellence', name: 'Higher Caliber Scholarship Fund', amount: '$10,000', amountNote: 'Single award · Annual', deadline: 'May 1, 2026', featured: true, description: 'Awarded to one student demonstrating exceptional leadership in school and community.', requirements: ['Active HCEA membership', 'Exceptional school & community leadership', 'Reference from head coach or program manager', 'Reference from a community leader'] },
+      { id: 'sch1', tag: 'Native American Students', name: 'Terrance C. Walters Memorial Scholarship Fund', amount: '$1,000', amountNote: 'Growing to $5,000 Â· Awarded to 5 students', deadline: 'May 1, 2026', featured: false, description: "For Native American students who have excelled academically and in their school's esports program.", requirements: ['Active HCEA membership', 'Demonstrated academic excellence', 'Reference letter from school esports head coach'] },
+      { id: 'sch2', tag: 'Leadership Excellence', name: 'Higher Caliber Scholarship Fund', amount: '$10,000', amountNote: 'Single award Â· Annual', deadline: 'May 1, 2026', featured: true, description: 'Awarded to one student demonstrating exceptional leadership in school and community.', requirements: ['Active HCEA membership', 'Exceptional school & community leadership', 'Reference from head coach or program manager', 'Reference from a community leader'] },
     ];
   },
   apply: async (scholarshipId, userId, formData) => {
@@ -849,9 +849,9 @@ export const scholarshipsApi = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  COACH APPLICATION API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let MOCK_COACH_APPLICATIONS = [
   {
     id: 'ca_001', userId: 'user_002', status: 'pending',
@@ -867,7 +867,7 @@ let MOCK_COACH_APPLICATIONS = [
     experience: 'Coached my high school esports team for 2 seasons.',
     references: [{ name: 'Coach Mike Hanson', role: 'HS Esports Director', contact: 'mhanson@sfschools.com' }],
     certifications: '', availableDays: [1,2,3,4,5],
-    preferredHours: 'Afternoons and evenings (3PM–9PM CST)',
+    preferredHours: 'Afternoons and evenings (3PMâ€“9PM CST)',
     proposedMemberRate: 35, proposedNonMemberRate: 50,
     personalStatement: "I want to give back to the esports community that shaped me.",
     agreedToTerms: true, backgroundCheckConsent: true,
@@ -944,37 +944,41 @@ export const coachAppApi = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  ACTIVITY API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const activityApi = {
   getRecent: async (userId) => {
     await delay(300);
     return [
       { id: 'a1', type: 'tournament',  text: 'Registered for TFT Tournament',                    time: '2 hours ago',  dot: 'green' },
-      { id: 'a2', type: 'session',     text: 'Completed Coaching Session – League of Legends',    time: 'Feb 20, 2025', dot: 'blue'  },
+      { id: 'a2', type: 'session',     text: 'Completed Coaching Session â€“ League of Legends',    time: 'Feb 20, 2025', dot: 'blue'  },
       { id: 'a3', type: 'scholarship', text: 'Submitted Higher Caliber Scholarship application',  time: 'Feb 15, 2025', dot: 'gold'  },
       { id: 'a4', type: 'team',        text: 'Created team: Rapid City Reapers',                  time: 'Jan 15, 2025', dot: 'green' },
     ];
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  CONTACT API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const contactApi = {
   send: async (formData) => { await delay(600); return { success: true }; },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  ADMIN: USERS API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const adminApi = {
+
   getPlayers: async () => {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
     if (!token) { console.warn('getPlayers: no session'); return []; }
-    const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles?select=id,first_name,last_name,email,school,grade,role,created_at&order=created_at.desc';
+    // Include roles[] column alongside legacy role string
+    const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles' +
+      '?select=id,first_name,last_name,email,school,grade,role,roles,created_at' +
+      '&order=created_at.desc';
     const res = await fetch(url, {
       headers: {
         'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi',
@@ -984,33 +988,90 @@ export const adminApi = {
     });
     if (!res.ok) { console.error('getPlayers error:', res.status, await res.text()); return []; }
     const data = await res.json();
-    return (data || []).map(p => ({
-      id:               p.id,
-      name:             ((p.first_name || '') + ' ' + (p.last_name || '')).trim() || p.email,
-      email:            p.email,
-      school:           p.school || '',
-      grade:            p.grade  || '',
-      role:             p.role ? p.role.toLowerCase() : 'player',
-      membershipActive: false,
-      joinedAt:         p.created_at ? p.created_at.slice(0, 10) : '',
-    }));
+    return (data || []).map(p => {
+      // Normalize: prefer roles[] array, fall back to legacy role string
+      let roles = [];
+      if (Array.isArray(p.roles) && p.roles.length > 0) {
+        roles = p.roles.map(r => r.toLowerCase());
+      } else if (p.role && p.role !== 'player') {
+        roles = [p.role.toLowerCase()];
+      }
+      if (!roles.includes('player')) roles = [...roles, 'player'];
+      return {
+        id:               p.id,
+        name:             ((p.first_name || '') + ' ' + (p.last_name || '')).trim() || p.email,
+        email:            p.email,
+        school:           p.school || '',
+        grade:            p.grade  || '',
+        roles,                        // ← full array e.g. ['head_admin','coach','player']
+        role:             roles[0],   // ← legacy primary role
+        membershipActive: false,
+        joinedAt:         p.created_at ? p.created_at.slice(0, 10) : '',
+      };
+    });
   },
+
   updatePlayer: async (userId, updates) => {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
     if (!token) return { success: false, error: 'Not authenticated' };
     const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles?id=eq.' + userId;
-    const res = await fetch(url, { method: 'PATCH', headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify(updates) });
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(updates),
+    });
     return res.ok ? { success: true } : { success: false, error: await res.text() };
   },
+
   deletePlayer: async (userId) => {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
     if (!token) return { success: false, error: 'Not authenticated' };
     const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles?id=eq.' + userId;
-    const res = await fetch(url, { method: 'DELETE', headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } });
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    });
     return res.ok ? { success: true } : { success: false, error: await res.text() };
   },
+
+  // ── ADD a single role to a user ──────────────────────────────────────────
+  addRole: async (userId, role, currentRoles = []) => {
+    const VALID = ['player', 'coach', 'org_manager', 'league_admin', 'head_admin'];
+    if (!VALID.includes(role)) return { success: false, error: 'Invalid role.' };
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return { success: false, error: 'Not authenticated' };
+    // Merge without duplicates; always keep 'player'
+    const newRoles = [...new Set([...currentRoles, role, 'player'])];
+    const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles?id=eq.' + userId;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ roles: newRoles, role: newRoles[0] }),
+    });
+    return res.ok ? { success: true, roles: newRoles } : { success: false, error: await res.text() };
+  },
+
+  // ── REMOVE a single role from a user ────────────────────────────────────
+  removeRole: async (userId, role, currentRoles = []) => {
+    if (role === 'player') return { success: false, error: 'Cannot remove base player role.' };
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return { success: false, error: 'Not authenticated' };
+    const newRoles = currentRoles.filter(r => r !== role);
+    if (!newRoles.includes('player')) newRoles.push('player');
+    const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles?id=eq.' + userId;
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ roles: newRoles, role: newRoles[0] }),
+    });
+    return res.ok ? { success: true, roles: newRoles } : { success: false, error: await res.text() };
+  },
+
+  // ── LEGACY: kept for backward compat ────────────────────────────────────
   setPlayerRole: async (userId, role) => {
     const valid = ['player', 'coach', 'org_manager', 'league_admin', 'head_admin'];
     const dbRole = role.toLowerCase();
@@ -1019,14 +1080,19 @@ export const adminApi = {
     const token = session?.access_token;
     if (!token) return { success: false, error: 'Not authenticated' };
     const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles?id=eq.' + userId;
-    const res = await fetch(url, { method: 'PATCH', headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify({ role: dbRole }) });
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ role: dbRole }),
+    });
     return res.ok ? { success: true } : { success: false, error: await res.text() };
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  ORGS API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let MOCK_ORGS = [];
 let MOCK_YOUTH_PLAYERS = [];
 let MOCK_YOUTH_TEAMS = [];
@@ -1115,16 +1181,16 @@ export const orgsApi = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  MATCH ROOM API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const SERIES_WINS_NEEDED = { 'bo1': 1, 'bo3': 2, 'bo5': 3, 'bo7': 4 };
 
 let MATCH_ROOMS = {
   'm4': {
     matchId: 'm4', tournamentId: 't4', seriesFormat: 'bo3', games: [], status: 'pending',
     chat: [
-      { id: 'msg_001', userId: 'user_admin', userName: 'Admin', role: 'admin', text: '👋 Welcome to the match room! Use this chat to coordinate your match start.', ts: Date.now() - 480000, system: false },
+      { id: 'msg_001', userId: 'user_admin', userName: 'Admin', role: 'admin', text: 'ðŸ‘‹ Welcome to the match room! Use this chat to coordinate your match start.', ts: Date.now() - 480000, system: false },
       { id: 'msg_002', userId: 'sys', userName: 'System', role: 'system', text: 'Match room opened. Series format: Best of 3.', ts: Date.now() - 470000, system: true },
     ],
   },
@@ -1168,7 +1234,7 @@ export const matchRoomApi = {
     if (!room) return { success: false };
     const gameNum = room.games.length + 1;
     room.games.push({ gameNum, reportingTeamId, winnerTeamId, losingTeamId, confirmedBy: null, confirmed: false, ts: Date.now() });
-    room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `Game ${gameNum} reported – waiting for opponent confirmation.`, ts: Date.now(), system: true });
+    room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `Game ${gameNum} reported â€“ waiting for opponent confirmation.`, ts: Date.now(), system: true });
     return { success: true, gameNum };
   },
   confirmGame: async (matchId, gameNum, confirmingTeamId) => {
@@ -1187,7 +1253,7 @@ export const matchRoomApi = {
     if (seriesWinner) {
       room.status = 'complete';
       room.seriesWinnerId = seriesWinner[0];
-      room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `🏆 Series complete! Match winner determined. Admins will update the bracket shortly.`, ts: Date.now(), system: true });
+      room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `ðŸ† Series complete! Match winner determined. Admins will update the bracket shortly.`, ts: Date.now(), system: true });
     } else {
       room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `Game ${gameNum} confirmed. Series continues.`, ts: Date.now(), system: true });
     }
@@ -1200,7 +1266,7 @@ export const matchRoomApi = {
     if (!room) return { success: false };
     const game = room.games.find(g => g.gameNum === gameNum);
     if (game) game.disputed = true;
-    room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `⚠️ Game ${gameNum} disputed by a team. Reason: "${reason}" – An admin has been notified.`, ts: Date.now(), system: true });
+    room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `âš ï¸ Game ${gameNum} disputed by a team. Reason: "${reason}" â€“ An admin has been notified.`, ts: Date.now(), system: true });
     return { success: true };
   },
   adminSetWinner: async (matchId, winnerTeamId, score1, score2) => {
@@ -1210,7 +1276,7 @@ export const matchRoomApi = {
     room.status = 'complete';
     room.seriesWinnerId = winnerTeamId;
     room.adminOverride = true;
-    room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `⚙️ Admin has set the final series result: ${score1}–${score2}. Match complete.`, ts: Date.now(), system: true });
+    room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `âš™ï¸ Admin has set the final series result: ${score1}â€“${score2}. Match complete.`, ts: Date.now(), system: true });
     return { success: true };
   },
   getMessages: async (matchId, since) => {
@@ -1221,9 +1287,9 @@ export const matchRoomApi = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  SEASONAL LEAGUE API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const LEAGUE_GAMES = Object.keys(GAME_TEAM_SIZES);
 
 let MOCK_LEAGUES = [
@@ -1379,7 +1445,7 @@ export const leagueApi = {
     if (!group) return { success: false };
     if (!group.teamIds.includes(team.id)) {
       group.teamIds.push(team.id);
-      group.standings.push({ teamId: team.id, teamName: team.name, wins: 0, losses: 0, points: 0, gamesPlayed: 0, streak: '–' });
+      group.standings.push({ teamId: team.id, teamName: team.name, wins: 0, losses: 0, points: 0, gamesPlayed: 0, streak: 'â€“' });
     }
     return { success: true };
   },
@@ -1458,9 +1524,9 @@ export const leagueApi = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  MATCH FLAGS API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const matchFlagApi = {
   flag:    async (matchId, reason, reportedBy) => { return { success: true, id: 'flag_' + Date.now() }; },
   resolve: async (flagId, resolution)          => { return { success: true }; },
@@ -1470,9 +1536,9 @@ export const matchFlagApi = {
   clearFlag: async (flagId)                    => { return { success: true }; },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  PUBLIC API  ← FIXED: all methods Landing.jsx needs are here
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  PUBLIC API  â† FIXED: all methods Landing.jsx needs are here
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const publicApi = {
   getAll: async () => { return []; },
 
@@ -1503,9 +1569,9 @@ export const publicApi = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  SOCIAL API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const socialApi = {
   getCommunities:  async ()              => { return []; },
   getCommunity:    async (id)            => { return null; },
@@ -1528,9 +1594,9 @@ export const socialApi = {
   timeoutUser:     async (uid, duration) => { return { success: true }; },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  CLANS API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const clansApi = {
   getAll:     async ()        => { return []; },
   getMyClans: async (uid)     => { return []; },
@@ -1542,9 +1608,9 @@ export const clansApi = {
   updateMemberRole: async (clanId, uid, role)    => { return { success: true }; },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  CASH MATCH API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const cashMatchApi = {
   getOpenMatches:  async ()         => { return []; },
   getMyMatches:    async (uid)      => { return []; },
@@ -1556,9 +1622,9 @@ export const cashMatchApi = {
   confirmResult:   async (id)       => { return { success: true }; },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  HALO MLG SETTINGS & LADDER API
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const HALO_MLG_SETTINGS = {
   version: 'V8',
   modes: ['Slayer', 'CTF', 'Ball', 'Oddball', 'Territories'],
@@ -1592,3 +1658,6 @@ export const ladderApi = {
   getRecentMatches:async (gameId)       => { return []; },
   getTopTeam:      async (gameId)       => { return null; },
 };
+
+```
+

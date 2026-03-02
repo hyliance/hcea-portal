@@ -1,4 +1,3 @@
-import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { tournamentsApi, scholarshipsApi, adminApi, coachesApi, matchFlagApi, gameApi, BRACKET_FORMATS, GAME_TEAM_SIZES } from '../../api';
 import AdminOrgs from './AdminOrgs';
@@ -10,7 +9,7 @@ import styles from './AdminPanel.module.css';
 const GAMES = Object.keys(GAME_TEAM_SIZES);
 const STATUS_COLORS = { pending: 'gold', approved: 'green', rejected: 'red' };
 
-// ── CREATE TOURNAMENT FORM ────────────────────────────────────────
+// â”€â”€ CREATE TOURNAMENT FORM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function CreateTournamentForm({ onCreated }) {
   const empty = { name:'', game:'', format:'single_elim', date:'', time:'', prize:'', description:'', maxTeams:8, memberOnly:false, minTeamSize:1, maxTeamSize:5 };
   const [form, setForm]       = useState(empty);
@@ -35,7 +34,7 @@ function CreateTournamentForm({ onCreated }) {
   return (
     <div className={styles.formCard}>
       <div className={styles.formTitle}>Create New Tournament</div>
-      {success && <div className={styles.successBox}>✓ Tournament created successfully!</div>}
+      {success && <div className={styles.successBox}>âœ“ Tournament created successfully!</div>}
 
       <div className={styles.formGrid}>
         <div className={styles.fg}>
@@ -91,13 +90,13 @@ function CreateTournamentForm({ onCreated }) {
       </div>
 
       <button className="btn btn-primary" style={{ clipPath:'none', padding:'0.75rem 2.5rem' }} onClick={handleSubmit} disabled={loading}>
-        {loading ? 'Creating...' : 'Create Tournament →'}
+        {loading ? 'Creating...' : 'Create Tournament â†’'}
       </button>
     </div>
   );
 }
 
-// ── SCHOLARSHIP APPLICATIONS ──────────────────────────────────────
+// â”€â”€ SCHOLARSHIP APPLICATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ScholarshipApplications() {
   const [apps, setApps]   = useState([]);
   const [loading, setLoading] = useState(true);
@@ -131,8 +130,8 @@ function ScholarshipApplications() {
           <p className={styles.appExcerpt}>"{app.essayExcerpt}..."</p>
           {app.status === 'pending' && (
             <div className={styles.appActions}>
-              <button className={styles.approveBtn} onClick={() => updateStatus(app.id, 'approved')}>✓ Approve</button>
-              <button className={styles.rejectBtn} onClick={() => updateStatus(app.id, 'rejected')}>✕ Reject</button>
+              <button className={styles.approveBtn} onClick={() => updateStatus(app.id, 'approved')}>âœ“ Approve</button>
+              <button className={styles.rejectBtn} onClick={() => updateStatus(app.id, 'rejected')}>âœ• Reject</button>
             </div>
           )}
         </div>
@@ -141,16 +140,102 @@ function ScholarshipApplications() {
   );
 }
 
-// ── PLAYERS MANAGEMENT ────────────────────────────────────────────
+// â”€â”€ PLAYERS MANAGEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const ROLE_CFG = {
+  head_admin:   { label: 'Head Admin',   color: '#dc2626', bg: 'rgba(220,38,38,0.12)',  icon: '👑' },
+  league_admin: { label: 'League Admin', color: '#7c3aed', bg: 'rgba(124,58,237,0.12)', icon: '🏆' },
+  coach:        { label: 'Coach',        color: '#059669', bg: 'rgba(5,150,105,0.12)',  icon: '🎓' },
+  org_manager:  { label: 'Org Manager',  color: '#d97706', bg: 'rgba(217,119,6,0.12)',  icon: '🏢' },
+  player:       { label: 'Player',       color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', icon: '🎮' },
+};
+const ROLE_RANK   = { head_admin: 5, league_admin: 4, coach: 3, org_manager: 2, player: 1 };
+const ASSIGNABLE  = ['head_admin', 'league_admin', 'coach', 'org_manager'];
+
+function getPrimary(roles) {
+  return [...roles].sort((a, b) => (ROLE_RANK[b] || 0) - (ROLE_RANK[a] || 0))[0] || 'player';
+}
+
+function RoleBadge({ role, onRemove, canRemove }) {
+  const cfg = ROLE_CFG[role] || ROLE_CFG.player;
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      padding: '2px 8px', borderRadius: 999, fontSize: '0.7rem', fontWeight: 700,
+      letterSpacing: '0.03em', color: cfg.color, background: cfg.bg,
+      border: `1px solid ${cfg.color}33`, whiteSpace: 'nowrap',
+    }}>
+      {cfg.icon} {cfg.label}
+      {canRemove && role !== 'player' && (
+        <button onClick={onRemove} style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          color: cfg.color, padding: '0 0 0 2px', fontSize: '0.72rem', lineHeight: 1, opacity: 0.7,
+        }}>✕</button>
+      )}
+    </span>
+  );
+}
+
+function AddRoleDropdown({ currentRoles, onAdd }) {
+  const [open, setOpen] = useState(false);
+  const available = ASSIGNABLE.filter(r => !currentRoles.includes(r));
+  if (available.length === 0) return null;
+  return (
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <button onClick={() => setOpen(o => !o)} style={{
+        background: 'rgba(59,130,246,0.08)', border: '1px dashed rgba(59,130,246,0.35)',
+        color: '#3b82f6', borderRadius: 999, padding: '2px 8px',
+        fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer',
+      }}>+ Role</button>
+      {open && (
+        <div style={{
+          position: 'absolute', top: '110%', left: 0, zIndex: 200,
+          background: '#0d1b2e', border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: 8, padding: 4, minWidth: 150,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+        }}>
+          {available.map(role => {
+            const cfg = ROLE_CFG[role];
+            return (
+              <button key={role} onClick={() => { onAdd(role); setOpen(false); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                  background: 'none', border: 'none', color: cfg.color,
+                  padding: '6px 10px', borderRadius: 6, fontSize: '0.8rem',
+                  fontWeight: 700, cursor: 'pointer', textAlign: 'left',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = cfg.bg}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              >
+                {cfg.icon} {cfg.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PlayersManagement() {
-  const [players, setPlayers]   = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [search, setSearch]     = useState('');
-  const [selected, setSelected] = useState(null);
-  const [roleLoading, setRoleLoading] = useState(null);
+  const [players, setPlayers]     = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [search, setSearch]       = useState('');
+  const [filterRole, setFilterRole] = useState('all');
+  const [selected, setSelected]   = useState(null);
+  const [pendingId, setPendingId] = useState(null);
 
   const load = () => {
-    adminApi.getPlayers().then(d => { setPlayers(d); setLoading(false); });
+    adminApi.getPlayers().then(d => {
+      const sorted = [...d].sort((a, b) => {
+        const ra = ROLE_RANK[getPrimary(a.roles || [a.role])] || 0;
+        const rb = ROLE_RANK[getPrimary(b.roles || [b.role])] || 0;
+        if (rb !== ra) return rb - ra;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+      setPlayers(sorted);
+      setLoading(false);
+    });
   };
   useEffect(() => { load(); }, []);
 
@@ -160,182 +245,277 @@ function PlayersManagement() {
     if (selected?.id === p.id) setSelected(prev => ({ ...prev, membershipActive: !prev.membershipActive }));
   };
 
-  const handleRoleChange = async (p, newRole) => {
-    setRoleLoading(p.id);
-    const res = await adminApi.setPlayerRole(p.id, newRole);
+  const handleAddRole = async (userId, role) => {
+    const player = players.find(p => p.id === userId);
+    if (!player) return;
+    setPendingId(userId);
+    const res = await adminApi.addRole(userId, role, player.roles || [player.role]);
     if (res.success) {
-      setPlayers(prev => prev.map(pl => pl.id === p.id ? { ...pl, role: newRole } : pl));
-      if (selected?.id === p.id) setSelected(prev => ({ ...prev, role: newRole }));
+      setPlayers(prev => prev.map(p => p.id === userId ? { ...p, roles: res.roles, role: res.roles[0] } : p));
+      if (selected?.id === userId) setSelected(prev => ({ ...prev, roles: res.roles, role: res.roles[0] }));
+    } else {
+      alert('Failed to add role: ' + res.error);
     }
-    setRoleLoading(null);
+    setPendingId(null);
   };
 
-  const filtered = players.filter(p =>
-    !search.trim() ||
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.email.toLowerCase().includes(search.toLowerCase()) ||
-    (p.school || '').toLowerCase().includes(search.toLowerCase())
-  );
+  const handleRemoveRole = async (userId, role) => {
+    const player = players.find(p => p.id === userId);
+    if (!player) return;
+    if (!window.confirm(`Remove ${ROLE_CFG[role]?.label} from ${player.name}?`)) return;
+    setPendingId(userId);
+    const res = await adminApi.removeRole(userId, role, player.roles || [player.role]);
+    if (res.success) {
+      setPlayers(prev => prev.map(p => p.id === userId ? { ...p, roles: res.roles, role: res.roles[0] } : p));
+      if (selected?.id === userId) setSelected(prev => ({ ...prev, roles: res.roles, role: res.roles[0] }));
+    } else {
+      alert('Failed to remove role: ' + res.error);
+    }
+    setPendingId(null);
+  };
 
-  const leagueAdmins = players.filter(p => p.role === 'league_admin');
+  const elevatedPlayers = players.filter(p => (p.roles || [p.role]).some(r => r !== 'player'));
+
+  const filtered = players.filter(p => {
+    const matchSearch = !search.trim() ||
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.email.toLowerCase().includes(search.toLowerCase()) ||
+      (p.school || '').toLowerCase().includes(search.toLowerCase());
+    const matchRole = filterRole === 'all' || (p.roles || [p.role]).includes(filterRole);
+    return matchSearch && matchRole;
+  });
 
   if (loading) return <Spinner />;
 
   return (
     <div className={styles.playersWrap}>
 
-      {/* League Admin Roster summary */}
+      {/* ── Elevated Roles Roster ── */}
       <div className={styles.leagueAdminRoster}>
         <div className={styles.leagueAdminRosterHead}>
-          <span className={styles.leagueAdminRosterTitle}>⚙️ League Admin Roster</span>
-          <span className={styles.leagueAdminCount}>{leagueAdmins.length} assigned</span>
+          <span className={styles.leagueAdminRosterTitle}>⚙️ Elevated Role Roster</span>
+          <span className={styles.leagueAdminCount}>{elevatedPlayers.length} users with elevated roles</span>
         </div>
-        {leagueAdmins.length === 0 ? (
-          <div className={styles.leagueAdminEmpty}>No league admins assigned yet. Search for a player below to grant access.</div>
+        {elevatedPlayers.length === 0 ? (
+          <div className={styles.leagueAdminEmpty}>No elevated roles assigned yet. Search for a player below to grant access.</div>
         ) : (
           <div className={styles.leagueAdminList}>
-            {leagueAdmins.map(p => (
-              <div key={p.id} className={styles.leagueAdminRow}>
-                <div className={styles.leagueAdminAvatar}>{p.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
-                <div className={styles.leagueAdminInfo}>
-                  <div className={styles.leagueAdminName}>{p.name}</div>
-                  <div className={styles.leagueAdminEmail}>{p.email}</div>
+            {elevatedPlayers.map(p => {
+              const userRoles = (p.roles || [p.role]).filter(r => r !== 'player');
+              const primary = getPrimary(p.roles || [p.role]);
+              return (
+                <div key={p.id} className={styles.leagueAdminRow}>
+                  <div className={styles.leagueAdminAvatar}
+                    style={{ background: ROLE_CFG[primary]?.color + '22', color: ROLE_CFG[primary]?.color }}>
+                    {p.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </div>
+                  <div className={styles.leagueAdminInfo}>
+                    <div className={styles.leagueAdminName}>{p.name}</div>
+                    <div className={styles.leagueAdminEmail}>{p.email}</div>
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                      {userRoles.map(role => (
+                        <RoleBadge
+                          key={role} role={role} canRemove={pendingId !== p.id}
+                          onRemove={() => handleRemoveRole(p.id, role)}
+                        />
+                      ))}
+                      {pendingId !== p.id && (
+                        <AddRoleDropdown
+                          currentRoles={p.roles || [p.role]}
+                          onAdd={role => handleAddRole(p.id, role)}
+                        />
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <button
-                  className={styles.revokeBtn}
-                  disabled={roleLoading === p.id}
-                  onClick={() => handleRoleChange(p, 'player')}
-                >
-                  {roleLoading === p.id ? '...' : '✕ Revoke'}
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Search */}
-      <div className={styles.playerSearchWrap}>
-        <span className={styles.playerSearchIcon}>🔍</span>
-        <input
-          className={styles.playerSearch}
-          placeholder="Search players by name, email, or school..."
-          value={search}
-          onChange={e => { setSearch(e.target.value); setSelected(null); }}
-        />
-        {search && <button className={styles.playerSearchClear} onClick={() => { setSearch(''); setSelected(null); }}>✕</button>}
+      {/* ── Search + Role Filter ── */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+        <div className={styles.playerSearchWrap} style={{ flex: 1 }}>
+          <span className={styles.playerSearchIcon}>🔍</span>
+          <input
+            className={styles.playerSearch}
+            placeholder="Search players by name, email, or school..."
+            value={search}
+            onChange={e => { setSearch(e.target.value); setSelected(null); }}
+          />
+          {search && <button className={styles.playerSearchClear} onClick={() => { setSearch(''); setSelected(null); }}>✕</button>}
+        </div>
+        <select
+          value={filterRole}
+          onChange={e => setFilterRole(e.target.value)}
+          style={{
+            padding: '8px 12px', background: '#0d1b2e',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 6, color: '#e8f0ff', fontSize: '0.85rem',
+          }}
+        >
+          <option value="all">All Roles</option>
+          {Object.entries(ROLE_CFG).map(([k, v]) => (
+            <option key={k} value={k}>{v.icon} {v.label}</option>
+          ))}
+        </select>
       </div>
 
-      {/* Player list + detail panel */}
+      {/* ── Player List + Detail Panel ── */}
       <div className={styles.playerLayout}>
 
         {/* Table */}
         <div className={styles.playerTable}>
           <div className={styles.tableHead}>
-            <span>Player</span><span>School</span><span>Role</span><span>Membership</span>
+            <span>Player</span><span>School</span><span>Roles</span><span>Membership</span>
           </div>
           {filtered.length === 0 && (
             <div className={styles.playerEmpty}>No players match "{search}"</div>
           )}
-          {filtered.map(p => (
-            <div
-              key={p.id}
-              className={`${styles.tableRow} ${selected?.id === p.id ? styles.tableRowSelected : ''}`}
-              onClick={() => setSelected(p)}
-            >
-              <div className={styles.playerNameCell}>
-                <div className={styles.playerInitials}>{p.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
-                <div>
-                  <div className={styles.playerName}>{p.name}</div>
-                  <div className={styles.playerEmail}>{p.email}</div>
+          {filtered.map(p => {
+            const userRoles = p.roles || [p.role];
+            const primary = getPrimary(userRoles);
+            const isPending = pendingId === p.id;
+            return (
+              <div
+                key={p.id}
+                className={`${styles.tableRow} ${selected?.id === p.id ? styles.tableRowSelected : ''}`}
+                onClick={() => setSelected(p)}
+                style={{ opacity: isPending ? 0.5 : 1 }}
+              >
+                <div className={styles.playerNameCell}>
+                  <div className={styles.playerInitials}
+                    style={{ background: ROLE_CFG[primary]?.color + '22', color: ROLE_CFG[primary]?.color }}>
+                    {p.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </div>
+                  <div>
+                    <div className={styles.playerName}>{p.name}</div>
+                    <div className={styles.playerEmail}>{p.email}</div>
+                  </div>
                 </div>
+                <span>{p.school || '—'}</span>
+                <span style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                  {userRoles
+                    .sort((a, b) => (ROLE_RANK[b] || 0) - (ROLE_RANK[a] || 0))
+                    .map(role => <RoleBadge key={role} role={role} canRemove={false} />)
+                  }
+                </span>
+                <span>
+                  <Badge variant={p.membershipActive ? 'green' : 'red'}>{p.membershipActive ? 'Active' : 'Inactive'}</Badge>
+                </span>
               </div>
-              <span>{p.school || '—'}</span>
-              <span>
-                {p.role === 'league_admin'
-                  ? <Badge variant="gold">League Admin</Badge>
-                  : <Badge variant="blue">Player</Badge>}
-              </span>
-              <span>
-                <Badge variant={p.membershipActive ? 'green' : 'red'}>{p.membershipActive ? 'Active' : 'Inactive'}</Badge>
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Detail panel */}
-        {selected && (
-          <div className={styles.playerDetail}>
-            <div className={styles.playerDetailHeader}>
-              <div className={styles.playerDetailAvatar}>{selected.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
-              <div>
-                <div className={styles.playerDetailName}>{selected.name}</div>
-                <div className={styles.playerDetailEmail}>{selected.email}</div>
+        {selected && (() => {
+          const userRoles = selected.roles || [selected.role];
+          const isPending = pendingId === selected.id;
+          const nonPlayerRoles = userRoles.filter(r => r !== 'player');
+          const primary = getPrimary(userRoles);
+          return (
+            <div className={styles.playerDetail}>
+              <div className={styles.playerDetailHeader}>
+                <div className={styles.playerDetailAvatar}
+                  style={{ background: ROLE_CFG[primary]?.color + '22', color: ROLE_CFG[primary]?.color }}>
+                  {selected.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                </div>
+                <div>
+                  <div className={styles.playerDetailName}>{selected.name}</div>
+                  <div className={styles.playerDetailEmail}>{selected.email}</div>
+                </div>
+                <button className={styles.playerDetailClose} onClick={() => setSelected(null)}>✕</button>
               </div>
-              <button className={styles.playerDetailClose} onClick={() => setSelected(null)}>✕</button>
-            </div>
 
-            <div className={styles.playerDetailBody}>
-              <div className={styles.playerDetailRow}><span>School</span><span>{selected.school || '—'}</span></div>
-              <div className={styles.playerDetailRow}><span>Joined</span><span>{selected.joinedAt}</span></div>
-              <div className={styles.playerDetailRow}>
-                <span>Membership</span>
-                <Badge variant={selected.membershipActive ? 'green' : 'red'}>{selected.membershipActive ? 'Active' : 'Inactive'}</Badge>
+              <div className={styles.playerDetailBody}>
+                <div className={styles.playerDetailRow}><span>School</span><span>{selected.school || '—'}</span></div>
+                <div className={styles.playerDetailRow}><span>Joined</span><span>{selected.joinedAt}</span></div>
+                <div className={styles.playerDetailRow}>
+                  <span>Membership</span>
+                  <Badge variant={selected.membershipActive ? 'green' : 'red'}>
+                    {selected.membershipActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+                <div className={styles.playerDetailRow}>
+                  <span>Roles</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                    {userRoles
+                      .sort((a, b) => (ROLE_RANK[b] || 0) - (ROLE_RANK[a] || 0))
+                      .map(role => (
+                        <RoleBadge
+                          key={role} role={role}
+                          canRemove={!isPending}
+                          onRemove={() => handleRemoveRole(selected.id, role)}
+                        />
+                      ))
+                    }
+                    {!isPending && (
+                      <AddRoleDropdown
+                        currentRoles={userRoles}
+                        onAdd={role => handleAddRole(selected.id, role)}
+                      />
+                    )}
+                    {isPending && <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>Saving...</span>}
+                  </div>
+                </div>
               </div>
-              <div className={styles.playerDetailRow}>
-                <span>Role</span>
-                {selected.role === 'league_admin'
-                  ? <Badge variant="gold">League Admin</Badge>
-                  : <Badge variant="blue">Player</Badge>}
-              </div>
-            </div>
 
-            <div className={styles.playerDetailActions}>
-              <button className={styles.actionBtn} onClick={() => toggleMembership(selected)}>
-                {selected.membershipActive ? 'Deactivate Membership' : 'Activate Membership'}
-              </button>
+              <div className={styles.playerDetailActions}>
+                <button className={styles.actionBtn} onClick={() => toggleMembership(selected)}>
+                  {selected.membershipActive ? 'Deactivate Membership' : 'Activate Membership'}
+                </button>
 
-              {/* Role management — head admin only */}
-              <div className={styles.roleSection}>
-                <div className={styles.roleSectionTitle}>League Admin Access</div>
-                {selected.role === 'league_admin' ? (
-                  <div className={styles.roleGranted}>
-                    <div className={styles.roleGrantedInfo}>
-                      <Badge variant="gold">League Admin</Badge>
-                      <span className={styles.roleGrantedDesc}>Can manage leagues, tournaments, ladders, and social moderation.</span>
+                <div className={styles.roleSection}>
+                  <div className={styles.roleSectionTitle}>Role Management</div>
+                  {nonPlayerRoles.length === 0 ? (
+                    <div className={styles.rolePromote}>
+                      <p className={styles.rolePromoteDesc}>
+                        This player has no elevated roles. Use the "+ Role" button above to grant access.
+                      </p>
                     </div>
-                    <button
-                      className={styles.revokeBtn}
-                      disabled={roleLoading === selected.id}
-                      onClick={() => handleRoleChange(selected, 'player')}
-                    >
-                      {roleLoading === selected.id ? 'Revoking...' : '✕ Revoke League Admin'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className={styles.rolePromote}>
-                    <p className={styles.rolePromoteDesc}>
-                      Granting League Admin access allows this player to manage seasonal leagues, tournaments, the ranked ladder, flagged matches, and social feed moderation. They will not have access to HCEA programs, coaching, scholarships, or player management.
-                    </p>
-                    <button
-                      className={styles.promoteBtn}
-                      disabled={roleLoading === selected.id}
-                      onClick={() => handleRoleChange(selected, 'league_admin')}
-                    >
-                      {roleLoading === selected.id ? 'Granting...' : '⚙️ Add to League Admin Roster'}
-                    </button>
-                  </div>
-                )}
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {nonPlayerRoles
+                        .sort((a, b) => (ROLE_RANK[b] || 0) - (ROLE_RANK[a] || 0))
+                        .map(role => {
+                          const cfg = ROLE_CFG[role];
+                          const desc = {
+                            head_admin:   'Full platform access including all league admin permissions.',
+                            league_admin: 'Can manage leagues, tournaments, ladders, and social moderation.',
+                            coach:        'Can edit their coach profile and manage their schedule.',
+                            org_manager:  'Can manage HCEA youth organization players and teams.',
+                          }[role] || '';
+                          return (
+                            <div key={role} className={styles.roleGranted}>
+                              <div className={styles.roleGrantedInfo}>
+                                <RoleBadge role={role} canRemove={false} />
+                                <span className={styles.roleGrantedDesc}>{desc}</span>
+                              </div>
+                              <button
+                                className={styles.revokeBtn}
+                                disabled={isPending}
+                                onClick={() => handleRemoveRole(selected.id, role)}
+                              >
+                                {isPending ? '...' : `✕ Revoke ${cfg.label}`}
+                              </button>
+                            </div>
+                          );
+                        })
+                      }
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
 }
 
-// ── COACHES MANAGEMENT ────────────────────────────────────────────
 function CoachesManagement() {
   const [coaches, setCoaches]   = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -366,7 +546,7 @@ function CoachesManagement() {
   return (
     <div>
       <div className={styles.rosterMeta}>
-        {active.length} active · {hidden.length} hidden
+        {active.length} active Â· {hidden.length} hidden
       </div>
 
       <div className={styles.coachList}>
@@ -384,16 +564,16 @@ function CoachesManagement() {
               <div className={styles.coachGames}>{c.games.map(g => g.icon).join(' ')}</div>
             </div>
             <div className={styles.coachMeta}>
-              <div>⭐ {c.rating.toFixed(1)}</div>
+              <div>â­ {c.rating.toFixed(1)}</div>
               <div>{c.totalSessions}+ sessions</div>
-              <div>📍 {c.location}</div>
+              <div>ðŸ“ {c.location}</div>
             </div>
             <button
               className={`${styles.actionBtn} ${c.onRoster ? styles.hideBtn : styles.showBtn}`}
               onClick={() => handleToggle(c)}
               disabled={toggling === c.id}
             >
-              {toggling === c.id ? '...' : c.onRoster ? '🚫 Hide from Platform' : '✓ Restore to Platform'}
+              {toggling === c.id ? '...' : c.onRoster ? 'ðŸš« Hide from Platform' : 'âœ“ Restore to Platform'}
             </button>
           </div>
         ))}
@@ -408,7 +588,7 @@ function CoachesManagement() {
   );
 }
 
-// ── TOURNAMENT MANAGEMENT ─────────────────────────────────────────
+// â”€â”€ TOURNAMENT MANAGEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function TournamentManagement({ tournaments, onStart, onDelete }) {
   return (
     <div className={styles.tourneyList}>
@@ -416,7 +596,7 @@ function TournamentManagement({ tournaments, onStart, onDelete }) {
         <div key={t.id} className={styles.tourneyRow}>
           <div>
             <div className={styles.tourneyName}>{t.name}</div>
-            <div className={styles.tourneyMeta}>{t.game} · {t.format} · {t.date}</div>
+            <div className={styles.tourneyMeta}>{t.game} Â· {t.format} Â· {t.date}</div>
           </div>
           <div className={styles.tourneyStatus}>
             <Badge variant={t.phase === 'bracket' ? 'green' : t.phase === 'complete' ? 'blue' : 'gold'}>
@@ -426,7 +606,7 @@ function TournamentManagement({ tournaments, onStart, onDelete }) {
           </div>
           <div className={styles.tourneyActions}>
             {t.phase === 'registration' && t.registeredTeams.length >= 2 && (
-              <button className={styles.startBtn} onClick={() => onStart(t.id)}>🚀 Start</button>
+              <button className={styles.startBtn} onClick={() => onStart(t.id)}>ðŸš€ Start</button>
             )}
             <button className={styles.deleteBtn} onClick={() => onDelete(t.id)}>Delete</button>
           </div>
@@ -436,8 +616,8 @@ function TournamentManagement({ tournaments, onStart, onDelete }) {
   );
 }
 
-// ── MAIN ADMIN PANEL ──────────────────────────────────────────────
-// ─── FLAG HISTORY PANEL ───────────────────────────────────────────
+// â”€â”€ MAIN ADMIN PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€ FLAG HISTORY PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function FlagHistoryPanel() {
   const [history, setHistory]       = useState([]);
   const [summary, setSummary]       = useState(null);
@@ -466,7 +646,7 @@ function FlagHistoryPanel() {
 
   useEffect(() => { load(); }, [filterContext, filterCategory]);
 
-  const formatDate = (ts) => ts ? new Date(ts).toLocaleString() : '—';
+  const formatDate = (ts) => ts ? new Date(ts).toLocaleString() : 'â€”';
   const formatDays = (n) => n === 0 ? 'Expires today' : n === 1 ? '1 day left' : `${n} days left`;
 
   return (
@@ -490,7 +670,7 @@ function FlagHistoryPanel() {
 
       {/* Retention policy note */}
       <div style={{ background:'rgba(59,130,246,0.05)', border:'1px solid rgba(59,130,246,0.2)', padding:'0.7rem 1rem', fontSize:'0.82rem', color:'#8ba0c0', lineHeight:1.6 }}>
-        📋 <strong style={{color:'#e8f0ff'}}>Retention Policy:</strong> Resolved flags are kept for <strong style={{color:'#3b82f6'}}>7 days after the associated event ends</strong> (tournament completion date or league end date). Flags without a linked event expire 7 days after resolution. Records are then automatically purged.
+        ðŸ“‹ <strong style={{color:'#e8f0ff'}}>Retention Policy:</strong> Resolved flags are kept for <strong style={{color:'#3b82f6'}}>7 days after the associated event ends</strong> (tournament completion date or league end date). Flags without a linked event expire 7 days after resolution. Records are then automatically purged.
       </div>
 
       {/* Filters */}
@@ -528,17 +708,17 @@ function FlagHistoryPanel() {
             style={{ display:'flex', alignItems:'center', gap:'0.8rem', padding:'0.85rem 1rem', cursor:'pointer', flexWrap:'wrap' }}
             onClick={() => setExpanded(expanded === f.id ? null : f.id)}
           >
-            <span style={{ fontSize:'1rem' }}>🚩</span>
+            <span style={{ fontSize:'1rem' }}>ðŸš©</span>
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontFamily:"'Barlow Condensed',sans-serif", fontSize:'0.95rem', fontWeight:700, color:'#e8f0ff' }}>
                 Match <code style={{ fontSize:'0.82rem', color:'#8ba0c0' }}>{f.matchId}</code>
-                {' · '}
+                {' Â· '}
                 <span style={{ color: '#3b82f6', textTransform:'capitalize' }}>{f.context}</span>
-                {' · '}
+                {' Â· '}
                 <span style={{ color:'#e8f0ff' }}>{CATEGORY_LABELS[f.category] || f.category}</span>
               </div>
               <div style={{ fontSize:'0.72rem', color:'#6b7fa3', marginTop:'0.15rem' }}>
-                Flagged {formatDate(f.createdAt)} · Resolved {formatDate(f.resolvedAt)}
+                Flagged {formatDate(f.createdAt)} Â· Resolved {formatDate(f.resolvedAt)}
               </div>
             </div>
             <div style={{
@@ -548,9 +728,9 @@ function FlagHistoryPanel() {
               border: `1px solid ${f.daysLeft <= 2 ? 'rgba(239,68,68,0.3)' : f.daysLeft <= 5 ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'}`,
               padding:'0.2rem 0.6rem', flexShrink:0,
             }}>
-              ⏳ {formatDays(f.daysLeft)}
+              â³ {formatDays(f.daysLeft)}
             </div>
-            <span style={{ color:'#6b7fa3', fontSize:'0.8rem' }}>{expanded === f.id ? '▲' : '▼'}</span>
+            <span style={{ color:'#6b7fa3', fontSize:'0.8rem' }}>{expanded === f.id ? 'â–²' : 'â–¼'}</span>
           </div>
 
           {/* Expanded detail */}
@@ -573,7 +753,7 @@ function FlagHistoryPanel() {
                   <div style={{ fontSize:'0.65rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'#6b7fa3', fontWeight:700, marginBottom:'0.3rem' }}>Additional Notes ({f.notes.length})</div>
                   {f.notes.map((n, i) => (
                     <div key={i} style={{ fontSize:'0.82rem', color:'#8ba0c0', padding:'0.35rem 0.7rem', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
-                      {n.text} <span style={{ color:'#6b7fa3', fontSize:'0.7rem' }}>— {formatDate(n.ts)}</span>
+                      {n.text} <span style={{ color:'#6b7fa3', fontSize:'0.7rem' }}>â€” {formatDate(n.ts)}</span>
                     </div>
                   ))}
                 </div>
@@ -581,7 +761,7 @@ function FlagHistoryPanel() {
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.5rem', fontSize:'0.75rem', color:'#6b7fa3', marginTop:'0.2rem' }}>
                 <div>Event ID: <span style={{color:'#8ba0c0'}}>{f.eventId || 'Not linked'}</span></div>
                 <div>Context: <span style={{color:'#8ba0c0',textTransform:'capitalize'}}>{f.context}</span></div>
-                <div>Resolved by: <span style={{color:'#8ba0c0'}}>{f.resolvedBy || '—'}</span></div>
+                <div>Resolved by: <span style={{color:'#8ba0c0'}}>{f.resolvedBy || 'â€”'}</span></div>
                 <div>Expires: <span style={{color: f.daysLeft <= 2 ? '#ef4444' : '#8ba0c0'}}>{formatDate(f.expiresAt)}</span></div>
               </div>
             </div>
@@ -592,7 +772,7 @@ function FlagHistoryPanel() {
   );
 }
 
-// ─── FLAGGED MATCHES PANEL ────────────────────────────────────────
+// â”€â”€â”€ FLAGGED MATCHES PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function FlaggedMatchesPanel() {
   const { user } = useAuth();
   const [flags, setFlags]       = useState([]);
@@ -629,7 +809,7 @@ function FlaggedMatchesPanel() {
   if (flags.length === 0) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)' }}>
-        ✅ No flagged matches right now. All clear!
+        âœ… No flagged matches right now. All clear!
       </div>
     );
   }
@@ -645,8 +825,8 @@ function FlaggedMatchesPanel() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
             <div>
               <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: '1rem', fontWeight: 700 }}>
-                🚩 Match <code style={{ fontSize: '0.85rem', color: 'var(--silver)' }}>{f.matchId}</code>
-                {' — '}
+                ðŸš© Match <code style={{ fontSize: '0.85rem', color: 'var(--silver)' }}>{f.matchId}</code>
+                {' â€” '}
                 <span style={{ color: 'var(--red)' }}>{CATEGORY_LABELS[f.category] || f.category}</span>
                 <span style={{ marginLeft: '0.6rem', fontSize: '0.7rem', color: 'var(--muted)', fontWeight: 400, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                   {f.context}
@@ -689,7 +869,7 @@ function FlaggedMatchesPanel() {
                   fontFamily: "'Barlow',sans-serif",
                 }}
               >
-                {resolving === f.id ? '...' : '✓ Resolve'}
+                {resolving === f.id ? '...' : 'âœ“ Resolve'}
               </button>
             </div>
           </div>
@@ -700,13 +880,13 @@ function FlaggedMatchesPanel() {
 }
 
 
-// ── GAME MANAGEMENT ───────────────────────────────────────────────────────────
-const GAME_ICONS = ['🎮','⚔️','🔫','🎯','🏆','🚀','🎲','💥','🏗️','🦸','🏀','⚽','🎸','🃏','🐉','🌟','🔥','💡','🛡️','🎪'];
+// â”€â”€ GAME MANAGEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const GAME_ICONS = ['ðŸŽ®','âš”ï¸','ðŸ”«','ðŸŽ¯','ðŸ†','ðŸš€','ðŸŽ²','ðŸ’¥','ðŸ—ï¸','ðŸ¦¸','ðŸ€','âš½','ðŸŽ¸','ðŸƒ','ðŸ‰','ðŸŒŸ','ðŸ”¥','ðŸ’¡','ðŸ›¡ï¸','ðŸŽª'];
 const GAME_COLORS = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#06b6d4','#ec4899','#f97316','#84cc16','#c89b3c','#ff4655','#00b4d8'];
 const GAME_GENRES = ['MOBA','FPS','Battle Royale','Fighting','Sports','Auto Battler','Hero Shooter','Strategy','RPG','Puzzle','Racing','Card Game'];
 const GAME_PLATFORMS = ['PC','Console','PC/Console','Nintendo Switch','PC/Mobile','PC/Console/Mobile','Mobile'];
 
-// ── MAPS TAB ─────────────────────────────────────────────────────────────────
+// â”€â”€ MAPS TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const MAP_TYPES = ['Standard','Competitive','MLG','Starter','Counterpick','ARAM','Special','Battle Royale','Convoy','Domination','Convergence','Reload'];
 
 function MapsTab({ game, maps, setMaps, accentColor }) {
@@ -779,7 +959,7 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
     <div className={styles.gmEditBody}>
       <p className={styles.gmHelp}>
         Manage maps for {game.name}. Maps appear in tournament and league creation. Drag rows to reorder.
-        <span className={styles.gmMapSummary}>{activeMaps.length} active · {inactiveMaps.length} inactive · {maps.length} total</span>
+        <span className={styles.gmMapSummary}>{activeMaps.length} active Â· {inactiveMaps.length} inactive Â· {maps.length} total</span>
       </p>
 
       {/* Map list */}
@@ -800,7 +980,7 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
             onDragEnd={() => setDragOver(null)}
           >
             {/* Drag handle */}
-            <div className={styles.gmMapDrag} title="Drag to reorder">⠿</div>
+            <div className={styles.gmMapDrag} title="Drag to reorder">â ¿</div>
 
             {/* Active indicator */}
             <div className={`${styles.gmMapActive} ${map.active ? styles.gmMapActiveOn : ''}`}
@@ -808,7 +988,7 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
               title={map.active ? 'Active' : 'Inactive'} />
 
             {editing === map.id ? (
-              /* ── INLINE EDIT MODE ── */
+              /* â”€â”€ INLINE EDIT MODE â”€â”€ */
               <div className={styles.gmMapEditInline}>
                 <input className={styles.gmInput} value={editVals.name}
                   onChange={e => setEditVals(p => ({...p, name: e.target.value}))}
@@ -821,12 +1001,12 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
                   onChange={e => setEditVals(p => ({...p, notes: e.target.value}))}
                   placeholder="Notes (optional)" />
                 <div className={styles.gmMapEditBtns}>
-                  <button className={styles.gmSeasonToggle} onClick={() => saveEdit(map.id)}>✓ Save</button>
+                  <button className={styles.gmSeasonToggle} onClick={() => saveEdit(map.id)}>âœ“ Save</button>
                   <button className={styles.gmModeRemove} onClick={() => setEditing(null)}>Cancel</button>
                 </div>
               </div>
             ) : (
-              /* ── DISPLAY MODE ── */
+              /* â”€â”€ DISPLAY MODE â”€â”€ */
               <>
                 <div className={styles.gmMapInfo}>
                   <div className={styles.gmMapName} style={!map.active ? { opacity: 0.5 } : {}}>{map.name}</div>
@@ -837,13 +1017,13 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
                 </div>
 
                 <div className={styles.gmMapActions}>
-                  <button className={styles.gmMapEditBtn} onClick={() => openEdit(map)}>✏️ Edit</button>
+                  <button className={styles.gmMapEditBtn} onClick={() => openEdit(map)}>âœï¸ Edit</button>
                   <button
                     className={`${styles.gmSeasonToggle} ${map.active ? styles.gmSeasonToggleOn : ''}`}
                     onClick={() => toggleActive(map.id)}>
                     {map.active ? 'Active' : 'Inactive'}
                   </button>
-                  <button className={styles.gmSeasonDelete} onClick={() => deleteMap(map.id)}>🗑</button>
+                  <button className={styles.gmSeasonDelete} onClick={() => deleteMap(map.id)}>ðŸ—‘</button>
                 </div>
               </>
             )}
@@ -873,13 +1053,13 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
               <label>Notes / Modes Available</label>
               <input className={styles.gmInput} value={addForm.notes}
                 onChange={e => setAddForm(p => ({...p, notes: e.target.value}))}
-                placeholder="e.g. Available in all modes · Competitive legal"
+                placeholder="e.g. Available in all modes Â· Competitive legal"
                 onKeyDown={e => e.key === 'Enter' && addMap()} />
             </div>
           </div>
           <div className={styles.gmSeasonActions}>
             <button className={styles.gmAddBtn} onClick={addMap} disabled={saving || !addForm.name.trim()}>
-              {saving ? 'Adding…' : '+ Add Map'}
+              {saving ? 'Addingâ€¦' : '+ Add Map'}
             </button>
             <button className={styles.gmCancelSeason} onClick={() => setShowAdd(false)}>Cancel</button>
           </div>
@@ -955,23 +1135,23 @@ function GameManagement() {
                       : game.icon}
                   </div>
                   <div className={styles.gmCardBadges}>
-                    {game.featured && <span className={styles.gmBadgeFeatured}>⭐ Featured</span>}
-                    {game.hasLadder && <span className={styles.gmBadgeLadder}>🎮 Ladder</span>}
+                    {game.featured && <span className={styles.gmBadgeFeatured}>â­ Featured</span>}
+                    {game.hasLadder && <span className={styles.gmBadgeLadder}>ðŸŽ® Ladder</span>}
                     {!game.active && <span className={styles.gmBadgeInactive}>Inactive</span>}
                   </div>
                 </div>
                 <div className={styles.gmCardBody}>
                   <div className={styles.gmCardName} style={{ color: game.color }}>{game.name}</div>
-                  <div className={styles.gmCardMeta}>{game.genre} · {game.platform}</div>
+                  <div className={styles.gmCardMeta}>{game.genre} Â· {game.platform}</div>
                   <div className={styles.gmCardMeta}>{game.teamSize.label}</div>
                   <div className={styles.gmCardSeasons}>
                     {game.seasons.length > 0
-                      ? `${game.seasons.length} Season${game.seasons.length !== 1 ? 's' : ''} · ${game.seasons.find(s=>s.active) ? '🟢 Active' : '⚪ No Active Season'}`
+                      ? `${game.seasons.length} Season${game.seasons.length !== 1 ? 's' : ''} Â· ${game.seasons.find(s=>s.active) ? 'ðŸŸ¢ Active' : 'âšª No Active Season'}`
                       : 'No seasons'}
                   </div>
                 </div>
                 <div className={styles.gmCardFoot}>
-                  <button className={styles.gmCardEdit} onClick={e => { e.stopPropagation(); openGame(game); }}>Edit ›</button>
+                  <button className={styles.gmCardEdit} onClick={e => { e.stopPropagation(); openGame(game); }}>Edit â€º</button>
                   <button
                     className={`${styles.gmCardToggle} ${game.active ? styles.gmCardToggleOn : styles.gmCardToggleOff}`}
                     onClick={e => { e.stopPropagation(); toggleActive(game.id); }}>
@@ -1002,7 +1182,7 @@ function GameManagement() {
   );
 }
 
-// ── GAME DETAIL EDITOR ────────────────────────────────────────────────────────
+// â”€â”€ GAME DETAIL EDITOR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function GameDetailEditor({ game, onBack, onSaved }) {
   const [form, setForm] = useState({
     name: game.name, shortName: game.shortName, genre: game.genre,
@@ -1082,7 +1262,7 @@ function GameDetailEditor({ game, onBack, onSaved }) {
     <div className={styles.gmDetail}>
       {/* Header */}
       <div className={styles.gmDetailHeader}>
-        <button className={styles.gmBackBtn} onClick={onBack}>← All Games</button>
+        <button className={styles.gmBackBtn} onClick={onBack}>â† All Games</button>
         <div className={styles.gmDetailTitle}>
           <div className={styles.gmDetailIcon} style={{ background: form.color + '22', border: `2px solid ${form.color}`, overflow:'hidden' }}>
             {coverImage
@@ -1091,17 +1271,17 @@ function GameDetailEditor({ game, onBack, onSaved }) {
           </div>
           <div>
             <div className={styles.gmDetailName} style={{ color: form.color }}>{form.name}</div>
-            <div className={styles.gmDetailSub}>{form.genre} · {form.platform}</div>
+            <div className={styles.gmDetailSub}>{form.genre} Â· {form.platform}</div>
           </div>
         </div>
         <button className={`${styles.gmSaveBtn} ${saved ? styles.gmSaveBtnSaved : ''}`} onClick={save} disabled={saving}>
-          {saving ? 'Saving…' : saved ? '✓ Saved!' : 'Save Changes'}
+          {saving ? 'Savingâ€¦' : saved ? 'âœ“ Saved!' : 'Save Changes'}
         </button>
       </div>
 
       {/* Edit tabs */}
       <div className={styles.gmEditTabs}>
-        {[['info','📋 Info & Settings'],['modes','🎯 Game Modes'],['maps','🗺️ Maps'],['seasons','📅 Seasons']].map(([id,label]) => (
+        {[['info','ðŸ“‹ Info & Settings'],['modes','ðŸŽ¯ Game Modes'],['maps','ðŸ—ºï¸ Maps'],['seasons','ðŸ“… Seasons']].map(([id,label]) => (
           <button key={id} className={`${styles.gmEditTab} ${editTab===id?styles.gmEditTabOn:''}`}
             onClick={() => setEditTab(id)}>{label}
             {id === 'seasons' && <span className={styles.gmTabBadge}>{seasons.length}</span>}
@@ -1114,7 +1294,7 @@ function GameDetailEditor({ game, onBack, onSaved }) {
       {editTab === 'info' && (
         <div className={styles.gmEditBody}>
 
-          {/* ── COVER IMAGE UPLOADER ── */}
+          {/* â”€â”€ COVER IMAGE UPLOADER â”€â”€ */}
           <div className={styles.gmCoverSection}>
             <div className={styles.gmCoverLabel}>Game Cover / Title Art</div>
             <div className={styles.gmCoverRow}>
@@ -1129,7 +1309,7 @@ function GameDetailEditor({ game, onBack, onSaved }) {
                         await gameApi.removeCoverImage(game.id);
                         setCoverImage('');
                         onSaved({ ...game, coverImage: '' });
-                      }}>✕ Remove</button>
+                      }}>âœ• Remove</button>
                     </div>
                   </>
                 ) : (
@@ -1149,7 +1329,7 @@ function GameDetailEditor({ game, onBack, onSaved }) {
                   onClick={() => coverImageRef.current.click()}
                   disabled={imgUploading}
                 >
-                  {imgUploading ? '⏳ Uploading…' : coverImage ? '🖼️ Replace Image' : '📁 Upload Cover Art'}
+                  {imgUploading ? 'â³ Uploadingâ€¦' : coverImage ? 'ðŸ–¼ï¸ Replace Image' : 'ðŸ“ Upload Cover Art'}
                 </button>
                 <input
                   ref={coverImageRef}
@@ -1174,7 +1354,7 @@ function GameDetailEditor({ game, onBack, onSaved }) {
                   }}
                 />
                 {coverImage && (
-                  <p className={styles.gmCoverHint}>✓ Cover image set — shown on game cards and throughout the platform.</p>
+                  <p className={styles.gmCoverHint}>âœ“ Cover image set â€” shown on game cards and throughout the platform.</p>
                 )}
               </div>
             </div>
@@ -1263,14 +1443,14 @@ function GameDetailEditor({ game, onBack, onSaved }) {
             {modes.length === 0 && <div className={styles.gmEmpty}>No modes added yet.</div>}
             {modes.map((mode, i) => (
               <div key={i} className={styles.gmModeRow}>
-                <div className={styles.gmModeIcon} style={{ background: form.color + '22' }}>🎯</div>
+                <div className={styles.gmModeIcon} style={{ background: form.color + '22' }}>ðŸŽ¯</div>
                 <span className={styles.gmModeName}>{mode}</span>
-                <button className={styles.gmModeRemove} onClick={() => removeMode(i)}>✕</button>
+                <button className={styles.gmModeRemove} onClick={() => removeMode(i)}>âœ•</button>
               </div>
             ))}
           </div>
           <div className={styles.gmModeAdd}>
-            <input className={styles.gmInput} placeholder="Add new mode (e.g. Ranked 5v5)…"
+            <input className={styles.gmInput} placeholder="Add new mode (e.g. Ranked 5v5)â€¦"
               value={newMode} onChange={e => setNewMode(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addMode()}/>
             <button className={styles.gmAddModeBtn} onClick={addMode} disabled={!newMode.trim()}>+ Add</button>
@@ -1303,16 +1483,16 @@ function GameDetailEditor({ game, onBack, onSaved }) {
                 <div className={styles.gmSeasonLeft}>
                   <div className={styles.gmSeasonName}>
                     {season.name}
-                    {season.active && <span className={styles.gmSeasonActiveBadge}>● Active</span>}
+                    {season.active && <span className={styles.gmSeasonActiveBadge}>â— Active</span>}
                   </div>
-                  <div className={styles.gmSeasonDates}>{season.startDate} — {season.endDate}</div>
+                  <div className={styles.gmSeasonDates}>{season.startDate} â€” {season.endDate}</div>
                 </div>
                 <div className={styles.gmSeasonActions}>
                   <button className={`${styles.gmSeasonToggle} ${season.active ? styles.gmSeasonToggleOn : ''}`}
                     onClick={() => toggleSeasonActive(season.id, season.active)}>
                     {season.active ? 'Deactivate' : 'Set Active'}
                   </button>
-                  <button className={styles.gmSeasonDelete} onClick={() => deleteSeason(season.id)}>🗑</button>
+                  <button className={styles.gmSeasonDelete} onClick={() => deleteSeason(season.id)}>ðŸ—‘</button>
                 </div>
               </div>
             ))}
@@ -1358,11 +1538,11 @@ function GameDetailEditor({ game, onBack, onSaved }) {
   );
 }
 
-// ── CREATE GAME MODAL ─────────────────────────────────────────────────────────
+// â”€â”€ CREATE GAME MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function CreateGameModal({ onClose, onCreated }) {
   const [form, setForm] = useState({
     name: '', shortName: '', genre: 'FPS', platform: 'PC',
-    icon: '🎮', color: '#3b82f6',
+    icon: 'ðŸŽ®', color: '#3b82f6',
     teamSizeMin: 5, teamSizeMax: 5, teamSizeLabel: '5v5',
     featured: false, hasLadder: false,
   });
@@ -1387,7 +1567,7 @@ function CreateGameModal({ onClose, onCreated }) {
     <div className={styles.modalBackdrop} onClick={e => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal} style={{ maxWidth: 540 }}>
         <div className={styles.modalHeader}><span className={styles.modalTitle}>Add New Game</span>
-          <button className={styles.modalClose} onClick={onClose}>✕</button></div>
+          <button className={styles.modalClose} onClick={onClose}>âœ•</button></div>
         <div className={styles.modalBody}>
           <div className={styles.gmFormGrid}>
             <div className={styles.gmField}>
@@ -1460,7 +1640,7 @@ function CreateGameModal({ onClose, onCreated }) {
         <div className={styles.modalFooter}>
           <button className={styles.actionBtn} onClick={onClose}>Cancel</button>
           <button className={styles.promoteBtn} disabled={saving||!form.name.trim()} onClick={submit}>
-            {saving?'Creating…':'Add Game'}
+            {saving?'Creatingâ€¦':'Add Game'}
           </button>
         </div>
       </div>
@@ -1492,25 +1672,25 @@ export default function AdminPanel() {
     setTournaments(prev => prev.filter(t => t.id !== id));
   };
 
-  // ── Tab definitions ───────────────────────────────────────────
-  // 'all'        → both head_admin and league_admin see this tab
-  // 'head_admin' → only head_admin (and legacy admin) can see this tab
+  // â”€â”€ Tab definitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // 'all'        â†’ both head_admin and league_admin see this tab
+  // 'head_admin' â†’ only head_admin (and legacy admin) can see this tab
   // league_admin can access: leagues, tournaments, create, flags, flag_history, social_mod
   // league_admin cannot access: orgs (HCEA), coach_apps, scholarships, players, coaches
   const ALL_TABS = [
-    { id: 'leagues',      label: '🏅 Seasonal Leagues',     access: 'all' },
-    { id: 'tournaments',  label: '🏆 Tournaments',          access: 'all' },
+    { id: 'leagues',      label: 'ðŸ… Seasonal Leagues',     access: 'all' },
+    { id: 'tournaments',  label: 'ðŸ† Tournaments',          access: 'all' },
     { id: 'create',       label: '+ Create Tournament',     access: 'all' },
-    { id: 'flags',        label: '🚩 Flagged Matches',      access: 'all' },
-    { id: 'flag_history', label: '📋 Flag History',         access: 'all' },
-    { id: 'social_mod',   label: '💬 Social Moderation',    access: 'all' },
-    // Head admin only — HCEA and people management
-    { id: 'orgs',         label: '🏢 HCEA Organizations',   access: 'head_admin' },
-    { id: 'coach_apps',   label: '🎓 Coach Applications',   access: 'head_admin' },
-    { id: 'scholarships', label: '🏅 Scholarship Apps',     access: 'head_admin' },
-    { id: 'players',      label: '👥 Players',              access: 'head_admin' },
-    { id: 'coaches',      label: '🎓 Coach Roster',         access: 'head_admin' },
-    { id: 'games',        label: '🎮 Game Management',       access: 'head_admin' },
+    { id: 'flags',        label: 'ðŸš© Flagged Matches',      access: 'all' },
+    { id: 'flag_history', label: 'ðŸ“‹ Flag History',         access: 'all' },
+    { id: 'social_mod',   label: 'ðŸ’¬ Social Moderation',    access: 'all' },
+    // Head admin only â€” HCEA and people management
+    { id: 'orgs',         label: 'ðŸ¢ HCEA Organizations',   access: 'head_admin' },
+    { id: 'coach_apps',   label: 'ðŸŽ“ Coach Applications',   access: 'head_admin' },
+    { id: 'scholarships', label: 'ðŸ… Scholarship Apps',     access: 'head_admin' },
+    { id: 'players',      label: 'ðŸ‘¥ Players',              access: 'head_admin' },
+    { id: 'coaches',      label: 'ðŸŽ“ Coach Roster',         access: 'head_admin' },
+    { id: 'games',        label: 'ðŸŽ® Game Management',       access: 'head_admin' },
   ];
 
   const TABS = ALL_TABS.filter(t =>
@@ -1535,7 +1715,7 @@ export default function AdminPanel() {
         </div>
         <p>
           {isHeadAdmin
-            ? 'Full platform management — tournaments, leagues, HCEA organizations, coaching, players.'
+            ? 'Full platform management â€” tournaments, leagues, HCEA organizations, coaching, players.'
             : 'Manage leagues, tournaments, flagged matches, and social feed moderation.'}
         </p>
       </div>
@@ -1559,7 +1739,7 @@ export default function AdminPanel() {
             <option key={t.id} value={t.id}>{t.label}</option>
           ))}
         </select>
-        <span className={styles.tabSelectArrow}>▾</span>
+        <span className={styles.tabSelectArrow}>â–¾</span>
       </div>
 
       <div className={styles.body}>
@@ -1574,22 +1754,22 @@ export default function AdminPanel() {
         {tab === 'orgs' && <AdminOrgs />}
         {tab === 'scholarships' && <div><div className={styles.sectionTitle}>Scholarship Applications</div><ScholarshipApplications /></div>}
         {tab === 'flags' && <div><div className={styles.sectionTitle}>Flagged Matches</div><FlaggedMatchesPanel /></div>}
-        {tab === 'flag_history' && <div><div className={styles.sectionTitle}>Flag History · Retained 1 Week After Event Ends</div><FlagHistoryPanel /></div>}
+        {tab === 'flag_history' && <div><div className={styles.sectionTitle}>Flag History Â· Retained 1 Week After Event Ends</div><FlagHistoryPanel /></div>}
         {tab === 'social_mod' && (
           <div>
             <div className={styles.sectionTitle}>Social Feed Moderation</div>
             <div style={{padding:'1.5rem',background:'rgba(59,130,246,0.04)',border:'1px solid rgba(59,130,246,0.15)',marginBottom:'1rem'}}>
               <div style={{fontSize:'0.8rem',color:'#8ba0c0',lineHeight:1.7}}>
                 <strong style={{color:'#e8f0ff'}}>Social moderation tools live in the Community Feed.</strong><br/>
-                Navigate to <strong style={{color:'#3b82f6'}}>Community Feed → Social Feed</strong> in the sidebar to view all posts, pin/unpin, flag, timeout users, and delete content.<br/>
+                Navigate to <strong style={{color:'#3b82f6'}}>Community Feed â†’ Social Feed</strong> in the sidebar to view all posts, pin/unpin, flag, timeout users, and delete content.<br/>
                 Flagged posts from the feed also appear in <strong style={{color:'#3b82f6'}}>Flagged Matches</strong> for cross-reference on match-related disputes.
               </div>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'1rem'}}>
               {[
-                {icon:'📌',label:'Pin/Unpin Posts',desc:'Pinned posts float to the top of all users\' feeds.'},
-                {icon:'🚩',label:'Flag & Remove',desc:'Flag or delete posts violating community guidelines.'},
-                {icon:'⏱',label:'User Timeouts',desc:'Temporarily restrict users from posting (15min–7 days).'},
+                {icon:'ðŸ“Œ',label:'Pin/Unpin Posts',desc:'Pinned posts float to the top of all users\' feeds.'},
+                {icon:'ðŸš©',label:'Flag & Remove',desc:'Flag or delete posts violating community guidelines.'},
+                {icon:'â±',label:'User Timeouts',desc:'Temporarily restrict users from posting (15minâ€“7 days).'},
               ].map(item => (
                 <div key={item.label} style={{padding:'1rem',background:'rgba(0,0,0,0.2)',border:'1px solid rgba(255,255,255,0.07)'}}>
                   <div style={{fontSize:'1.4rem',marginBottom:'0.4rem'}}>{item.icon}</div>

@@ -2,20 +2,21 @@ import { createContext, useContext, useState, useCallback, useEffect } from 'rea
 import { supabase } from '../supabaseClient';
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  AuthContext — Real Supabase Auth
+//  AuthContext – Real Supabase Auth
 //
-//  Roles (stored in public.profiles.role):
-//    'head_admin'   — Full access
-//    'league_admin' — Tournaments, leagues, flags, social mod only
-//    'admin'        — Legacy alias = head_admin behavior
-//    'coach'        — Edit own coach profile and schedule
-//    'player'       — Default role for all new sign-ups
-//    'org_manager'  — Manage HCEA youth org
+//  Roles (stored in public.profiles.roles as text[]):
+//    'head_admin'   – Full access (inherits league_admin permissions)
+//    'league_admin' – Tournaments, leagues, flags, social mod only
+//    'coach'        – Edit own coach profile and schedule
+//    'org_manager'  – Manage HCEA youth org
+//    'player'       – Default base role (always present)
+//
+//  Users can hold MULTIPLE roles simultaneously (e.g. head_admin + coach).
+//  Legacy profiles.role string is kept in sync as the primary/highest role.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext(null);
 
-// Helper: calculate age from a date-of-birth string
 function calcAge(dob) {
   if (!dob) return null;
   const today = new Date();
@@ -26,12 +27,31 @@ function calcAge(dob) {
   return age;
 }
 
-// Helper: map a Supabase profiles row to the user shape the app expects
+const ROLE_RANK = { head_admin: 5, admin: 5, league_admin: 4, coach: 3, org_manager: 2, player: 1 };
+
+function getPrimaryRole(roles) {
+  return [...roles].sort((a, b) => (ROLE_RANK[b] || 0) - (ROLE_RANK[a] || 0))[0] || 'player';
+}
+
+// Normalize roles from a Supabase profiles row.
+// Prefers the new roles[] column; falls back to legacy role string.
+function normalizeRolesFromProfile(profile) {
+  if (Array.isArray(profile.roles) && profile.roles.length > 0) {
+    const r = profile.roles.map(x => x.toLowerCase());
+    return r.includes('player') ? r : [...r, 'player'];
+  }
+  const legacy = profile.role?.toLowerCase();
+  if (legacy && legacy !== 'player') return [legacy, 'player'];
+  return ['player'];
+}
+
 function profileToUser(profile) {
   if (!profile) return null;
+  const roles = normalizeRolesFromProfile(profile);
   return {
     id:               profile.id,
-    role:             profile.role || 'player',
+    roles,                              // ← NEW: full array e.g. ['head_admin','coach','player']
+    role:             getPrimaryRole(roles), // ← LEGACY: highest role string for compat
     firstName:        profile.first_name,
     lastName:         profile.last_name,
     email:            profile.email,
@@ -60,7 +80,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
 
-  // Fetch profile row and update state
   const loadProfile = useCallback(async (supabaseUser) => {
     if (!supabaseUser) { setUser(null); return; }
     const { data: profile, error: profileError } = await supabase
@@ -76,23 +95,10 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // On mount: restore session based on remember-me preference.
-  // - "Keep me logged in" checked → localStorage flag → persists across ALL browser closes/refreshes
-  // - Unchecked → session-only flag written to BOTH sessionStorage AND localStorage with a
-  //   session ID so hard refresh (Ctrl+F5) doesn't sign the user out (only closing the browser does)
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        const rememberMe = localStorage.getItem('hcg_remember_me');
-
-        if (rememberMe) {
-          // "Keep me logged in" was checked — always restore regardless of refresh type
-          await loadProfile(session.user);
-        } else {
-          // No remember-me — still restore the session (Supabase handles expiry)
-          // The session will naturally expire; we don't force sign-out on refresh
-          await loadProfile(session.user);
-        }
+        await loadProfile(session.user);
       } else {
         setUser(null);
       }
@@ -105,7 +111,6 @@ export function AuthProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
-      // Track remember-me preference
       if (rememberMe) {
         localStorage.setItem('hcg_remember_me', '1');
         sessionStorage.removeItem('hcg_session_only');
@@ -128,22 +133,18 @@ export function AuthProvider({ children }) {
     }
   }, [loadProfile]);
 
-  // REGISTER — new users are always 'player' by default
+  // REGISTER – new users always start as ['player']
   const register = useCallback(async (formData) => {
     setLoading(true);
     setError(null);
     try {
       const { firstName, lastName, email, password, dob, phone, school, grade } = formData;
-
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
-        options: {
-          data: { first_name: firstName, last_name: lastName },
-        },
+        options: { data: { first_name: firstName, last_name: lastName } },
       });
       if (signUpError) throw new Error(signUpError.message);
-
       const userId = data.user?.id;
       if (userId) {
         await supabase.from('profiles').update({
@@ -155,9 +156,10 @@ export function AuthProvider({ children }) {
           grade:        grade  || null,
           avatar_color: '#059669',
           member_since: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          role:         'player',
+          roles:        ['player'],
         }).eq('id', userId);
       }
-
       return { success: true };
     } catch (err) {
       setError(err.message);
@@ -192,12 +194,7 @@ export function AuthProvider({ children }) {
       if (updates.games       !== undefined) dbUpdates.games        = updates.games;
       if (updates.avatarColor !== undefined) dbUpdates.avatar_color = updates.avatarColor;
       if (updates.avatarImg   !== undefined) dbUpdates.avatar_img   = updates.avatarImg;
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update(dbUpdates)
-        .eq('id', user.id);
-
+      const { error: updateError } = await supabase.from('profiles').update(dbUpdates).eq('id', user.id);
       if (updateError) throw new Error(updateError.message);
       setUser(prev => ({ ...prev, ...updates, age: calcAge(updates.dob ?? prev?.dob) }));
       return { success: true };
@@ -208,14 +205,19 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  // ROLE HELPERS — identical shape to before so nothing else in the app breaks
-  const isAdmin        = user?.role === 'admin' || user?.role === 'head_admin' || user?.role === 'league_admin';
-  const isHeadAdmin    = user?.role === 'head_admin' || user?.role === 'admin';
-  const isLeagueAdmin  = user?.role === 'league_admin';
-  const isCoach        = user?.role === 'coach';
-  const isPlayer       = user?.role === 'player';
-  const isOrgManager   = user?.role === 'org_manager';
-  const hasRole        = (...roles) => roles.includes(user?.role);
+  // ── ROLE HELPERS ──────────────────────────────────────────────────────────
+  // All checks now use roles[] so multi-role users work correctly.
+  const userRoles     = user?.roles || (user?.role ? [user.role] : ['player']);
+
+  const isAdmin       = userRoles.some(r => ['admin','head_admin','league_admin'].includes(r));
+  const isHeadAdmin   = userRoles.some(r => ['head_admin','admin'].includes(r));
+  // head_admin inherits league_admin access
+  const isLeagueAdmin = userRoles.includes('league_admin') || isHeadAdmin;
+  const isCoach       = userRoles.includes('coach');
+  const isPlayer      = userRoles.includes('player');
+  const isOrgManager  = userRoles.includes('org_manager');
+  // hasRole(...roles) – true if user holds ANY of the given roles
+  const hasRole       = (...roles) => roles.some(r => userRoles.includes(r));
 
   const leagueAdminCan = {
     tournaments: true, leagues: true,
