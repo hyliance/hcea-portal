@@ -3,6 +3,8 @@
 //  All mock data lives here. Replace each function body with real fetch() calls.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { supabase } from '../supabaseClient';
+
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
 const delay = ms => new Promise(r => setTimeout(r, ms));
 
@@ -1085,31 +1087,53 @@ export const contactApi = {
 // ─────────────────────────────────────────────
 //  ADMIN: USERS API
 // ─────────────────────────────────────────────
-let MOCK_PLAYERS = [
-  { id: 'user_001', name: 'Alex Rivera',  email: 'alexrivera@email.com', school: 'Rapid City Stevens HS', role: 'player',       membershipActive: true,  joinedAt: '2025-01-01' },
-  { id: 'user_010', name: 'Casey Park',   email: 'casey@email.com',      school: 'Aberdeen Central HS',   role: 'player',       membershipActive: true,  joinedAt: '2025-01-20' },
-  { id: 'user_020', name: 'Blake Torres', email: 'blake@email.com',      school: 'Sioux Falls Lincoln',   role: 'player',       membershipActive: false, joinedAt: '2025-02-01' },
-  { id: 'user_030', name: 'Jordan Kim',   email: 'jordan@email.com',     school: 'Brookings HS',          role: 'league_admin', membershipActive: true,  joinedAt: '2025-01-10' },
-];
-
 export const adminApi = {
-  getPlayers: async () => { await delay(400); return [...MOCK_PLAYERS]; },
+  // Fetch all profiles from Supabase — shows every real registered user
+  getPlayers: async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email, school, grade, role, created_at')
+      .order('created_at', { ascending: false });
+    if (error) { console.error('getPlayers error:', error.message); return []; }
+    return (data || []).map(p => ({
+      id:               p.id,
+      name:             `${p.first_name || ''} ${p.last_name || ''}`.trim() || p.email,
+      email:            p.email,
+      school:           p.school || '',
+      grade:            p.grade  || '',
+      role:             p.role   || 'player',
+      membershipActive: false,
+      joinedAt:         p.created_at ? p.created_at.slice(0, 10) : '',
+    }));
+  },
+
   updatePlayer: async (userId, updates) => {
-    await delay(300);
-    MOCK_PLAYERS = MOCK_PLAYERS.map(p => p.id === userId ? { ...p, ...updates } : p);
+    const { error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', userId);
+    if (error) return { success: false, error: error.message };
     return { success: true };
   },
+
   deletePlayer: async (userId) => {
-    await delay(300);
-    MOCK_PLAYERS = MOCK_PLAYERS.filter(p => p.id !== userId);
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+    if (error) return { success: false, error: error.message };
     return { success: true };
   },
+
   // Head admin only — promote player to league_admin or revoke back to player
   setPlayerRole: async (userId, role) => {
-    await delay(350);
-    const valid = ['player', 'league_admin'];
+    const valid = ['player', 'league_admin', 'admin', 'head_admin', 'coach', 'org_manager'];
     if (!valid.includes(role)) return { success: false, error: 'Invalid role.' };
-    MOCK_PLAYERS = MOCK_PLAYERS.map(p => p.id === userId ? { ...p, role } : p);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role })
+      .eq('id', userId);
+    if (error) return { success: false, error: error.message };
     return { success: true };
   },
 };
@@ -1528,13 +1552,18 @@ export const matchRoomApi = {
   },
 
   // Report result of ONE game in the series
-  reportGame: async (matchId, reportingTeamId, winnerTeamId, losingTeamId) => {
+  reportGame: async (matchId, reportingTeamId, winnerTeamId, losingTeamId, score1, score2) => {
     await delay(300);
     const room = MATCH_ROOMS[matchId];
     if (!room) return { success: false };
     const gameNum = room.games.length + 1;
+    // Normalize scores: team1 score first, team2 score second
+    const team1Id = room.team1Id || winnerTeamId;
+    const s1 = score1 != null ? score1 : null;
+    const s2 = score2 != null ? score2 : null;
     room.games.push({
       gameNum, reportingTeamId, winnerTeamId, losingTeamId,
+      score1: s1, score2: s2,
       confirmedBy: null, confirmed: false, ts: Date.now(),
     });
     room.chat.push({
