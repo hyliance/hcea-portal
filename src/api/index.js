@@ -1145,4 +1145,675 @@ export const adminApi = {
   },
 };
 
+export const orgsApi = {
+  // ── Admin endpoints ──
+  getAll: async () => { await delay(350); return [...MOCK_ORGS]; },
 
+  create: async (data) => {
+    await delay(500);
+    const org = { id: `org_${Date.now()}`, ...data, createdAt: new Date().toISOString().split('T')[0], active: true };
+    MOCK_ORGS.push(org);
+    // Also create the org manager user
+    return { success: true, org };
+  },
+
+  update: async (id, updates) => {
+    await delay(400);
+    MOCK_ORGS = MOCK_ORGS.map(o => o.id === id ? { ...o, ...updates } : o);
+    return { success: true };
+  },
+
+  delete: async (id) => {
+    await delay(300);
+    MOCK_ORGS = MOCK_ORGS.filter(o => o.id !== id);
+    return { success: true };
+  },
+
+  // ── Org manager endpoints ──
+  getMyOrg: async (managerId) => {
+    await delay(300);
+    return MOCK_ORGS.find(o => o.managerId === managerId) || null;
+  },
+
+  // ── Youth Players ──
+  getYouthPlayers: async (orgId) => {
+    await delay(350);
+    return MOCK_YOUTH_PLAYERS.filter(p => p.orgId === orgId);
+  },
+
+  createYouthPlayer: async (orgId, data) => {
+    await delay(500);
+    const player = {
+      id: `youth_${Date.now()}`,
+      orgId, ...data,
+      teamIds: [], tournamentIds: [],
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    MOCK_YOUTH_PLAYERS.push(player);
+    return { success: true, player };
+  },
+
+  updateYouthPlayer: async (playerId, updates) => {
+    await delay(400);
+    MOCK_YOUTH_PLAYERS = MOCK_YOUTH_PLAYERS.map(p => p.id === playerId ? { ...p, ...updates } : p);
+    return { success: true };
+  },
+
+  deleteYouthPlayer: async (playerId) => {
+    await delay(300);
+    MOCK_YOUTH_PLAYERS = MOCK_YOUTH_PLAYERS.filter(p => p.id !== playerId);
+    return { success: true };
+  },
+
+  // ── Youth Teams ──
+  getYouthTeams: async (orgId) => {
+    await delay(300);
+    return MOCK_YOUTH_TEAMS.filter(t => t.orgId === orgId);
+  },
+
+  createYouthTeam: async (orgId, data) => {
+    await delay(500);
+    const team = { id: `yteam_${Date.now()}`, orgId, ...data, memberIds: [], createdAt: new Date().toISOString().split('T')[0] };
+    MOCK_YOUTH_TEAMS.push(team);
+    return { success: true, team };
+  },
+
+  addPlayerToTeam: async (teamId, playerId) => {
+    await delay(300);
+    const team = MOCK_YOUTH_TEAMS.find(t => t.id === teamId);
+    if (team && !team.memberIds.includes(playerId)) {
+      team.memberIds.push(playerId);
+      MOCK_YOUTH_PLAYERS = MOCK_YOUTH_PLAYERS.map(p => p.id === playerId ? { ...p, teamIds: [...(p.teamIds||[]), teamId] } : p);
+    }
+    return { success: true };
+  },
+
+  removePlayerFromTeam: async (teamId, playerId) => {
+    await delay(300);
+    const team = MOCK_YOUTH_TEAMS.find(t => t.id === teamId);
+    if (team) team.memberIds = team.memberIds.filter(id => id !== playerId);
+    MOCK_YOUTH_PLAYERS = MOCK_YOUTH_PLAYERS.map(p =>
+      p.id === playerId ? { ...p, teamIds: (p.teamIds||[]).filter(id => id !== teamId) } : p
+    );
+    return { success: true };
+  },
+
+  deleteYouthTeam: async (teamId) => {
+    await delay(300);
+    MOCK_YOUTH_TEAMS = MOCK_YOUTH_TEAMS.filter(t => t.id !== teamId);
+    return { success: true };
+  },
+
+  // ── Register youth player for tournament ──
+  registerYouthForTournament: async (playerId, tournamentId) => {
+    await delay(400);
+    MOCK_YOUTH_PLAYERS = MOCK_YOUTH_PLAYERS.map(p =>
+      p.id === playerId ? { ...p, tournamentIds: [...(p.tournamentIds||[]), tournamentId] } : p
+    );
+    return { success: true };
+  },
+};
+
+// ─────────────────────────────────────────────
+//  MATCH ROOM API
+// ─────────────────────────────────────────────
+
+const SERIES_WINS_NEEDED = { 'bo1': 1, 'bo3': 2, 'bo5': 3, 'bo7': 4 };
+
+let MATCH_ROOMS = {
+  // Pre-seeded room for the live demo match
+  'm4': {
+    matchId: 'm4',
+    tournamentId: 't4',
+    seriesFormat: 'bo3',
+    games: [],        // individual game results within the series
+    status: 'pending',
+    chat: [
+      { id: 'msg_001', userId: 'user_admin', userName: 'Admin', role: 'admin', text: '👋 Welcome to the match room! Use this chat to coordinate your match start.', ts: Date.now() - 480000, system: false },
+      { id: 'msg_002', userId: 'sys', userName: 'System', role: 'system', text: 'Match room opened. Series format: Best of 3.', ts: Date.now() - 470000, system: true },
+    ],
+  },
+  'm5': {
+    matchId: 'm5',
+    tournamentId: 't4',
+    seriesFormat: 'bo3',
+    games: [],
+    status: 'pending',
+    chat: [
+      { id: 'msg_010', userId: 'sys', userName: 'System', role: 'system', text: 'Match room opened. Series format: Best of 3.', ts: Date.now() - 300000, system: true },
+    ],
+  },
+};
+
+export const matchRoomApi = {
+
+  // Get or create a match room
+  getRoom: async (tournamentId, matchId) => {
+    await delay(300);
+    if (!MATCH_ROOMS[matchId]) {
+      // Auto-create room when first opened
+      MATCH_ROOMS[matchId] = {
+        matchId, tournamentId,
+        seriesFormat: 'bo3',
+        games: [], status: 'pending',
+        chat: [
+          { id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system',
+            text: 'Match room opened. Use this chat to coordinate your match start and report scores.', ts: Date.now(), system: true },
+        ],
+      };
+    }
+    return { ...MATCH_ROOMS[matchId] };
+  },
+
+  // Update series format (admin or both team captains can set)
+  setSeriesFormat: async (matchId, format) => {
+    await delay(200);
+    if (!MATCH_ROOMS[matchId]) return { success: false };
+    MATCH_ROOMS[matchId].seriesFormat = format;
+    // Add system message
+    const label = { bo1:'Best of 1', bo3:'Best of 3', bo5:'Best of 5', bo7:'Best of 7' }[format];
+    MATCH_ROOMS[matchId].chat.push({
+      id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system',
+      text: `Series format changed to ${label}.`, ts: Date.now(), system: true,
+    });
+    return { success: true };
+  },
+
+  // Send a chat message
+  sendMessage: async (matchId, userId, userName, role, text) => {
+    await delay(150);
+    if (!MATCH_ROOMS[matchId]) return { success: false };
+    const msg = { id: `msg_${Date.now()}_${Math.random().toString(36).slice(2,6)}`, userId, userName, role, text: text.trim(), ts: Date.now(), system: false };
+    MATCH_ROOMS[matchId].chat.push(msg);
+    return { success: true, message: msg };
+  },
+
+  // Report result of ONE game in the series
+  reportGame: async (matchId, reportingTeamId, winnerTeamId, losingTeamId) => {
+    await delay(300);
+    const room = MATCH_ROOMS[matchId];
+    if (!room) return { success: false };
+    const gameNum = room.games.length + 1;
+    room.games.push({
+      gameNum, reportingTeamId, winnerTeamId, losingTeamId,
+      confirmedBy: null, confirmed: false, ts: Date.now(),
+    });
+    room.chat.push({
+      id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system',
+      text: `Game ${gameNum} reported — waiting for opponent confirmation.`, ts: Date.now(), system: true,
+    });
+    return { success: true, gameNum };
+  },
+
+  // Confirm a game result
+  confirmGame: async (matchId, gameNum, confirmingTeamId) => {
+    await delay(300);
+    const room = MATCH_ROOMS[matchId];
+    if (!room) return { success: false };
+    const game = room.games.find(g => g.gameNum === gameNum && !g.confirmed);
+    if (!game) return { success: false };
+    game.confirmed = true;
+    game.confirmedBy = confirmingTeamId;
+
+    // Tally wins
+    const winsNeeded = SERIES_WINS_NEEDED[room.seriesFormat] || 2;
+    const team1Wins = room.games.filter(g => g.confirmed && g.winnerTeamId === game.losingTeamId /* flip perspective */ ).length;
+    // Recount properly
+    const allConfirmed = room.games.filter(g => g.confirmed);
+    const winCounts = {};
+    allConfirmed.forEach(g => { winCounts[g.winnerTeamId] = (winCounts[g.winnerTeamId] || 0) + 1; });
+    const seriesWinner = Object.entries(winCounts).find(([, w]) => w >= winsNeeded);
+
+    if (seriesWinner) {
+      room.status = 'complete';
+      room.seriesWinnerId = seriesWinner[0];
+      room.chat.push({
+        id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system',
+        text: `🏆 Series complete! Match winner determined. Admins will update the bracket shortly.`, ts: Date.now(), system: true,
+      });
+    } else {
+      room.chat.push({
+        id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system',
+        text: `Game ${gameNum} confirmed. Series continues.`, ts: Date.now(), system: true,
+      });
+    }
+
+    // Build score summary
+    const scoreStr = Object.entries(winCounts).map(([id, w]) => `${id}: ${w}`).join(' | ');
+    return { success: true, winCounts, seriesWinner: seriesWinner ? seriesWinner[0] : null, scoreStr };
+  },
+
+  // Dispute a game result (flags for admin review)
+  disputeGame: async (matchId, gameNum, disputingTeamId, reason) => {
+    await delay(300);
+    const room = MATCH_ROOMS[matchId];
+    if (!room) return { success: false };
+    const game = room.games.find(g => g.gameNum === gameNum);
+    if (game) game.disputed = true;
+    room.chat.push({
+      id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system',
+      text: `⚠️ Game ${gameNum} disputed by a team. Reason: "${reason}" — An admin has been notified.`, ts: Date.now(), system: true,
+    });
+    return { success: true };
+  },
+
+  // Admin override: mark match complete with final series scores
+  adminSetWinner: async (matchId, winnerTeamId, score1, score2) => {
+    await delay(300);
+    const room = MATCH_ROOMS[matchId];
+    if (!room) return { success: false };
+    room.status = 'complete';
+    room.seriesWinnerId = winnerTeamId;
+    room.adminOverride = true;
+    room.chat.push({
+      id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system',
+      text: `⚙️ Admin has set the final series result: ${score1}–${score2}. Match complete.`, ts: Date.now(), system: true,
+    });
+    return { success: true };
+  },
+
+  // Poll for new messages (simulates real-time by returning full chat)
+  getMessages: async (matchId, since) => {
+    await delay(100);
+    const room = MATCH_ROOMS[matchId];
+    if (!room) return [];
+    return since ? room.chat.filter(m => m.ts > since) : room.chat;
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  SEASONAL LEAGUE API
+// ═══════════════════════════════════════════════════════════════════
+
+const LEAGUE_GAMES = Object.keys(GAME_TEAM_SIZES);
+
+// ── MOCK DATA ──────────────────────────────────────────────────────
+let MOCK_LEAGUES = [
+  {
+    id: 'league_001',
+    name: 'SD Esports Spring League 2026',
+    game: 'League of Legends',
+    season: 'Spring 2026',
+    status: 'active', // draft | active | playoffs | complete
+    startDate: 'Feb 1, 2026',
+    endDate: 'Apr 30, 2026',
+    weeksTotal: 8,
+    currentWeek: 3,
+    description: 'Statewide seasonal league for South Dakota high school and college teams. Top 8 per group advance to divisional playoffs. Top 4 per group enter the championship.',
+    createdBy: 'user_admin',
+    createdAt: '2025-12-01',
+    groups: [
+      {
+        id: 'grp_A', name: 'Group A', label: 'North Division',
+        teamIds: ['team_001', 'team_rr1', 'team_rr2', 'team_rr3', 'team_rr4', 'team_rr5', 'team_rr6', 'team_rr7'],
+        standings: [
+          { teamId: 'team_001',  teamName: 'Rapid City Reapers',   wins: 5, losses: 1, points: 15, gamesPlayed: 6, streak: 'W3' },
+          { teamId: 'team_rr1',  teamName: 'Pierre Phantoms',      wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'W1' },
+          { teamId: 'team_rr2',  teamName: 'Sioux Falls Surge',    wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'L1' },
+          { teamId: 'team_rr3',  teamName: 'Aberdeen Aces',        wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'W2' },
+          { teamId: 'team_rr4',  teamName: 'Watertown Wolves',     wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'L2' },
+          { teamId: 'team_rr5',  teamName: 'Huron Hawks',          wins: 2, losses: 4, points: 6,  gamesPlayed: 6, streak: 'L1' },
+          { teamId: 'team_rr6',  teamName: 'Mitchell Mavericks',   wins: 1, losses: 5, points: 3,  gamesPlayed: 6, streak: 'L3' },
+          { teamId: 'team_rr7',  teamName: 'Brookings Blitz',      wins: 0, losses: 6, points: 0,  gamesPlayed: 6, streak: 'L6' },
+        ],
+      },
+      {
+        id: 'grp_B', name: 'Group B', label: 'South Division',
+        teamIds: ['team_b1','team_b2','team_b3','team_b4','team_b5','team_b6','team_b7','team_b8'],
+        standings: [
+          { teamId: 'team_b1', teamName: 'Vermillion Vipers',    wins: 5, losses: 1, points: 15, gamesPlayed: 6, streak: 'W2' },
+          { teamId: 'team_b2', teamName: 'Yankton Yetis',        wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'W1' },
+          { teamId: 'team_b3', teamName: 'Madison Monarchs',     wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'L1' },
+          { teamId: 'team_b4', teamName: 'Canton Cobras',        wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'W1' },
+          { teamId: 'team_b5', teamName: 'Dell Rapids Dragons',  wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'L1' },
+          { teamId: 'team_b6', teamName: 'Lennox Lions',         wins: 2, losses: 4, points: 6,  gamesPlayed: 6, streak: 'L2' },
+          { teamId: 'team_b7', teamName: 'Tea Titans',           wins: 1, losses: 5, points: 3,  gamesPlayed: 6, streak: 'L4' },
+          { teamId: 'team_b8', teamName: 'Brandon Blazers',      wins: 0, losses: 6, points: 0,  gamesPlayed: 6, streak: 'L6' },
+        ],
+      },
+      {
+        id: 'grp_C', name: 'Group C', label: 'East Division',
+        teamIds: ['team_c1','team_c2','team_c3','team_c4','team_c5','team_c6','team_c7','team_c8'],
+        standings: [
+          { teamId: 'team_c1', teamName: 'Sisseton Saints',      wins: 5, losses: 1, points: 15, gamesPlayed: 6, streak: 'W4' },
+          { teamId: 'team_c2', teamName: 'Milbank Maulers',      wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'W2' },
+          { teamId: 'team_c3', teamName: 'Waubay Warriors',      wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'W1' },
+          { teamId: 'team_c4', teamName: 'Clear Lake Cyclones',  wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'L1' },
+          { teamId: 'team_c5', teamName: 'Webster Wolves',       wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'W1' },
+          { teamId: 'team_c6', teamName: 'Britton Bulldogs',     wins: 2, losses: 4, points: 6,  gamesPlayed: 6, streak: 'L3' },
+          { teamId: 'team_c7', teamName: 'Groton Giants',        wins: 1, losses: 5, points: 3,  gamesPlayed: 6, streak: 'L2' },
+          { teamId: 'team_c8', teamName: 'Frederick Force',      wins: 0, losses: 6, points: 0,  gamesPlayed: 6, streak: 'L5' },
+        ],
+      },
+      {
+        id: 'grp_D', name: 'Group D', label: 'West Division',
+        teamIds: ['team_d1','team_d2','team_d3','team_d4','team_d5','team_d6','team_d7','team_d8'],
+        standings: [
+          { teamId: 'team_d1', teamName: 'Sturgis Strikers',     wins: 5, losses: 1, points: 15, gamesPlayed: 6, streak: 'W3' },
+          { teamId: 'team_d2', teamName: 'Lead Legends',         wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'L1' },
+          { teamId: 'team_d3', teamName: 'Deadwood Demons',      wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'W2' },
+          { teamId: 'team_d4', teamName: 'Spearfish Spartans',   wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'W1' },
+          { teamId: 'team_d5', teamName: 'Belle Fourche Bison',  wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'L2' },
+          { teamId: 'team_d6', teamName: 'Hot Springs Hawks',    wins: 2, losses: 4, points: 6,  gamesPlayed: 6, streak: 'L1' },
+          { teamId: 'team_d7', teamName: 'Custer Cougars',       wins: 1, losses: 5, points: 3,  gamesPlayed: 6, streak: 'L3' },
+          { teamId: 'team_d8', teamName: 'Edgemont Eagles',      wins: 0, losses: 6, points: 0,  gamesPlayed: 6, streak: 'L6' },
+        ],
+      },
+    ],
+    schedule: [], // weekly matches
+  },
+];
+
+let MOCK_LEAGUE_MATCHES = [
+  // Group A Week 3 upcoming match — has a match room ready
+  {
+    id: 'lm_001', leagueId: 'league_001', groupId: 'grp_A',
+    week: 3, round: 'Week 3',
+    team1: { id: 'team_001', name: 'Rapid City Reapers' },
+    team2: { id: 'team_rr3', name: 'Aberdeen Aces' },
+    status: 'pending', // pending | complete | waiting
+    score1: null, score2: null, winner: null,
+    scheduledDate: 'Mar 5, 2026', scheduledTime: '7:00 PM CST',
+    reportedBy: null, confirmedBy: null,
+  },
+  {
+    id: 'lm_002', leagueId: 'league_001', groupId: 'grp_A',
+    week: 3, round: 'Week 3',
+    team1: { id: 'team_rr1', name: 'Pierre Phantoms' },
+    team2: { id: 'team_rr4', name: 'Watertown Wolves' },
+    status: 'pending',
+    score1: null, score2: null, winner: null,
+    scheduledDate: 'Mar 5, 2026', scheduledTime: '7:00 PM CST',
+    reportedBy: null, confirmedBy: null,
+  },
+  {
+    id: 'lm_003', leagueId: 'league_001', groupId: 'grp_A',
+    week: 3, round: 'Week 3',
+    team1: { id: 'team_rr2', name: 'Sioux Falls Surge' },
+    team2: { id: 'team_rr5', name: 'Huron Hawks' },
+    status: 'pending',
+    score1: null, score2: null, winner: null,
+    scheduledDate: 'Mar 5, 2026', scheduledTime: '7:00 PM CST',
+    reportedBy: null, confirmedBy: null,
+  },
+  // Week 2 completed results
+  {
+    id: 'lm_004', leagueId: 'league_001', groupId: 'grp_A',
+    week: 2, round: 'Week 2',
+    team1: { id: 'team_001', name: 'Rapid City Reapers' },
+    team2: { id: 'team_rr2', name: 'Sioux Falls Surge' },
+    status: 'complete', score1: 2, score2: 0, winner: 'team_001',
+    scheduledDate: 'Feb 26, 2026', scheduledTime: '7:00 PM CST',
+    reportedBy: 'team_001', confirmedBy: 'team_rr2',
+  },
+];
+
+// ── LEAGUE API ─────────────────────────────────────────────────────
+
+export const leagueApi = {
+
+  getAll: async () => { await delay(400); return [...MOCK_LEAGUES]; },
+
+  getById: async (id) => {
+    await delay(250);
+    return MOCK_LEAGUES.find(l => l.id === id) || null;
+  },
+
+  create: async (data) => {
+    await delay(600);
+    const groups = ['A','B','C','D'].map(letter => ({
+      id: `grp_${data.id}_${letter}`,
+      name: `Group ${letter}`,
+      label: { A:'North Division', B:'South Division', C:'East Division', D:'West Division' }[letter],
+      teamIds: [],
+      standings: [],
+    }));
+    const league = {
+      id: `league_${Date.now()}`,
+      ...data,
+      status: 'draft',
+      currentWeek: 0,
+      groups,
+      schedule: [],
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    MOCK_LEAGUES.push(league);
+    return { success: true, league };
+  },
+
+  update: async (id, updates) => {
+    await delay(400);
+    MOCK_LEAGUES = MOCK_LEAGUES.map(l => l.id === id ? { ...l, ...updates } : l);
+    return { success: true };
+  },
+
+  delete: async (id) => {
+    await delay(300);
+    MOCK_LEAGUES = MOCK_LEAGUES.filter(l => l.id !== id);
+    return { success: true };
+  },
+
+  // Advance season to next phase
+  advanceStatus: async (id) => {
+    await delay(400);
+    const order = ['draft','active','playoffs','complete'];
+    const league = MOCK_LEAGUES.find(l => l.id === id);
+    if (!league) return { success: false };
+    const next = order[order.indexOf(league.status) + 1];
+    if (next) league.status = next;
+    return { success: true, status: next };
+  },
+
+  // Add team to a group
+  addTeamToGroup: async (leagueId, groupId, team) => {
+    await delay(300);
+    const league = MOCK_LEAGUES.find(l => l.id === leagueId);
+    if (!league) return { success: false };
+    const group = league.groups.find(g => g.id === groupId);
+    if (!group) return { success: false };
+    if (!group.teamIds.includes(team.id)) {
+      group.teamIds.push(team.id);
+      group.standings.push({ teamId: team.id, teamName: team.name, wins: 0, losses: 0, points: 0, gamesPlayed: 0, streak: '—' });
+    }
+    return { success: true };
+  },
+
+  removeTeamFromGroup: async (leagueId, groupId, teamId) => {
+    await delay(300);
+    const league = MOCK_LEAGUES.find(l => l.id === leagueId);
+    if (!league) return { success: false };
+    const group = league.groups.find(g => g.id === groupId);
+    if (!group) return { success: false };
+    group.teamIds = group.teamIds.filter(id => id !== teamId);
+    group.standings = group.standings.filter(s => s.teamId !== teamId);
+    return { success: true };
+  },
+
+  // Schedule a match
+  scheduleMatch: async (leagueId, matchData) => {
+    await delay(400);
+    const match = { id: `lm_${Date.now()}`, leagueId, ...matchData, status: 'pending', score1: null, score2: null, winner: null, reportedBy: null, confirmedBy: null };
+    MOCK_LEAGUE_MATCHES.push(match);
+    return { success: true, match };
+  },
+
+  // Get matches — filtered by league, group, week
+  getMatches: async (leagueId, { groupId, week } = {}) => {
+    await delay(300);
+    let matches = MOCK_LEAGUE_MATCHES.filter(m => m.leagueId === leagueId);
+    if (groupId) matches = matches.filter(m => m.groupId === groupId);
+    if (week !== undefined) matches = matches.filter(m => m.week === week);
+    return matches;
+  },
+
+  // Report a league match result
+  reportMatchResult: async (matchId, reportingTeamId, score1, score2) => {
+    await delay(400);
+    const match = MOCK_LEAGUE_MATCHES.find(m => m.id === matchId);
+    if (!match) return { success: false };
+    match.reportedBy = reportingTeamId;
+    match._pendingScore = { score1, score2, reportingTeamId };
+    return { success: true };
+  },
+
+  confirmMatchResult: async (matchId, confirmingTeamId) => {
+    await delay(400);
+    const match = MOCK_LEAGUE_MATCHES.find(m => m.id === matchId);
+    if (!match || !match._pendingScore) return { success: false };
+    const { score1, score2 } = match._pendingScore;
+    match.score1 = score1;
+    match.score2 = score2;
+    match.winner = score1 > score2 ? match.team1.id : match.team2.id;
+    match.confirmedBy = confirmingTeamId;
+    match.status = 'complete';
+    delete match._pendingScore;
+
+    // Update standings
+    const league = MOCK_LEAGUES.find(l => l.id === match.leagueId);
+    if (league) {
+      const group = league.groups.find(g => g.id === match.groupId);
+      if (group) {
+        const winnerStanding = group.standings.find(s => s.teamId === match.winner);
+        const loserStanding  = group.standings.find(s => s.teamId === (match.winner === match.team1.id ? match.team2.id : match.team1.id));
+        if (winnerStanding) { winnerStanding.wins++; winnerStanding.points += 3; winnerStanding.gamesPlayed++; winnerStanding.streak = 'W1'; }
+        if (loserStanding)  { loserStanding.losses++;  loserStanding.gamesPlayed++; loserStanding.streak = 'L1'; }
+        // Re-sort standings by points
+        group.standings.sort((a, b) => b.points - a.points || b.wins - a.wins);
+      }
+    }
+    return { success: true };
+  },
+
+  getPendingReport: async (matchId) => {
+    await delay(100);
+    const match = MOCK_LEAGUE_MATCHES.find(m => m.id === matchId);
+    return match?._pendingScore || null;
+  },
+
+  // Get playoff seedings — top 8 per group → divisional, top 4 per group → championship
+  getPlayoffSeedings: async (leagueId) => {
+    await delay(300);
+    const league = MOCK_LEAGUES.find(l => l.id === leagueId);
+    if (!league) return null;
+    const divisional = {};   // groupId → top 8
+    const championship = []; // top 4 from each group × 4 = 16
+    league.groups.forEach(g => {
+      const sorted = [...g.standings].sort((a, b) => b.points - a.points || b.wins - a.wins);
+      divisional[g.id] = sorted.slice(0, 8);
+      championship.push(...sorted.slice(0, 4));
+    });
+    return { divisional, championship };
+  },
+};
+
+
+// ─────────────────────────────────────────────
+//  MATCH FLAGS API
+// ─────────────────────────────────────────────
+export const matchFlagApi = {
+  flag:    async (matchId, reason, reportedBy) => { return { success: true, id: 'flag_' + Date.now() }; },
+  resolve: async (flagId, resolution)          => { return { success: true }; },
+  getForMatch: async (matchId)                 => { return []; },
+  getHistory:  async ()                        => { return []; },
+  getRetentionSummary: async ()                => { return { total: 0, resolved: 0, pending: 0 }; },
+  clearFlag: async (flagId)                    => { return { success: true }; },
+};
+
+// ─────────────────────────────────────────────
+//  PUBLIC API
+// ─────────────────────────────────────────────
+export const publicApi = {
+  getAll: async () => { return []; },
+};
+
+// ─────────────────────────────────────────────
+//  SOCIAL API
+// ─────────────────────────────────────────────
+export const socialApi = {
+  getCommunities:  async ()              => { return []; },
+  getCommunity:    async (id)            => { return null; },
+  createCommunity: async (data)          => { return { success: true, id: 'comm_' + Date.now() }; },
+  getFeedPosts:    async (communityId)   => { return []; },
+  getTopPosts:     async ()              => { return []; },
+  getPosts:        async (communityId)   => { return []; },
+  createPost:      async (data)          => { return { success: true, id: 'post_' + Date.now() }; },
+  createForumPost: async (data)          => { return { success: true, id: 'post_' + Date.now() }; },
+  deletePost:      async (postId)        => { return { success: true }; },
+  flagPost:        async (postId)        => { return { success: true }; },
+  pinPost:         async (postId)        => { return { success: true }; },
+  toggleUpvote:    async (postId, uid)   => { return { success: true }; },
+  addComment:      async (postId, data)  => { return { success: true, id: 'cmt_' + Date.now() }; },
+  deleteComment:   async (commentId)     => { return { success: true }; },
+  upvoteComment:   async (commentId, uid)=> { return { success: true }; },
+  joinCommunity:   async (commId, uid)   => { return { success: true }; },
+  leaveCommunity:  async (commId, uid)   => { return { success: true }; },
+  parseMediaUrl:   async (url)           => { return null; },
+  timeoutUser:     async (uid, duration) => { return { success: true }; },
+};
+
+// ─────────────────────────────────────────────
+//  CLANS API
+// ─────────────────────────────────────────────
+export const clansApi = {
+  getAll:     async ()        => { return []; },
+  getMyClans: async (uid)     => { return []; },
+  create:     async (data)    => { return { success: true, id: 'clan_' + Date.now() }; },
+  update:     async (id, data)=> { return { success: true }; },
+  delete:     async (id)      => { return { success: true }; },
+  addMember:      async (clanId, uid)    => { return { success: true }; },
+  removeMember:   async (clanId, uid)    => { return { success: true }; },
+  updateMemberRole: async (clanId, uid, role) => { return { success: true }; },
+};
+
+// ─────────────────────────────────────────────
+//  CASH MATCH API
+// ─────────────────────────────────────────────
+export const cashMatchApi = {
+  getOpenMatches:  async ()         => { return []; },
+  getMyMatches:    async (uid)      => { return []; },
+  create:          async (data)     => { return { success: true, id: 'cm_' + Date.now() }; },
+  cancel:          async (id)       => { return { success: true }; },
+  accept:          async (id, uid)  => { return { success: true }; },
+  dispute:         async (id, data) => { return { success: true }; },
+  reportResult:    async (id, data) => { return { success: true }; },
+  confirmResult:   async (id)       => { return { success: true }; },
+};
+
+// ─────────────────────────────────────────────
+//  HALO MLG SETTINGS & LADDER API
+// ─────────────────────────────────────────────
+export const HALO_MLG_SETTINGS = {
+  version: 'V8',
+  modes: ['Slayer', 'CTF', 'Ball', 'Oddball', 'Territories'],
+  maps: [
+    { id: 'guardian',   name: 'Guardian',   modes: ['Slayer','CTF','Ball'] },
+    { id: 'narrows',    name: 'Narrows',    modes: ['Slayer','CTF','Ball','Territories'] },
+    { id: 'construct',  name: 'Construct',  modes: ['Slayer','CTF','Ball'] },
+    { id: 'highground', name: 'High Ground',modes: ['Slayer','CTF','Territories'] },
+    { id: 'sandtrap',   name: 'Sand Trap',  modes: ['Slayer','CTF','Oddball'] },
+    { id: 'epitaph',    name: 'Epitaph',    modes: ['Slayer','Ball','Territories'] },
+    { id: 'snowbound',  name: 'Snowbound',  modes: ['Slayer','CTF','Oddball'] },
+    { id: 'isolation',  name: 'Isolation',  modes: ['Slayer','Ball','Territories'] },
+  ],
+  seriesPool: {
+    'bo1': 1, 'bo3': 3, 'bo5': 5, 'bo7': 7,
+  },
+};
+
+export const ladderApi = {
+  getStandings:    async (gameId)      => { return []; },
+  getQueueStatus:  async (gameId, uid) => { return { inQueue: false, position: 0, estimatedWait: 0 }; },
+  joinQueue:       async (gameId, uid) => { return { success: true }; },
+  leaveQueue:      async (gameId, uid) => { return { success: true }; },
+  pollQueue:       async (gameId, uid) => { return { matched: false }; },
+  getRoom:         async (matchId)     => { return null; },
+  getMessages:     async (matchId)     => { return []; },
+  sendMessage:     async (matchId, msg)=> { return { success: true }; },
+  reportGame:      async (matchId, data)=>{ return { success: true }; },
+  confirmGame:     async (matchId, gameId)=>{ return { success: true }; },
+  disputeGame:     async (matchId, gameId)=>{ return { success: true }; },
+  adminSetWinner:  async (matchId, winnerId)=>{ return { success: true }; },
+  setSeriesFormat: async (matchId, fmt)=>{ return { success: true }; },
+  getRecentMatches:async (gameId)      => { return []; },
+  getTopTeam:      async (gameId)      => { return null; },
+};
