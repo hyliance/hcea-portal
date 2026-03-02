@@ -1527,12 +1527,14 @@ export const leagueApi = {
 //  MATCH FLAGS API
 // ─────────────────────────────────────────────────────────────────────────────
 export const matchFlagApi = {
-  flag:    async (matchId, reason, reportedBy) => { return { success: true, id: 'flag_' + Date.now() }; },
-  resolve: async (flagId, resolution)          => { return { success: true }; },
-  getForMatch: async (matchId)                 => { return []; },
-  getHistory:  async ()                        => { return []; },
-  getRetentionSummary: async ()                => { return { total: 0, resolved: 0, pending: 0 }; },
-  clearFlag: async (flagId)                    => { return { success: true }; },
+  flag:               async (matchId, reason, reportedBy) => { return { success: true, id: 'flag_' + Date.now() }; },
+  resolve:            async (flagId, resolvedBy, note, eventEndTs) => { return { success: true }; },
+  getForMatch:        async (matchId)  => { return []; },
+  getActive:          async ()         => { return []; },
+  getHistory:         async (filters)  => { return []; },
+  getRetentionSummary: async ()        => { return { active: 0, totalResolved: 0, expiringThisWeek: 0 }; },
+  clearFlag:          async (flagId)   => { return { success: true }; },
+  setEventEndDate:    async (eventId, endTs) => { return { success: true }; },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
