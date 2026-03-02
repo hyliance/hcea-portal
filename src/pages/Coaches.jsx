@@ -1,3 +1,4 @@
+### FILE: pages\Coaches.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { coachesApi } from '../api';
@@ -290,26 +291,27 @@ function CoachEditPanel({ coach, onSaved }) {
 
 // ── MAIN PAGE ─────────────────────────────────────────────────────
 export default function Coaches({ onBookWithCoach }) {
-  const { user, isCoach, isAdmin } = useAuth();
+  const { user, isCoach, isAdmin, isHeadAdmin } = useAuth();
+  const canEditCoachProfile = isCoach || isHeadAdmin;
   const [coaches, setCoaches]           = useState([]);
   const [loading, setLoading]           = useState(true);
   const [filterGame, setFilterGame]     = useState('all');
   const [profileCoach, setProfileCoach] = useState(null);
   // Coaches and admins see edit mode by default when landing here
-  const [editMode, setEditMode]         = useState(isCoach);
+  const [editMode, setEditMode]         = useState(canEditCoachProfile);
   const [myCoach, setMyCoach]           = useState(null);
 
   useEffect(() => {
     coachesApi.getAll().then(data => {
       setCoaches(data);
       // Find the coach profile that matches the logged-in coach user
-      if (isCoach && user?.coachId) {
+      if (canEditCoachProfile && user?.coachId) {
         const mine = data.find(c => c.id === user.coachId);
         if (mine) setMyCoach(mine);
       }
       setLoading(false);
     });
-  }, [isCoach, user?.coachId]);
+  }, [canEditCoachProfile, user?.coachId]);
 
   const handleSaved = (updatedCoach) => {
     setCoaches(prev => prev.map(c => c.id === updatedCoach.id ? updatedCoach : c));
@@ -323,7 +325,7 @@ export default function Coaches({ onBookWithCoach }) {
   if (loading) return <Spinner />;
 
   // ── COACH VIEW: edit panel first, then full directory below ──
-  if (isCoach) {
+  if (canEditCoachProfile) {
     return (
       <div className={styles.wrap}>
         <div className={styles.header}>
@@ -390,3 +392,7 @@ export default function Coaches({ onBookWithCoach }) {
     </div>
   );
 }
+
+
+
+### FILE: pages\Coaches.module.css
