@@ -304,13 +304,15 @@ export default function Coaches({ onBookWithCoach }) {
     coachesApi.getAll().then(data => {
       setCoaches(data);
       // Find the coach profile that matches the logged-in coach user
-      if (canEditCoachProfile && user?.coachId) {
-        const mine = data.find(c => c.id === user.coachId);
+      if (canEditCoachProfile) {
+        // Match by coach_id first, fall back to userId in case coach_id isn't set yet
+        const mine = data.find(c => c.id === user?.coachId)
+                  || data.find(c => c.userId === user?.id);
         if (mine) setMyCoach(mine);
       }
       setLoading(false);
     });
-  }, [canEditCoachProfile, user?.coachId]);
+  }, [canEditCoachProfile, user?.coachId, user?.id]);
 
   const handleSaved = (updatedCoach) => {
     setCoaches(prev => prev.map(c => c.id === updatedCoach.id ? updatedCoach : c));
