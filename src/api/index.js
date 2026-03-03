@@ -310,34 +310,54 @@ export const coachesApi = {
     return (data || []).map(normalizeCoach);
   },
   addToRoster: async (app) => {
+    // Support both camelCase (from component state) and snake_case (from raw DB response)
+    const userId = app.userId ?? app.user_id;
     // maybeSingle returns null instead of throwing when no row exists
-    const { data: existing } = await supabase.from('coaches').select('id').eq('user_id', app.userId).maybeSingle();
+    const { data: existing } = await supabase.from('coaches').select('id').eq('user_id', userId).maybeSingle();
+    let coachId;
     if (existing) {
       await supabase.from('coaches').update({ is_active: true }).eq('id', existing.id);
-      return { success: true, coachId: existing.id };
+      coachId = existing.id;
+    } else {
+      // Support both { firstName, lastName } (from coach app) and { name } (from player role assignment)
+      const firstName = app.firstName || (app.name || '').split(' ')[0] || '';
+      const lastName  = app.lastName  || (app.name || '').split(' ').slice(1).join(' ') || '';
+      const fullName  = `${firstName} ${lastName}`.trim();
+      const { data: newCoach, error } = await supabase.from('coaches').insert([{
+        user_id:         userId,
+        name:            fullName,
+        title:           'Coach',
+        initials:        `${(firstName[0] || '?')}${(lastName[0] || '?')}`.toUpperCase(),
+        accent_color:    '#059669',
+        experience:      app.yearsCoaching ? `${app.yearsCoaching} years coaching` : '',
+        location:        app.location || '',
+        rating:          5.0,
+        total_sessions:  0,
+        bio:             app.experience  || '',
+        philosophy:      app.philosophy  || '',
+        available_days:  app.availableDays || [1, 2, 3, 4, 5],
+        available_hours: app.preferredHours ? [app.preferredHours] : ['4:00 PM CST', '5:30 PM CST', '7:00 PM CST'],
+        is_active:       true,
+      }]).select().single();
+      if (error) return { success: false, error: error.message };
+      coachId = newCoach.id;
     }
-    // Support both { firstName, lastName } (from coach app) and { name } (from player role assignment)
-    const firstName = app.firstName || (app.name || '').split(' ')[0] || '';
-    const lastName  = app.lastName  || (app.name || '').split(' ').slice(1).join(' ') || '';
-    const fullName  = `${firstName} ${lastName}`.trim();
-    const { data: newCoach, error } = await supabase.from('coaches').insert([{
-      user_id:         app.userId,
-      name:            fullName,
-      title:           'Coach',
-      initials:        `${(firstName[0] || '?')}${(lastName[0] || '?')}`.toUpperCase(),
-      accent_color:    '#059669',
-      experience:      app.yearsCoaching ? `${app.yearsCoaching} years coaching` : '',
-      location:        app.location || '',
-      rating:          5.0,
-      total_sessions:  0,
-      bio:             app.experience  || '',
-      philosophy:      app.philosophy  || '',
-      available_days:  app.availableDays || [1, 2, 3, 4, 5],
-      available_hours: app.preferredHours ? [app.preferredHours] : ['4:00 PM CST', '5:30 PM CST', '7:00 PM CST'],
-      is_active:       true,
-    }]).select().single();
-    if (error) return { success: false, error: error.message };
-    return { success: true, coachId: newCoach.id };
+    // Grant the coach role and link coach_id in the user's profile
+    if (userId) {
+      const { data: profile } = await supabase.from('profiles').select('roles, role').eq('id', userId).single();
+      if (profile) {
+        const currentRoles = Array.isArray(profile.roles) && profile.roles.length > 0
+          ? profile.roles
+          : (profile.role && profile.role !== 'player' ? [profile.role, 'player'] : ['player']);
+        const profileUpdates = { coach_id: coachId };
+        if (!currentRoles.includes('coach')) {
+          profileUpdates.roles = [...currentRoles, 'coach'];
+          if (!profile.role || profile.role === 'player') profileUpdates.role = 'coach';
+        }
+        await supabase.from('profiles').update(profileUpdates).eq('id', userId);
+      }
+    }
+    return { success: true, coachId };
   },
   removeFromRoster: async (coachId) => {
     const { error } = await supabase.from('coaches').update({ is_active: false }).eq('id', coachId);

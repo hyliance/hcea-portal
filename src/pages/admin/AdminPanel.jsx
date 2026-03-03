@@ -250,13 +250,38 @@ function PlayersManagement() {
     const player = players.find(p => p.id === userId);
     if (!player) return;
     setPendingId(userId);
+
+    // 1. Update the role in profiles
     const res = await adminApi.addRole(userId, role, player.roles || [player.role]);
-    if (res.success) {
-      setPlayers(prev => prev.map(p => p.id === userId ? { ...p, roles: res.roles, role: res.roles[0] } : p));
-      if (selected?.id === userId) setSelected(prev => ({ ...prev, roles: res.roles, role: res.roles[0] }));
-    } else {
+    if (!res.success) {
       alert('Failed to add role: ' + res.error);
+      setPendingId(null);
+      return;
     }
+
+    // 2. If the coach role was assigned, auto-create a coaches row
+    if (role === 'coach') {
+      const nameParts = (player.name || '').trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName  = nameParts.slice(1).join(' ') || '';
+      const coachRes  = await coachesApi.addToRoster({
+        userId:        userId,
+        firstName:     firstName,
+        lastName:      lastName,
+        yearsCoaching: '',
+        location:      player.school || '',
+        experience:    '',
+        philosophy:    '',
+        availableDays: [1, 2, 3, 4, 5],
+      });
+      // Link profile.coach_id back to the new coaches row
+      if (coachRes.success) {
+        await adminApi.updatePlayer(userId, { coach_id: coachRes.coachId });
+      }
+    }
+
+    setPlayers(prev => prev.map(p => p.id === userId ? { ...p, roles: res.roles, role: res.roles[0] } : p));
+    if (selected?.id === userId) setSelected(prev => ({ ...prev, roles: res.roles, role: res.roles[0] }));
     setPendingId(null);
   };
 
@@ -265,13 +290,25 @@ function PlayersManagement() {
     if (!player) return;
     if (!window.confirm(`Remove ${ROLE_CFG[role]?.label} from ${player.name}?`)) return;
     setPendingId(userId);
+
+    // 1. Update the role in profiles
     const res = await adminApi.removeRole(userId, role, player.roles || [player.role]);
-    if (res.success) {
-      setPlayers(prev => prev.map(p => p.id === userId ? { ...p, roles: res.roles, role: res.roles[0] } : p));
-      if (selected?.id === userId) setSelected(prev => ({ ...prev, roles: res.roles, role: res.roles[0] }));
-    } else {
+    if (!res.success) {
       alert('Failed to remove role: ' + res.error);
+      setPendingId(null);
+      return;
     }
+
+    // 2. If coach role was removed, take them off the roster (keeps their data, just hides them)
+    if (role === 'coach') {
+      const coachList = await coachesApi.getAllAdmin();
+      const coachRow  = coachList.find(c => c.userId === userId);
+      if (coachRow) await coachesApi.removeFromRoster(coachRow.id);
+      await adminApi.updatePlayer(userId, { coach_id: null });
+    }
+
+    setPlayers(prev => prev.map(p => p.id === userId ? { ...p, roles: res.roles, role: res.roles[0] } : p));
+    if (selected?.id === userId) setSelected(prev => ({ ...prev, roles: res.roles, role: res.roles[0] }));
     setPendingId(null);
   };
 

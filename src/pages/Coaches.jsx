@@ -122,8 +122,12 @@ function CoachEditPanel({ coach, onSaved }) {
 
   const handleSave = async () => {
     setSaving(true);
-    await coachesApi.update(coach.id, form);
+    const result = await coachesApi.update(coach.id, form);
     setSaving(false);
+    if (result?.success === false) {
+      alert('Failed to save changes: ' + (result.error || 'Unknown error. Check your permissions.'));
+      return;
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
     onSaved(form);
@@ -290,14 +294,15 @@ function CoachEditPanel({ coach, onSaved }) {
 
 // ── MAIN PAGE ─────────────────────────────────────────────────────
 export default function Coaches({ onBookWithCoach }) {
-  const { user, isCoach, isAdmin, isHeadAdmin } = useAuth();
+  const { user, isCoach, isHeadAdmin } = useAuth();
   const canEditCoachProfile = isCoach || isHeadAdmin;
   const [coaches, setCoaches]           = useState([]);
   const [loading, setLoading]           = useState(true);
   const [filterGame, setFilterGame]     = useState('all');
   const [profileCoach, setProfileCoach] = useState(null);
-  // Coaches and admins see edit mode by default when landing here
-  const [editMode, setEditMode]         = useState(canEditCoachProfile);
+  // Coaches and admins see edit mode by default when landing here.
+  // Default to true — the non-coach branch never uses this state anyway.
+  const [editMode, setEditMode]         = useState(true);
   const [myCoach, setMyCoach]           = useState(null);
 
   useEffect(() => {
