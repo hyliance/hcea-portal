@@ -151,7 +151,7 @@ const ROLE_CFG = {
   player:       { label: 'Player',       color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', icon: '🎮' },
 };
 const ROLE_RANK   = { head_admin: 5, league_admin: 4, coach: 3, org_manager: 2, player: 1 };
-const ASSIGNABLE  = ['head_admin', 'league_admin', 'coach', 'org_manager'];
+const ASSIGNABLE  = ['head_admin', 'league_admin', 'org_manager'];
 
 function getPrimary(roles) {
   return [...roles].sort((a, b) => (ROLE_RANK[b] || 0) - (ROLE_RANK[a] || 0))[0] || 'player';
