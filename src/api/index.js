@@ -339,6 +339,7 @@ export const coachesApi = {
         available_days:  app.availableDays || [1, 2, 3, 4, 5],
         available_hours: app.preferredHours ? [app.preferredHours] : ['4:00 PM CST', '5:30 PM CST', '7:00 PM CST'],
         is_active:       true,
+        social:          {},
       }]).select().single();
       if (error) return { success: false, error: error.message };
       coachId = newCoach.id;

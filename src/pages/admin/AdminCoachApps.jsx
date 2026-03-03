@@ -28,6 +28,7 @@ function AppDetail({ app, onUpdate, onClose }) {
   const [saving, setSaving]     = useState('');
   const [rosterDone, setRosterDone] = useState(false);
   const [rosterLoading, setRosterLoading] = useState(false);
+  const [rosterError, setRosterError] = useState('');
   const meta = STATUS_META[app.status] || STATUS_META.pending;
 
   const handleAction = async (action) => {
@@ -39,8 +40,13 @@ function AppDetail({ app, onUpdate, onClose }) {
 
   const handleAddToRoster = async () => {
     setRosterLoading(true);
+    setRosterError('');
     const res = await coachesApi.addToRoster(app);
-    if (res.success) setRosterDone(true);
+    if (res.success) {
+      setRosterDone(true);
+    } else {
+      setRosterError(res.error || 'Failed to add coach to roster.');
+    }
     setRosterLoading(false);
   };
 
@@ -100,6 +106,11 @@ function AppDetail({ app, onUpdate, onClose }) {
           ))}
         </div>
       </div>
+      {rosterError && (
+        <div style={{ padding: '0.5rem 1.25rem', color: '#ef4444', fontSize: '0.85rem' }}>
+          ⚠ {rosterError}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className={styles.drawerTabs}>
