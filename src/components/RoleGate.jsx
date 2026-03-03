@@ -13,18 +13,24 @@ import { useAuth } from '../context/AuthContext';
 
 export default function RoleGate({ allow, deny, fallback = null, children }) {
   const { user } = useAuth();
-  const role = user?.role;
+  // Use full roles array; fall back to primary role string for legacy compat
+  const userRoles = user?.roles || (user?.role ? [user.role] : []);
 
-  if (!role) return fallback;
+  if (!user || userRoles.length === 0) return fallback;
+
+  // head_admin inherits all admin permissions — treat it as 'admin' for gate checks
+  const effectiveRoles = userRoles.includes('head_admin')
+    ? [...new Set([...userRoles, 'admin'])]
+    : userRoles;
 
   if (allow) {
     const allowed = Array.isArray(allow) ? allow : [allow];
-    if (!allowed.includes(role)) return fallback;
+    if (!effectiveRoles.some(r => allowed.includes(r))) return fallback;
   }
 
   if (deny) {
     const denied = Array.isArray(deny) ? deny : [deny];
-    if (denied.includes(role)) return fallback;
+    if (effectiveRoles.some(r => denied.includes(r))) return fallback;
   }
 
   return children;

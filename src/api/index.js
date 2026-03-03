@@ -522,27 +522,94 @@ export const scholarshipsApi = {
 //  COACH APPLICATION API  →  coach_applications
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Normalize a raw DB row (snake_case) → camelCase for component consumption
+function normalizeApp(a) {
+  return {
+    id:                     a.id,
+    userId:                 a.user_id,
+    status:                 a.status,
+    reviewNote:             a.review_note       || null,
+    reviewedBy:             a.reviewed_by       || null,
+    submittedAt:            a.submitted_at ? new Date(a.submitted_at).getTime() : Date.now(),
+    updatedAt:              a.updated_at   ? new Date(a.updated_at).getTime()   : Date.now(),
+    firstName:              a.first_name,
+    lastName:               a.last_name,
+    email:                  a.email,
+    phone:                  a.phone             || '',
+    location:               a.location          || '',
+    yearsPlaying:           a.years_playing     || '',
+    yearsCoaching:          a.years_coaching    || '',
+    competitiveLevel:       a.competitive_level || '',
+    primaryGames:           a.primary_games     || [],
+    gameRanks:              a.game_ranks        || {},
+    philosophy:             a.philosophy        || '',
+    coachingStyle:          a.coaching_style    || '',
+    targetAgeGroups:        a.target_age_groups || [],
+    experience:             a.experience        || '',
+    certifications:         a.certifications    || '',
+    references:             a.references        || [],
+    availableDays:          a.available_days    || [],
+    preferredHours:         a.preferred_hours   || '',
+    proposedMemberRate:     a.proposed_member_rate     ?? 51,
+    proposedNonMemberRate:  a.proposed_non_member_rate ?? 60,
+    personalStatement:      a.personal_statement       || '',
+    agreedToTerms:          a.agreed_to_terms          || false,
+    backgroundCheckConsent: a.background_check_consent || false,
+  };
+}
+
+// Convert camelCase formData → snake_case DB columns for insert
+function appFormToDb(userId, formData) {
+  return {
+    user_id:                  userId,
+    status:                   'pending',
+    submitted_at:             new Date().toISOString(),
+    first_name:               formData.firstName,
+    last_name:                formData.lastName,
+    email:                    formData.email,
+    phone:                    formData.phone                || null,
+    location:                 formData.location,
+    years_playing:            formData.yearsPlaying,
+    years_coaching:           formData.yearsCoaching,
+    competitive_level:        formData.competitiveLevel,
+    primary_games:            formData.primaryGames         || [],
+    game_ranks:               formData.gameRanks            || {},
+    philosophy:               formData.philosophy,
+    coaching_style:           formData.coachingStyle,
+    target_age_groups:        formData.targetAgeGroups      || [],
+    experience:               formData.experience,
+    certifications:           formData.certifications       || null,
+    references:               formData.references           || [],
+    available_days:           formData.availableDays        || [],
+    preferred_hours:          formData.preferredHours,
+    proposed_member_rate:     51,
+    proposed_non_member_rate: 60,
+    personal_statement:       formData.personalStatement,
+    agreed_to_terms:          formData.agreedToTerms        || false,
+    background_check_consent: formData.backgroundCheckConsent || false,
+  };
+}
+
 export const coachAppApi = {
   submit: async (userId, formData) => {
     const { data: existing } = await supabase.from('coach_applications').select('id')
       .eq('user_id', userId).in('status', ['pending', 'under_review']).single();
     if (existing) return { success: false, error: 'You already have an active application in progress.' };
-    const { data, error } = await supabase.from('coach_applications').insert([{
-      user_id: userId, ...formData, status: 'pending',
-    }]).select().single();
+    const { data, error } = await supabase.from('coach_applications')
+      .insert([appFormToDb(userId, formData)]).select().single();
     if (error) return { success: false, error: error.message };
     return { success: true, applicationId: data.id };
   },
   getMyApplication: async (userId) => {
     const { data } = await supabase.from('coach_applications').select('*')
       .eq('user_id', userId).order('submitted_at', { ascending: false }).limit(1).single();
-    return data || null;
+    return data ? normalizeApp(data) : null;
   },
   getAll: async (status) => {
     let query = supabase.from('coach_applications').select('*').order('submitted_at', { ascending: false });
     if (status) query = query.eq('status', status);
     const { data } = await query;
-    return data || [];
+    return (data || []).map(normalizeApp);
   },
   updateStatus: async (appId, status, reviewNote, reviewerId) => {
     const { error } = await supabase.from('coach_applications').update({

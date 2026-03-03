@@ -132,7 +132,7 @@ function AgeGate({ minAge, feature, children }) {
 export default function Portal({ onBackToSite }) {
   const { user, isAdmin, isCoach, isOrgManager, canAccessSocial, canAccessCashMatch } = useAuth();
 
-  const defaultTab = isOrgManager ? 'org_dashboard' : 'dashboard';
+  const defaultTab = (isOrgManager && !isAdmin) ? 'org_dashboard' : 'dashboard';
   const [activeTab, setActiveTab]     = useState(defaultTab);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCoach, setPendingCoach] = useState(null);
@@ -200,7 +200,7 @@ export default function Portal({ onBackToSite }) {
       case 'profile':      return <Profile />;
 
       default:
-        return isOrgManager ? <OrgDashboard onNavigate={handleTabChange} /> : <Dashboard onNavigate={handleTabChange} />;
+        return (isOrgManager && !isAdmin) ? <OrgDashboard onNavigate={handleTabChange} /> : <Dashboard onNavigate={handleTabChange} />;
     }
   };
 
