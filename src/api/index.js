@@ -1,1661 +1,981 @@
-//  api/index.js – HCEA Backend Service Layer
-//  All mock data lives here. Replace each function body with real fetch() calls.
-// ────────────────────────────────────────────────────────────────────────────
+// api/index.js — HCEA Live Supabase Service Layer
+// All data comes from Supabase. No mock data.
+// ─────────────────────────────────────────────────────────────────────────────
 
 import { supabase } from '../supabaseClient';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-const delay = ms => new Promise(r => setTimeout(r, ms));
+const SUPABASE_URL  = 'https://yelicgqkqerpmmifhewn.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi';
 
-async function request(path, options = {}) {
-  const token = localStorage.getItem('hcea_token');
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers },
-    ...options,
-  });
-  if (!res.ok) throw new Error(`API error ${res.status}`);
-  return res.json();
+async function authHeaders() {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  return {
+    'apikey':        SUPABASE_ANON,
+    'Authorization': token ? 'Bearer ' + token : 'Bearer ' + SUPABASE_ANON,
+    'Content-Type':  'application/json',
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  GAME TEAM SIZE CONFIG
+//  STATIC CONFIG
 // ─────────────────────────────────────────────────────────────────────────────
+
 export const GAME_TEAM_SIZES = {
-  'League of Legends': { min: 5, max: 5,  label: '5v5' },
-  'Valorant':          { min: 5, max: 5,  label: '5v5' },
-  'Team Fight Tactics':{ min: 1, max: 1,  label: '1v1 (FFA)' },
-  'Rocket League':     { min: 2, max: 3,  label: '2v2 or 3v3' },
-  'Fortnite':          { min: 1, max: 4,  label: '1-4 players' },
-  'Smash Bros.':       { min: 1, max: 1,  label: '1v1' },
-  'Marvel Rivals':     { min: 5, max: 6,  label: '5v5 or 6v6' },
+  'League of Legends':  { min: 5, max: 5, label: '5v5' },
+  'Valorant':           { min: 5, max: 5, label: '5v5' },
+  'Team Fight Tactics': { min: 1, max: 1, label: '1v1 (FFA)' },
+  'Rocket League':      { min: 2, max: 3, label: '2v2 or 3v3' },
+  'Fortnite':           { min: 1, max: 4, label: '1-4 players' },
+  'Smash Bros.':        { min: 1, max: 1, label: '1v1' },
+  'Marvel Rivals':      { min: 5, max: 6, label: '5v5 or 6v6' },
 };
 
 export const BRACKET_FORMATS = [
-  { id: 'single_elim',  label: 'Single Elimination',  desc: 'One loss and you\'re out. Fast, high-stakes.' },
-  { id: 'double_elim',  label: 'Double Elimination',  desc: 'Two losses to be eliminated. More forgiving.' },
-  { id: 'round_robin',  label: 'Round Robin',          desc: 'Everyone plays everyone. Best overall record wins.' },
-  { id: 'swiss',        label: 'Swiss',                desc: 'Matched by record each round. No elimination until X losses.' },
-  { id: 'group_stage',  label: 'Group Stage + Playoffs', desc: 'Groups feed into a single-elim playoff bracket.' },
+  { id: 'single_elim', label: 'Single Elimination',    desc: "One loss and you're out. Fast, high-stakes." },
+  { id: 'double_elim', label: 'Double Elimination',    desc: 'Two losses to be eliminated. More forgiving.' },
+  { id: 'round_robin', label: 'Round Robin',            desc: 'Everyone plays everyone. Best overall record wins.' },
+  { id: 'swiss',       label: 'Swiss',                  desc: 'Matched by record each round. No elimination until X losses.' },
+  { id: 'group_stage', label: 'Group Stage + Playoffs', desc: 'Groups feed into a single-elim playoff bracket.' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  GAME MANAGEMENT API
+//  GAME MANAGEMENT API  →  game_titles, game_maps, game_modes, game_seasons
 // ─────────────────────────────────────────────────────────────────────────────
-let MOCK_GAMES = [
-  {
-    id: 'game_lol',    name: 'League of Legends', shortName: 'LoL',
-    genre: 'MOBA',     platform: 'PC',
-    teamSize: { min: 5, max: 5, label: '5v5' },
-    active: true, featured: true, hasLadder: false,
-    icon: '⚔️',  color: '#c89b3c',
-    coverImage: '',
-    modes: ['Summoners Rift (5v5)', 'ARAM', 'Arena'],
-    maps: [
-      { id: 'map_lol_sr',   name: "Summoner's Rift", type: 'Standard', active: true,  image: '', notes: '5v5 main competitive map' },
-      { id: 'map_lol_ha',   name: 'Howling Abyss',   type: 'ARAM',     active: true,  image: '', notes: 'Single lane all random map' },
-      { id: 'map_lol_ar',   name: 'Arena',            type: 'Special',  active: true,  image: '', notes: '2v2v2v2 rotating arena mode' },
-    ],
-    seasons: [
-      { id: 'lol_s1', name: 'Spring 2025', startDate: '2025-01-15', endDate: '2025-04-15', active: true },
-    ],
-  },
-  {
-    id: 'game_val',    name: 'Valorant',           shortName: 'VAL',
-    genre: 'FPS',      platform: 'PC',
-    teamSize: { min: 5, max: 5, label: '5v5' },
-    active: true, featured: true, hasLadder: false,
-    icon: '🔫',  color: '#ff4655',
-    coverImage: '',
-    modes: ['Standard (5v5)', 'Spike Rush', 'Deathmatch'],
-    maps: [
-      { id: 'map_val_haven',    name: 'Haven',    type: 'Competitive', active: true,  image: '', notes: '3 spike sites' },
-      { id: 'map_val_bind',     name: 'Bind',     type: 'Competitive', active: true,  image: '', notes: 'Teleporters, no mid' },
-      { id: 'map_val_ascent',   name: 'Ascent',   type: 'Competitive', active: true,  image: '', notes: 'Open mid with doors' },
-      { id: 'map_val_split',    name: 'Split',    type: 'Competitive', active: true,  image: '', notes: 'Vertical map design' },
-      { id: 'map_val_fracture', name: 'Fracture', type: 'Competitive', active: false, image: '', notes: 'Currently in rotation' },
-      { id: 'map_val_lotus',    name: 'Lotus',    type: 'Competitive', active: true,  image: '', notes: '3 sites with rotating doors' },
-    ],
-    seasons: [
-      { id: 'val_s1', name: 'Spring 2025', startDate: '2025-01-15', endDate: '2025-04-15', active: true },
-    ],
-  },
-  {
-    id: 'game_tft',    name: 'Team Fight Tactics', shortName: 'TFT',
-    genre: 'Auto Battler', platform: 'PC/Mobile',
-    teamSize: { min: 1, max: 1, label: '1v1 (FFA)' },
-    active: true, featured: true, hasLadder: false,
-    icon: '🎲',  color: '#7c3aed',
-    coverImage: '',
-    modes: ['Standard', 'Double Up'],
-    maps: [],
-    seasons: [
-      { id: 'tft_s1', name: 'Set 13 Season', startDate: '2025-01-01', endDate: '2025-06-01', active: true },
-    ],
-  },
-  {
-    id: 'game_rl',     name: 'Rocket League',      shortName: 'RL',
-    genre: 'Sports',   platform: 'PC/Console',
-    teamSize: { min: 2, max: 3, label: '2v2 or 3v3' },
-    active: true, featured: false, hasLadder: false,
-    icon: '🚀',  color: '#00b4d8',
-    coverImage: '',
-    modes: ['3v3 Soccar', '2v2 Soccar', '1v1 Duel', 'Rumble'],
-    maps: [
-      { id: 'map_rl_dfe',    name: 'DFH Stadium',       type: 'Standard', active: true, image: '', notes: 'Main competitive arena' },
-      { id: 'map_rl_manor',  name: 'Mannfield',          type: 'Standard', active: true, image: '', notes: 'Night variant available' },
-      { id: 'map_rl_urban',  name: 'Urban Central',      type: 'Standard', active: true, image: '', notes: '' },
-      { id: 'map_rl_utopia', name: 'Utopia Coliseum',    type: 'Standard', active: true, image: '', notes: '' },
-    ],
-    seasons: [],
-  },
-  {
-    id: 'game_fn',     name: 'Fortnite',            shortName: 'FN',
-    genre: 'Battle Royale', platform: 'PC/Console/Mobile',
-    teamSize: { min: 1, max: 4, label: '1-4 players' },
-    active: true, featured: false, hasLadder: false,
-    icon: '🏗️',  color: '#f59e0b',
-    coverImage: '',
-    modes: ['Battle Royale', 'Zero Build', 'Reload'],
-    maps: [
-      { id: 'map_fn_chapter6', name: 'Chapter 6 Island', type: 'Battle Royale', active: true, image: '', notes: 'Current chapter map' },
-      { id: 'map_fn_reload',   name: 'Reload Island',    type: 'Reload',        active: true, image: '', notes: 'Smaller Reload-mode map' },
-    ],
-    seasons: [],
-  },
-  {
-    id: 'game_ssb',    name: 'Smash Bros. Ultimate', shortName: 'SSBU',
-    genre: 'Fighting', platform: 'Nintendo Switch',
-    teamSize: { min: 1, max: 1, label: '1v1' },
-    active: true, featured: false, hasLadder: false,
-    icon: '💥',  color: '#ef4444',
-    coverImage: '',
-    modes: ['1v1 Tournament', 'Crews', 'Amateur Bracket'],
-    maps: [
-      { id: 'map_ssb_fd',      name: "Final Destination",      type: 'Starter',  active: true, image: '', notes: 'Flat, no platforms' },
-      { id: 'map_ssb_bf',      name: 'Battlefield',            type: 'Starter',  active: true, image: '', notes: '3 soft platforms' },
-      { id: 'map_ssb_sbf',     name: 'Small Battlefield',      type: 'Starter',  active: true, image: '', notes: 'Tighter platform layout' },
-      { id: 'map_ssb_tw',      name: 'Town & City',            type: 'Starter',  active: true, image: '', notes: 'Moving top platform' },
-      { id: 'map_ssb_pokemon', name: 'Pokemon Stadium 2',      type: 'Counterpick', active: true, image: '', notes: 'Transforming stage' },
-      { id: 'map_ssb_kalos',   name: 'Kalos Pokemon League',   type: 'Counterpick', active: true, image: '', notes: '' },
-      { id: 'map_ssb_la',      name: "Lylat Cruise",           type: 'Counterpick', active: true, image: '', notes: 'Tilting stage' },
-    ],
-    seasons: [],
-  },
-  {
-    id: 'game_mr',     name: 'Marvel Rivals',        shortName: 'MR',
-    genre: 'Hero Shooter', platform: 'PC/Console',
-    teamSize: { min: 5, max: 6, label: '5v5 or 6v6' },
-    active: true, featured: false, hasLadder: false,
-    icon: '🦸',  color: '#dc2626',
-    coverImage: '',
-    modes: ['Domination', 'Convoy', 'Convergence', 'Conquest'],
-    maps: [
-      { id: 'map_mr_hall',     name: 'Hall of Djalia',         type: 'Domination', active: true, image: '', notes: '' },
-      { id: 'map_mr_ygg',      name: 'Yggsgard',               type: 'Convoy',     active: true, image: '', notes: '' },
-      { id: 'map_mr_tokyo',    name: 'Tokyo 2099',             type: 'Convoy',     active: true, image: '', notes: '' },
-      { id: 'map_mr_empire',   name: 'Empire of Eternal Night', type: 'Convergence', active: true, image: '', notes: '' },
-    ],
-    seasons: [],
-  },
-  {
-    id: 'game_halo3',  name: 'Halo 3',              shortName: 'H3',
-    genre: 'FPS',      platform: 'PC (MCC)',
-    teamSize: { min: 2, max: 4, label: '2v2 or 4v4' },
-    active: true, featured: true, hasLadder: true,
-    icon: '🎯',  color: '#00b4d8',
-    coverImage: '',
-    modes: ['MLG Slayer', 'MLG CTF', 'MLG Team Shotty Snipers', 'MLG KotH'],
-    maps: [
-      { id: 'map_h3_construct', name: 'Construct',  type: 'MLG',  active: true, image: '', notes: 'Slayer, CTF, TS, KotH' },
-      { id: 'map_h3_guardian',  name: 'Guardian',   type: 'MLG',  active: true, image: '', notes: 'Slayer, CTF, TS, KotH' },
-      { id: 'map_h3_heretic',   name: 'Heretic',    type: 'MLG',  active: true, image: '', notes: 'Slayer, CTF, TS' },
-      { id: 'map_h3_isolation', name: 'Isolation',  type: 'MLG',  active: true, image: '', notes: 'CTF, KotH only' },
-      { id: 'map_h3_narrows',   name: 'Narrows',    type: 'MLG',  active: true, image: '', notes: 'Slayer, CTF, TS' },
-      { id: 'map_h3_pit',       name: 'The Pit',    type: 'MLG',  active: true, image: '', notes: 'All modes – most played' },
-      { id: 'map_h3_onslaught', name: 'Onslaught',  type: 'MLG',  active: true, image: '', notes: 'Slayer, CTF, TS' },
-      { id: 'map_h3_amplified', name: 'Amplified',  type: 'MLG',  active: true, image: '', notes: 'Slayer, CTF, KotH' },
-    ],
-    seasons: [
-      { id: 'halo_s1', name: 'MLG Season 1', startDate: '2025-02-01', endDate: '2025-05-01', active: true },
-    ],
-  },
-];
 
 export const gameApi = {
-
   getAll: async () => {
-    await delay(250);
-    return MOCK_GAMES.map(g => ({ ...g }));
+    const { data, error } = await supabase.from('game_titles').select('*').order('name');
+    if (error) throw error;
+    return data || [];
   },
-
   getActive: async () => {
-    await delay(200);
-    return MOCK_GAMES.filter(g => g.active).map(g => ({ ...g }));
+    const { data, error } = await supabase.from('game_titles').select('*').eq('active', true).order('name');
+    if (error) throw error;
+    return data || [];
   },
-
   getById: async (id) => {
-    await delay(150);
-    return MOCK_GAMES.find(g => g.id === id) || null;
+    const { data } = await supabase.from('game_titles').select('*').eq('id', id).single();
+    return data || null;
   },
-
-  create: async (data) => {
-    await delay(400);
-    const id = 'game_' + Date.now();
-    const game = {
-      id,
-      name: data.name.trim(),
-      shortName: data.shortName?.trim() || data.name.slice(0,4).toUpperCase(),
-      genre: data.genre?.trim() || '',
-      platform: data.platform?.trim() || 'PC',
-      teamSize: data.teamSize || { min: 5, max: 5, label: '5v5' },
-      active: true,
-      featured: data.featured || false,
-      hasLadder: data.hasLadder || false,
-      icon: data.icon || '🎮',
-      color: data.color || '#3b82f6',
-      modes: data.modes || [],
-      seasons: [],
-    };
-    MOCK_GAMES.push(game);
-    return { success: true, game };
+  create: async (gameData) => {
+    const { data, error } = await supabase.from('game_titles').insert([gameData]).select().single();
+    if (error) return { success: false, error: error.message };
+    return { success: true, game: data };
   },
-
   update: async (id, updates) => {
-    await delay(300);
-    const idx = MOCK_GAMES.findIndex(g => g.id === id);
-    if (idx === -1) return { success: false, error: 'Game not found.' };
-    MOCK_GAMES[idx] = { ...MOCK_GAMES[idx], ...updates };
-    return { success: true, game: MOCK_GAMES[idx] };
+    const { data, error } = await supabase.from('game_titles').update(updates).eq('id', id).select().single();
+    if (error) return { success: false, error: error.message };
+    return { success: true, game: data };
   },
-
   toggleActive: async (id) => {
-    await delay(200);
-    const g = MOCK_GAMES.find(g => g.id === id);
-    if (!g) return { success: false };
-    g.active = !g.active;
-    return { success: true, active: g.active };
+    const { data: current } = await supabase.from('game_titles').select('active').eq('id', id).single();
+    const { error } = await supabase.from('game_titles').update({ active: !current?.active }).eq('id', id);
+    if (error) return { success: false };
+    return { success: true, active: !current?.active };
   },
-
   addSeason: async (gameId, season) => {
-    await delay(300);
-    const g = MOCK_GAMES.find(g => g.id === gameId);
-    if (!g) return { success: false };
-    const newSeason = {
-      id: `${gameId}_s${Date.now()}`,
-      name: season.name.trim(),
-      startDate: season.startDate,
-      endDate: season.endDate,
-      active: season.active || false,
-    };
-    g.seasons.push(newSeason);
-    return { success: true, season: newSeason };
+    const { data, error } = await supabase.from('game_seasons').insert([{ ...season, game_id: gameId }]).select().single();
+    if (error) return { success: false, error: error.message };
+    return { success: true, season: data };
   },
-
   updateSeason: async (gameId, seasonId, updates) => {
-    await delay(250);
-    const g = MOCK_GAMES.find(g => g.id === gameId);
-    if (!g) return { success: false };
-    const si = g.seasons.findIndex(s => s.id === seasonId);
-    if (si === -1) return { success: false };
-    g.seasons[si] = { ...g.seasons[si], ...updates };
-    if (updates.active) g.seasons.forEach((s, i) => { if (i !== si) s.active = false; });
-    return { success: true };
+    const { error } = await supabase.from('game_seasons').update(updates).eq('id', seasonId).eq('game_id', gameId);
+    return error ? { success: false } : { success: true };
   },
-
   deleteSeason: async (gameId, seasonId) => {
-    await delay(250);
-    const g = MOCK_GAMES.find(g => g.id === gameId);
-    if (!g) return { success: false };
-    g.seasons = g.seasons.filter(s => s.id !== seasonId);
-    return { success: true };
+    const { error } = await supabase.from('game_seasons').delete().eq('id', seasonId).eq('game_id', gameId);
+    return error ? { success: false } : { success: true };
   },
-
   updateModes: async (gameId, modes) => {
-    await delay(200);
-    const g = MOCK_GAMES.find(g => g.id === gameId);
-    if (!g) return { success: false };
-    g.modes = modes;
+    await supabase.from('game_modes').delete().eq('game_id', gameId);
+    if (modes.length > 0) {
+      const { error } = await supabase.from('game_modes').insert(modes.map((name, i) => ({ game_id: gameId, name, sort_order: i })));
+      if (error) return { success: false };
+    }
     return { success: true };
   },
-
   getMaps: async (gameId) => {
-    await delay(200);
-    const g = MOCK_GAMES.find(g => g.id === gameId);
-    if (!g) return [];
-    return [...(g.maps || [])];
+    const { data } = await supabase.from('game_maps').select('*').eq('game_id', gameId).order('sort_order');
+    return data || [];
   },
-
   addMap: async (gameId, { name, type, notes }) => {
-    await delay(300);
-    const g = MOCK_GAMES.find(g => g.id === gameId);
-    if (!g) return { success: false };
-    if (!g.maps) g.maps = [];
-    const map = {
-      id: `map_${gameId}_${Date.now()}`,
-      name: name.trim(),
-      type: type.trim() || 'Standard',
-      active: true,
-      image: '',
-      notes: notes?.trim() || '',
-    };
-    g.maps.push(map);
-    return { success: true, map };
+    const { data, error } = await supabase.from('game_maps').insert([{ game_id: gameId, name, type, notes, active: true }]).select().single();
+    if (error) return { success: false };
+    return { success: true, map: data };
   },
-
   updateMap: async (gameId, mapId, updates) => {
-    await delay(250);
-    const g = MOCK_GAMES.find(g => g.id === gameId);
-    if (!g) return { success: false };
-    const idx = (g.maps || []).findIndex(m => m.id === mapId);
-    if (idx === -1) return { success: false };
-    g.maps[idx] = { ...g.maps[idx], ...updates };
-    return { success: true, map: g.maps[idx] };
+    const { data, error } = await supabase.from('game_maps').update(updates).eq('id', mapId).eq('game_id', gameId).select().single();
+    if (error) return { success: false };
+    return { success: true, map: data };
   },
-
   toggleMapActive: async (gameId, mapId) => {
-    await delay(200);
-    const g = MOCK_GAMES.find(g => g.id === gameId);
-    const map = g?.maps?.find(m => m.id === mapId);
-    if (!map) return { success: false };
-    map.active = !map.active;
-    return { success: true, active: map.active };
+    const { data: current } = await supabase.from('game_maps').select('active').eq('id', mapId).single();
+    const { error } = await supabase.from('game_maps').update({ active: !current?.active }).eq('id', mapId);
+    if (error) return { success: false };
+    return { success: true, active: !current?.active };
   },
-
   deleteMap: async (gameId, mapId) => {
-    await delay(250);
-    const g = MOCK_GAMES.find(g => g.id === gameId);
-    if (!g) return { success: false };
-    g.maps = (g.maps || []).filter(m => m.id !== mapId);
-    return { success: true };
+    const { error } = await supabase.from('game_maps').delete().eq('id', mapId).eq('game_id', gameId);
+    return error ? { success: false } : { success: true };
   },
-
   reorderMaps: async (gameId, orderedIds) => {
-    await delay(200);
-    const g = MOCK_GAMES.find(g => g.id === gameId);
-    if (!g || !g.maps) return { success: false };
-    const mapById = Object.fromEntries(g.maps.map(m => [m.id, m]));
-    g.maps = orderedIds.map(id => mapById[id]).filter(Boolean);
+    await Promise.all(orderedIds.map((id, i) => supabase.from('game_maps').update({ sort_order: i }).eq('id', id)));
     return { success: true };
   },
-
   updateCoverImage: async (gameId, base64DataUrl) => {
-    await delay(200);
-    const g = MOCK_GAMES.find(g => g.id === gameId);
-    if (!g) return { success: false };
-    g.coverImage = base64DataUrl;
-    return { success: true };
+    const { error } = await supabase.from('game_titles').update({ cover_image: base64DataUrl }).eq('id', gameId);
+    return error ? { success: false } : { success: true };
   },
-
   removeCoverImage: async (gameId) => {
-    await delay(150);
-    const g = MOCK_GAMES.find(g => g.id === gameId);
-    if (!g) return { success: false };
-    g.coverImage = '';
-    return { success: true };
+    const { error } = await supabase.from('game_titles').update({ cover_image: '' }).eq('id', gameId);
+    return error ? { success: false } : { success: true };
   },
 };
 
-export function getGameNames() {
-  return MOCK_GAMES.filter(g => g.active).map(g => g.name);
+export async function getGameNames() {
+  const { data } = await supabase.from('game_titles').select('name').eq('active', true).order('name');
+  return (data || []).map(g => g.name);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  TEAMS API
+//  TEAMS API  →  teams, team_members, team_invites
 // ─────────────────────────────────────────────────────────────────────────────
-let MOCK_TEAMS = [
-  {
-    id: 'team_001', name: 'Rapid City Reapers', game: 'League of Legends',
-    captainId: 'user_001', captainName: 'Alex Rivera',
-    members: [
-      { id: 'user_001', name: 'Alex Rivera',   role: 'Top',    initials: 'AR', avatarColor: '#059669' },
-      { id: 'user_002', name: 'Jordan Kim',    role: 'Jungle', initials: 'JK', avatarColor: '#1d4ed8' },
-      { id: 'user_003', name: 'Sam Chen',      role: 'Mid',    initials: 'SC', avatarColor: '#7c3aed' },
-      { id: 'user_004', name: 'Taylor Brooks', role: 'ADC',    initials: 'TB', avatarColor: '#dc2626' },
-      { id: 'user_005', name: 'Morgan Lee',    role: 'Support',initials: 'ML', avatarColor: '#d97706' },
-    ],
-    maxSize: 5, wins: 3, losses: 1, createdAt: '2025-01-15',
-    pendingInvites: [],
-  },
-  {
-    id: 'team_002', name: 'Black Hills Blazers', game: 'Valorant',
-    captainId: 'user_010', captainName: 'Casey Park',
-    members: [
-      { id: 'user_010', name: 'Casey Park',    role: 'Duelist',   initials: 'CP', avatarColor: '#1d4ed8' },
-      { id: 'user_011', name: 'Devon Walsh',   role: 'Controller',initials: 'DW', avatarColor: '#059669' },
-      { id: 'user_012', name: 'Riley Stone',   role: 'Sentinel',  initials: 'RS', avatarColor: '#dc2626' },
-      { id: 'user_013', name: 'Quinn Adams',   role: 'Initiator', initials: 'QA', avatarColor: '#7c3aed' },
-      { id: 'user_014', name: 'Avery Cruz',    role: 'Duelist',   initials: 'AC', avatarColor: '#d97706' },
-    ],
-    maxSize: 5, wins: 2, losses: 2, createdAt: '2025-01-20',
-    pendingInvites: [],
-  },
-  {
-    id: 'team_003', name: 'Sioux Falls Storm', game: 'Rocket League',
-    captainId: 'user_020', captainName: 'Blake Torres',
-    members: [
-      { id: 'user_020', name: 'Blake Torres',  role: 'Striker',  initials: 'BT', avatarColor: '#059669' },
-      { id: 'user_021', name: 'Drew Nguyen',   role: 'Defender', initials: 'DN', avatarColor: '#1d4ed8' },
-      { id: 'user_022', name: 'Emery Hall',    role: 'Flex',     initials: 'EH', avatarColor: '#7c3aed' },
-    ],
-    maxSize: 3, wins: 4, losses: 0, createdAt: '2025-01-10',
-    pendingInvites: [],
-  },
-];
 
 export const teamsApi = {
-  getAll: async () => { await delay(350); return [...MOCK_TEAMS]; },
-  getByGame: async (game) => { await delay(300); return MOCK_TEAMS.filter(t => t.game === game); },
-  getById: async (id) => { await delay(200); return MOCK_TEAMS.find(t => t.id === id) || null; },
+  getAll: async () => {
+    const { data, error } = await supabase.from('teams').select('*, team_members(*)').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+  getByGame: async (game) => {
+    const { data, error } = await supabase.from('teams').select('*, team_members(*)').eq('game', game);
+    if (error) throw error;
+    return data || [];
+  },
+  getById: async (id) => {
+    const { data } = await supabase.from('teams').select('*, team_members(*)').eq('id', id).single();
+    return data || null;
+  },
   getMyTeams: async (userId) => {
-    await delay(300);
-    return MOCK_TEAMS.filter(t => t.members.some(m => m.id === userId));
+    const { data } = await supabase.from('team_members').select('team_id, teams(*, team_members(*))').eq('user_id', userId);
+    return (data || []).map(r => r.teams).filter(Boolean);
   },
   getByIds: async (ids) => {
-    await delay(200);
-    return MOCK_TEAMS.filter(t => ids.includes(t.id));
+    const { data } = await supabase.from('teams').select('*, team_members(*)').in('id', ids);
+    return data || [];
   },
   create: async ({ name, game, captainId, captainName, captainInitials, captainColor }) => {
-    await delay(500);
     const size = GAME_TEAM_SIZES[game]?.max || 5;
-    const team = {
-      id: `team_${Date.now()}`,
-      name, game,
-      captainId, captainName,
-      members: [{ id: captainId, name: captainName, role: 'Captain', initials: captainInitials, avatarColor: captainColor }],
-      maxSize: size, wins: 0, losses: 0,
-      createdAt: new Date().toISOString().split('T')[0],
-      pendingInvites: [],
-    };
-    MOCK_TEAMS.push(team);
+    const { data: team, error } = await supabase.from('teams').insert([{
+      name, game, captain_id: captainId, captain_name: captainName, max_size: size, wins: 0, losses: 0,
+    }]).select().single();
+    if (error) return { success: false, error: error.message };
+    await supabase.from('team_members').insert([{
+      team_id: team.id, user_id: captainId, name: captainName,
+      role: 'Captain', initials: captainInitials, avatar_color: captainColor,
+    }]);
     return { success: true, team };
   },
   invitePlayer: async (teamId, playerEmail) => {
-    await delay(400);
-    const team = MOCK_TEAMS.find(t => t.id === teamId);
-    if (!team) return { success: false, error: 'Team not found' };
-    if (team.members.length >= team.maxSize) return { success: false, error: 'Team is full' };
-    team.pendingInvites = [...(team.pendingInvites || []), { email: playerEmail, sentAt: new Date().toISOString() }];
-    return { success: true };
+    const { error } = await supabase.from('team_invites').insert([{ team_id: teamId, email: playerEmail }]);
+    return error ? { success: false, error: error.message } : { success: true };
   },
   acceptInvite: async (teamId, userId, userName, userInitials, userColor) => {
-    await delay(400);
-    const team = MOCK_TEAMS.find(t => t.id === teamId);
-    if (!team) return { success: false, error: 'Team not found' };
-    if (team.members.some(m => m.id === userId)) return { success: false, error: 'Already a member' };
-    team.members.push({ id: userId, name: userName, role: 'Member', initials: userInitials, avatarColor: userColor });
-    return { success: true };
+    const { error } = await supabase.from('team_members').insert([{
+      team_id: teamId, user_id: userId, name: userName, role: 'Member', initials: userInitials, avatar_color: userColor,
+    }]);
+    return error ? { success: false, error: error.message } : { success: true };
   },
   removeMember: async (teamId, userId) => {
-    await delay(300);
-    const team = MOCK_TEAMS.find(t => t.id === teamId);
-    if (team) team.members = team.members.filter(m => m.id !== userId);
-    return { success: true };
+    const { error } = await supabase.from('team_members').delete().eq('team_id', teamId).eq('user_id', userId);
+    return error ? { success: false } : { success: true };
   },
   delete: async (teamId) => {
-    await delay(300);
-    MOCK_TEAMS = MOCK_TEAMS.filter(t => t.id !== teamId);
-    return { success: true };
+    await supabase.from('team_members').delete().eq('team_id', teamId);
+    const { error } = await supabase.from('teams').delete().eq('id', teamId);
+    return error ? { success: false } : { success: true };
   },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  TOURNAMENTS API
+//  TOURNAMENTS API  →  tournaments, tournament_registrations, tournament_matches, score_reports
 // ─────────────────────────────────────────────────────────────────────────────
-let MOCK_TOURNAMENTS = [
-  {
-    id: 't1', name: 'Team Fight Tactics Open', game: 'Team Fight Tactics',
-    format: 'single_elim', status: 'open', phase: 'registration',
-    date: 'Mar 1, 2026', time: '5:00 PM CST', prize: '3,500 RP',
-    description: 'Open to all skill levels. FFA style – top 4 advance each round.',
-    memberOnly: false, maxTeams: 16, registeredTeams: ['team_solo_1','team_solo_2','team_solo_3'],
-    minTeamSize: 1, maxTeamSize: 1,
-    bracketData: null, matches: [],
-    createdBy: 'user_admin',
-  },
-  {
-    id: 't2', name: 'Spring Valorant Cup', game: 'Valorant',
-    format: 'double_elim', status: 'open', phase: 'registration',
-    date: 'Mar 15, 2026', time: '6:00 PM CST', prize: 'Cash + Merch',
-    description: 'Double elimination Valorant tournament. Teams of 5.',
-    memberOnly: false, maxTeams: 8, registeredTeams: ['team_001'],
-    minTeamSize: 5, maxTeamSize: 5,
-    bracketData: null, matches: [],
-    createdBy: 'user_admin',
-  },
-  {
-    id: 't3', name: 'Rocket League Doubles', game: 'Rocket League',
-    format: 'round_robin', status: 'open', phase: 'registration',
-    date: 'Mar 29, 2026', time: '4:00 PM CST', prize: 'Free Entry + Trophy',
-    description: 'Round robin Rocket League. Teams of 2-3.',
-    memberOnly: false, maxTeams: 8, registeredTeams: ['team_003'],
-    minTeamSize: 2, maxTeamSize: 3,
-    bracketData: null, matches: [],
-    createdBy: 'user_admin',
-  },
-  {
-    id: 't4', name: 'Summer LoL Championship', game: 'League of Legends',
-    format: 'group_stage', status: 'active', phase: 'bracket',
-    date: 'Feb 24, 2026', time: '5:00 PM CST', prize: '$500 + Trophy',
-    description: 'Group stage feeding into single-elim playoffs. SD state qualifier.',
-    memberOnly: true, maxTeams: 8, registeredTeams: ['team_001','team_rr1','team_rr2','team_rr3','team_rr4','team_rr5','team_rr6','team_rr7'],
-    minTeamSize: 5, maxTeamSize: 5,
-    bracketData: {
-      rounds: [
-        {
-          round: 1, name: 'Quarterfinals',
-          matches: [
-            { id: 'm1', team1: { id:'team_001', name:'Rapid City Reapers'}, team2: { id:'team_rr1', name:'Pierre Phantoms'}, score1: 2, score2: 0, winner: 'team_001', status: 'complete', reportedBy: 'team_001', confirmedBy: 'team_rr1' },
-            { id: 'm2', team1: { id:'team_rr2', name:'Sioux Falls Surge'}, team2: { id:'team_rr3', name:'Aberdeen Aces'}, score1: 1, score2: 2, winner: 'team_rr3', status: 'complete', reportedBy: 'team_rr2', confirmedBy: 'team_rr3' },
-            { id: 'm3', team1: { id:'team_rr4', name:'Watertown Wolves'}, team2: { id:'team_rr5', name:'Huron Hawks'}, score1: 2, score2: 1, winner: 'team_rr4', status: 'complete', reportedBy: 'team_rr4', confirmedBy: 'team_rr5' },
-            { id: 'm4', team1: { id:'team_rr6', name:'Mitchell Mavericks'}, team2: { id:'team_rr7', name:'Brookings Blitz'}, score1: null, score2: null, winner: null, status: 'pending', reportedBy: null, confirmedBy: null },
-          ]
-        },
-        {
-          round: 2, name: 'Semifinals',
-          matches: [
-            { id: 'm5', team1: { id:'team_001', name:'Rapid City Reapers'}, team2: { id:'team_rr3', name:'Aberdeen Aces'}, score1: null, score2: null, winner: null, status: 'pending', reportedBy: null, confirmedBy: null },
-            { id: 'm6', team1: { id:'team_rr4', name:'Watertown Wolves'}, team2: null, score1: null, score2: null, winner: null, status: 'waiting', reportedBy: null, confirmedBy: null },
-          ]
-        },
-        {
-          round: 3, name: 'Grand Final',
-          matches: [
-            { id: 'm7', team1: null, team2: null, score1: null, score2: null, winner: null, status: 'waiting', reportedBy: null, confirmedBy: null },
-          ]
-        }
-      ]
-    },
-    matches: [],
-    createdBy: 'user_admin',
-  },
-];
-
-let PENDING_SCORE_REPORTS = [];
 
 export const tournamentsApi = {
-  getAll: async () => { await delay(400); return [...MOCK_TOURNAMENTS]; },
-  getById: async (id) => { await delay(200); return MOCK_TOURNAMENTS.find(t => t.id === id) || null; },
-  create: async (data) => {
-    await delay(500);
-    const t = {
-      id: `t_${Date.now()}`,
-      ...data,
-      status: 'open', phase: 'registration',
-      registeredTeams: [],
-      bracketData: null, matches: [],
-      createdAt: new Date().toISOString(),
-    };
-    MOCK_TOURNAMENTS.push(t);
-    return { success: true, tournament: t };
+  getAll: async () => {
+    const { data, error } = await supabase.from('tournaments').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+  getById: async (id) => {
+    const { data } = await supabase.from('tournaments').select('*').eq('id', id).single();
+    return data || null;
+  },
+  create: async (tournamentData) => {
+    const { data, error } = await supabase.from('tournaments').insert([{ ...tournamentData, status: 'open', phase: 'registration' }]).select().single();
+    if (error) return { success: false, error: error.message };
+    return { success: true, tournament: data };
   },
   update: async (id, updates) => {
-    await delay(400);
-    MOCK_TOURNAMENTS = MOCK_TOURNAMENTS.map(t => t.id === id ? { ...t, ...updates } : t);
-    return { success: true };
+    const { error } = await supabase.from('tournaments').update(updates).eq('id', id);
+    return error ? { success: false, error: error.message } : { success: true };
   },
   delete: async (id) => {
-    await delay(300);
-    MOCK_TOURNAMENTS = MOCK_TOURNAMENTS.filter(t => t.id !== id);
-    return { success: true };
+    const { error } = await supabase.from('tournaments').delete().eq('id', id);
+    return error ? { success: false } : { success: true };
   },
   register: async (tournamentId, teamId) => {
-    await delay(500);
-    const t = MOCK_TOURNAMENTS.find(t => t.id === tournamentId);
-    if (!t) return { success: false, error: 'Tournament not found' };
-    if (t.registeredTeams.includes(teamId)) return { success: false, error: 'Already registered' };
-    if (t.registeredTeams.length >= t.maxTeams) return { success: false, error: 'Tournament is full' };
-    t.registeredTeams.push(teamId);
-    return { success: true };
+    const { error } = await supabase.from('tournament_registrations').insert([{ tournament_id: tournamentId, team_id: teamId }]);
+    return error ? { success: false, error: error.message } : { success: true };
   },
   start: async (tournamentId) => {
-    await delay(600);
-    const t = MOCK_TOURNAMENTS.find(t => t.id === tournamentId);
-    if (!t) return { success: false, error: 'Not found' };
-    const teams = [...t.registeredTeams].sort(() => Math.random() - 0.5);
-    t.phase = 'bracket';
-    t.status = 'active';
-    const matches = [];
-    for (let i = 0; i < teams.length; i += 2) {
-      if (teams[i + 1]) {
-        matches.push({
-          id: `m_${Date.now()}_${i}`,
-          team1: { id: teams[i], name: teams[i] },
-          team2: { id: teams[i+1], name: teams[i+1] },
-          score1: null, score2: null, winner: null,
-          status: 'pending', reportedBy: null, confirmedBy: null,
-        });
-      }
-    }
-    t.bracketData = { rounds: [{ round: 1, name: 'Round 1', matches }] };
-    return { success: true, tournament: t };
+    const { error } = await supabase.from('tournaments').update({ status: 'active', phase: 'bracket' }).eq('id', tournamentId);
+    if (error) return { success: false, error: error.message };
+    const { data } = await supabase.from('tournaments').select('*').eq('id', tournamentId).single();
+    return { success: true, tournament: data };
   },
   reportScore: async (tournamentId, matchId, reportingTeamId, score1, score2) => {
-    await delay(400);
-    PENDING_SCORE_REPORTS.push({
-      id: `rep_${Date.now()}`,
-      tournamentId, matchId, reportingTeamId,
-      score1, score2,
-      reportedAt: new Date().toISOString(),
-      confirmed: false,
-    });
-    return { success: true, message: 'Score submitted. Waiting for opponent confirmation.' };
+    const { error } = await supabase.from('score_reports').insert([{
+      tournament_id: tournamentId, match_id: matchId,
+      reporting_team_id: reportingTeamId, score1, score2, confirmed: false,
+    }]);
+    return error ? { success: false, error: error.message } : { success: true, message: 'Score submitted. Waiting for opponent confirmation.' };
   },
   confirmScore: async (tournamentId, matchId, confirmingTeamId) => {
-    await delay(400);
-    const t = MOCK_TOURNAMENTS.find(t => t.id === tournamentId);
-    if (!t || !t.bracketData) return { success: false, error: 'Not found' };
-    const report = PENDING_SCORE_REPORTS.find(r => r.matchId === matchId && !r.confirmed);
+    const { data: report } = await supabase.from('score_reports').select('*').eq('match_id', matchId).eq('confirmed', false).single();
     if (!report) return { success: false, error: 'No pending report found' };
-    report.confirmed = true;
-    for (const round of t.bracketData.rounds) {
-      const match = round.matches.find(m => m.id === matchId);
-      if (match) {
-        match.score1 = report.score1;
-        match.score2 = report.score2;
-        match.winner = report.score1 > report.score2 ? match.team1?.id : match.team2?.id;
-        match.status = 'complete';
-        match.reportedBy = report.reportingTeamId;
-        match.confirmedBy = confirmingTeamId;
-      }
-    }
+    await supabase.from('score_reports').update({ confirmed: true }).eq('id', report.id);
+    const winner = report.score1 > report.score2 ? report.team1_id : report.team2_id;
+    await supabase.from('tournament_matches').update({
+      score1: report.score1, score2: report.score2, winner_id: winner,
+      status: 'complete', reported_by: report.reporting_team_id, confirmed_by: confirmingTeamId,
+    }).eq('id', matchId);
     return { success: true };
   },
   getPendingReport: async (tournamentId, matchId) => {
-    await delay(200);
-    return PENDING_SCORE_REPORTS.find(r => r.matchId === matchId && !r.confirmed) || null;
+    const { data } = await supabase.from('score_reports').select('*').eq('match_id', matchId).eq('confirmed', false).single();
+    return data || null;
   },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  COACHES API
+//  COACHES API  →  coaches, coach_games, coach_accolades, coach_reviews
 // ─────────────────────────────────────────────────────────────────────────────
-let MOCK_COACHES = [
-  {
-    id: 'coach_zach', userId: null,
-    name: 'Zach Walters', title: 'Head Coach & Founder',
-    initials: 'ZW', accentColor: '#1d4ed8', experience: '20+ Years',
-    location: 'Rapid City, SD',
-    rating: 5.0, totalSessions: 200,
-    bio: "Zach Walters is the founder of High Caliber Esports Academy and one of South Dakota's most experienced esports coaches. With over 20 years competing, coaching, and consulting in the esports industry, Zach brings unmatched strategic depth and a passion for developing the next generation of players.\n\nLast season, Zach coached the Sioux Falls Lincoln High School League of Legends team to a South Dakota State Championship. He continues to coach students across South Dakota through Fenworks and has consulted for multiple nonprofit youth organizations including the Pierre Area Boys & Girls Club and Sioux Falls Boys & Girls Clubs.\n\nZach's coaching philosophy centers on building not just game skills, but life skills – communication, resilience, and leadership that translate beyond the screen.",
-    philosophy: "I believe every player has a ceiling they haven't reached yet. My job is to help you find it – through honest feedback, structured improvement, and a genuine investment in your growth.",
-    games: [
-      { id: 'lol',    label: 'League of Legends', icon: '⚔️', rank: 'Diamond II',    specialty: 'Mid Lane / Macro Play' },
-      { id: 'val',    label: 'Valorant',           icon: '🎯', rank: 'Immortal',       specialty: 'IGL / Agent Composition' },
-      { id: 'tft',    label: 'Team Fight Tactics', icon: '♟️', rank: 'Master',         specialty: 'Economy & Positioning' },
-      { id: 'rl',     label: 'Rocket League',      icon: '🚀', rank: 'Diamond',        specialty: 'Rotations & Mechanics' },
-      { id: 'smash',  label: 'Smash Bros.',        icon: '💥', rank: 'Tournament Vet', specialty: 'Neutral & Punish Game' },
-      { id: 'fn',     label: 'Fortnite',           icon: '🏗️', rank: 'Competitive',   specialty: 'Zone Strategy & Building' },
-      { id: 'rivals', label: 'Marvel Rivals',      icon: '🦸', rank: 'Top 500',        specialty: 'Team Comps & Ult Tracking' },
-    ],
-    accolades: [
-      { icon: '🏆', text: 'SD State LoL Championship Coach – Sioux Falls Lincoln HS (2024)' },
-      { icon: '🎓', text: 'Founder – High Caliber Esports Academy, LLC' },
-      { icon: '🤝', text: 'Partner Coach – Pierre, Sioux Falls & Watertown Boys & Girls Clubs' },
-      { icon: '📡', text: 'Active Coach – Fenworks Statewide Esports Network' },
-      { icon: '⭐', text: '20+ years competing & coaching in professional esports' },
-      { icon: '🎮', text: 'Consulted for 10+ K-12 and collegiate esports programs' },
-    ],
-    social: { twitter: 'https://twitter.com', twitch: 'https://twitch.tv' },
-    availableDays: [1, 2, 3, 4, 5],
-    availableHours: ['10:00 AM CST', '11:30 AM CST', '1:00 PM CST', '2:30 PM CST', '4:00 PM CST', '5:30 PM CST'],
-    reviews: [
-      { id: 'r1', author: 'Marcus T.', game: 'League of Legends', rating: 5, text: 'Zach completely changed how I think about macro play. Went from Silver II to Gold I in 3 weeks of sessions.', date: 'Jan 2025' },
-      { id: 'r2', author: 'Jordan K.', game: 'Valorant', rating: 5, text: "Best coach I've ever had. He breaks down every decision and explains the why behind everything.", date: 'Feb 2025' },
-      { id: 'r3', author: 'Sam R.',    game: 'TFT',      rating: 5, text: "Finally hit Masters after 2 months of sessions. Zach's economy knowledge is insane.", date: 'Jan 2025' },
-    ],
-    onRoster: true,
-  },
-];
+
+function normalizeCoach(c) {
+  return {
+    id:             c.id,
+    userId:         c.user_id,
+    name:           c.name,
+    title:          c.title,
+    initials:       c.initials,
+    accentColor:    c.accent_color,
+    experience:     c.experience,
+    location:       c.location,
+    rating:         c.rating          ?? 5.0,
+    totalSessions:  c.total_sessions  ?? 0,
+    bio:            c.bio             ?? '',
+    philosophy:     c.philosophy      ?? '',
+    social:         c.social          ?? {},
+    availableDays:  c.available_days  ?? [],
+    availableHours: c.available_hours ?? [],
+    onRoster:       c.on_roster,
+    games: (c.coach_games || [])
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(g => ({ id: g.game_id, label: g.label, icon: g.icon, rank: g.rank, specialty: g.specialty })),
+    accolades: (c.coach_accolades || [])
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(a => ({ icon: a.icon, text: a.text })),
+    reviews: (c.coach_reviews || []).map(r => ({
+      id: r.id, author: r.author, game: r.game, rating: r.rating, text: r.text,
+      date: r.created_at ? new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '',
+    })),
+  };
+}
 
 export const coachesApi = {
   getAll: async () => {
-    await delay(350);
-    return MOCK_COACHES.filter(c => c.onRoster);
+    const { data, error } = await supabase
+      .from('coaches').select('*, coach_games(*), coach_accolades(*), coach_reviews(*)')
+      .eq('on_roster', true).order('created_at');
+    if (error) throw error;
+    return (data || []).map(normalizeCoach);
   },
-  getAllAdmin: async () => { await delay(200); return [...MOCK_COACHES]; },
+  getAllAdmin: async () => {
+    const { data, error } = await supabase
+      .from('coaches').select('*, coach_games(*), coach_accolades(*), coach_reviews(*)')
+      .order('created_at');
+    if (error) throw error;
+    return (data || []).map(normalizeCoach);
+  },
   addToRoster: async (app) => {
-    await delay(400);
-    const existingIdx = MOCK_COACHES.findIndex(c => c.userId === app.userId);
-    if (existingIdx > -1) {
-      MOCK_COACHES[existingIdx].onRoster = true;
-      return { success: true, coachId: MOCK_COACHES[existingIdx].id };
+    const { data: existing } = await supabase.from('coaches').select('id').eq('user_id', app.userId).single();
+    if (existing) {
+      await supabase.from('coaches').update({ on_roster: true }).eq('id', existing.id);
+      return { success: true, coachId: existing.id };
     }
-    const GAME_ICONS_MAP = {
-      'League of Legends':'⚔️', 'Valorant':'🎯', 'Team Fight Tactics':'♟️',
-      'Rocket League':'🚀', 'Fortnite':'🏗️', 'Smash Bros.':'💥', 'Marvel Rivals':'🦸',
-    };
-    const GAME_ID_MAP = {
-      'League of Legends':'lol','Valorant':'val','Team Fight Tactics':'tft',
-      'Rocket League':'rl','Fortnite':'fn','Smash Bros.':'smash','Marvel Rivals':'rivals',
-    };
-    const newCoach = {
-      id: `coach_${Date.now()}`,
-      userId: app.userId,
+    const { data: newCoach, error } = await supabase.from('coaches').insert([{
+      user_id: app.userId,
       name: `${app.firstName} ${app.lastName}`,
       title: 'Coach',
-      initials: `${(app.firstName||'?')[0]}${(app.lastName||'?')[0]}`.toUpperCase(),
-      accentColor: '#059669',
+      initials: `${(app.firstName || '?')[0]}${(app.lastName || '?')[0]}`.toUpperCase(),
+      accent_color: '#059669',
       experience: `${app.yearsCoaching} years coaching`,
       location: app.location || 'South Dakota',
-      rating: 5.0, totalSessions: 0,
+      rating: 5.0, total_sessions: 0,
       bio: app.experience || '',
       philosophy: app.philosophy || '',
-      games: (app.primaryGames || []).map(g => ({
-        id: GAME_ID_MAP[g] || g.toLowerCase().replace(/\s+/g,'-'),
-        label: g, icon: GAME_ICONS_MAP[g] || '🎮',
-        rank: (app.gameRanks || {})[g] || '',
-        specialty: '',
-      })),
-      accolades: app.certifications ? [{ icon: '🎓', text: app.certifications }] : [],
-      social: {},
-      availableDays: app.availableDays || [1,2,3,4,5],
-      availableHours: ['4:00 PM CST', '5:30 PM CST', '7:00 PM CST'],
-      reviews: [],
-      onRoster: true,
-    };
-    MOCK_COACHES.push(newCoach);
+      available_days: app.availableDays || [1, 2, 3, 4, 5],
+      available_hours: ['4:00 PM CST', '5:30 PM CST', '7:00 PM CST'],
+      on_roster: true,
+    }]).select().single();
+    if (error) return { success: false, error: error.message };
     return { success: true, coachId: newCoach.id };
   },
   removeFromRoster: async (coachId) => {
-    await delay(300);
-    const coach = MOCK_COACHES.find(c => c.id === coachId);
-    if (coach) coach.onRoster = false;
-    return { success: true };
+    const { error } = await supabase.from('coaches').update({ on_roster: false }).eq('id', coachId);
+    return error ? { success: false } : { success: true };
   },
   getAvailability: async (coachId, year, month) => {
-    await delay(300);
+    const { data } = await supabase.from('coaches').select('available_days, available_hours').eq('id', coachId).single();
+    if (!data) return {};
     const avail = {};
     const today = new Date();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const slots = ['10:00 AM CST', '11:30 AM CST', '1:00 PM CST', '2:30 PM CST', '4:00 PM CST', '5:30 PM CST'];
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(year, month, d);
       const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      if (!isPast && date.getDay() !== 0 && date.getDay() !== 6) {
-        const available = slots.filter(() => Math.random() > 0.3);
-        if (available.length > 0) avail[`${year}-${month}-${d}`] = available;
+      if (!isPast && (data.available_days || []).includes(date.getDay())) {
+        avail[`${year}-${month}-${d}`] = data.available_hours || [];
       }
     }
     return avail;
   },
-  update: async (coachId, updates) => { await delay(400); return { success: true }; },
+  update: async (coachId, updates) => {
+    const { games, accolades, ...coachFields } = updates;
+    const dbFields = {};
+    if (coachFields.name           !== undefined) dbFields.name            = coachFields.name;
+    if (coachFields.title          !== undefined) dbFields.title           = coachFields.title;
+    if (coachFields.experience     !== undefined) dbFields.experience      = coachFields.experience;
+    if (coachFields.location       !== undefined) dbFields.location        = coachFields.location;
+    if (coachFields.bio            !== undefined) dbFields.bio             = coachFields.bio;
+    if (coachFields.philosophy     !== undefined) dbFields.philosophy      = coachFields.philosophy;
+    if (coachFields.accentColor    !== undefined) dbFields.accent_color    = coachFields.accentColor;
+    if (coachFields.social         !== undefined) dbFields.social          = coachFields.social;
+    if (coachFields.availableDays  !== undefined) dbFields.available_days  = coachFields.availableDays;
+    if (coachFields.availableHours !== undefined) dbFields.available_hours = coachFields.availableHours;
+    if (coachFields.initials       !== undefined) dbFields.initials        = coachFields.initials;
+    if (Object.keys(dbFields).length > 0) {
+      const { error } = await supabase.from('coaches').update(dbFields).eq('id', coachId);
+      if (error) return { success: false, error: error.message };
+    }
+    if (Array.isArray(games)) {
+      await supabase.from('coach_games').delete().eq('coach_id', coachId);
+      if (games.length > 0) {
+        await supabase.from('coach_games').insert(games.map((g, i) => ({
+          coach_id: coachId, game_id: g.id, label: g.label,
+          icon: g.icon, rank: g.rank, specialty: g.specialty, sort_order: i,
+        })));
+      }
+    }
+    if (Array.isArray(accolades)) {
+      await supabase.from('coach_accolades').delete().eq('coach_id', coachId);
+      if (accolades.length > 0) {
+        await supabase.from('coach_accolades').insert(accolades.map((a, i) => ({
+          coach_id: coachId, icon: a.icon, text: a.text, sort_order: i,
+        })));
+      }
+    }
+    return { success: true };
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  SESSIONS API
+//  SESSIONS API  →  coaching_sessions
 // ─────────────────────────────────────────────────────────────────────────────
-const fmtDate = (iso) => {
-  const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-};
 
 const HOURLY_NON_MEMBER = 60;
 const HOURLY_MEMBER     = Math.round(60 * 0.85);
 const COACH_HOURLY      = 20;
+const sessionPrice      = (hrs, isMember) => Math.round((isMember ? HOURLY_MEMBER : HOURLY_NON_MEMBER) * hrs);
+const sessionEarning    = (hrs) => Math.round(COACH_HOURLY * hrs);
 
-const sessionPrice   = (hrs, isMember) => Math.round((isMember ? HOURLY_MEMBER : HOURLY_NON_MEMBER) * hrs);
-const sessionEarning = (hrs) => Math.round(COACH_HOURLY * hrs);
-
-const MOCK_SESSIONS_DATA = [
-  { id:'s1', userId:'user_001', playerName:'Alex Rivera',  isMember:true,  game:'League of Legends', title:'Macro Play & Map Control',    coachId:'coach_zach', coach:'Zach Walters', duration:'1 hour',    hours:1,   isoDate:'2026-02-07', time:'4:00 PM CST', status:'completed' },
-  { id:'s2', userId:'user_002', playerName:'Jordan Kim',   isMember:true,  game:'Valorant',          title:'Agent Comp & Utility',        coachId:'coach_zach', coach:'Zach Walters', duration:'1.5 hours', hours:1.5, isoDate:'2026-02-13', time:'3:00 PM CST', status:'completed' },
-  { id:'s3', userId:'user_003', playerName:'Morgan Lee',   isMember:true,  game:'Rocket League',     title:'Aerial Mechanics Deep Dive',  coachId:'coach_zach', coach:'Zach Walters', duration:'1 hour',    hours:1,   isoDate:'2026-02-19', time:'5:00 PM CST', status:'completed' },
-  { id:'s4', userId:'user_001', playerName:'Alex Rivera',  isMember:true,  game:'League of Legends', title:'Mid Lane Fundamentals',       coachId:'coach_zach', coach:'Zach Walters', duration:'1 hour',    hours:1,   isoDate:'2026-03-05', time:'4:00 PM CST', status:'upcoming'  },
-  { id:'s5', userId:'user_002', playerName:'Jordan Kim',   isMember:true,  game:'Valorant',          title:'Aim Training & Crosshair',    coachId:'coach_zach', coach:'Zach Walters', duration:'2 hours',   hours:2,   isoDate:'2026-03-12', time:'2:00 PM CST', status:'upcoming'  },
-  { id:'s6', userId:'user_004', playerName:'Sam Torres',   isMember:false, game:'Fortnite',          title:'Box Fight Strategies',        coachId:'coach_zach', coach:'Zach Walters', duration:'1 hour',    hours:1,   isoDate:'2026-03-18', time:'6:00 PM CST', status:'upcoming'  },
-  { id:'s7', userId:'user_003', playerName:'Morgan Lee',   isMember:true,  game:'Rocket League',     title:'Rotation & Positioning',      coachId:'coach_zach', coach:'Zach Walters', duration:'1.5 hours', hours:1.5, isoDate:'2026-03-25', time:'4:30 PM CST', status:'upcoming'  },
-  { id:'s8', userId:'user_005', playerName:'Casey Park',   isMember:true,  game:'League of Legends', title:'Jungle Pathing & Objectives', coachId:'coach_zach', coach:'Zach Walters', duration:'1 hour',    hours:1,   isoDate:'2026-03-28', time:'5:00 PM CST', status:'upcoming'  },
-].map(s => ({
-  ...s,
-  date:          fmtDate(s.isoDate),
-  price:         sessionPrice(s.hours, s.isMember),
-  coachEarning:  sessionEarning(s.hours),
-}));
-
-let MOCK_SESSIONS_LIVE = [...MOCK_SESSIONS_DATA];
+function normalizeSession(s) {
+  const hrs = s.hours ?? 1;
+  return {
+    ...s,
+    price:        sessionPrice(hrs, s.is_member ?? false),
+    coachEarning: sessionEarning(hrs),
+    isMember:     s.is_member,
+    playerName:   s.player_name,
+    coachId:      s.coach_id,
+    userId:       s.user_id,
+    isoDate:      s.iso_date,
+    date: s.iso_date
+      ? new Date(s.iso_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      : s.date,
+  };
+}
 
 export const sessionsApi = {
   getAll: async (userId) => {
-    await delay(400);
-    return MOCK_SESSIONS_LIVE
-      .filter(s => !userId || s.userId === userId || userId === 'user_001')
-      .map(s => ({ ...s }));
+    let query = supabase.from('coaching_sessions').select('*').order('iso_date');
+    if (userId) query = query.eq('user_id', userId);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map(normalizeSession);
   },
   getAllCoach: async (coachId) => {
-    await delay(400);
-    return MOCK_SESSIONS_LIVE
-      .filter(s => !coachId || s.coachId === coachId)
-      .sort((a, b) => a.isoDate.localeCompare(b.isoDate));
+    let query = supabase.from('coaching_sessions').select('*').order('iso_date');
+    if (coachId) query = query.eq('coach_id', coachId);
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map(normalizeSession);
   },
-  getAvailability: async (year, month) => coachesApi.getAvailability('coach_zach', year, month),
-  book: async (data) => {
-    await delay(400);
-    const iso = data.isoDate || new Date().toISOString().split('T')[0];
-    const newSession = {
-      id: `s_${Date.now()}`,
-      ...data,
-      isoDate: iso,
-      date: fmtDate(iso),
-      status: 'upcoming',
-      coachId: 'coach_zach',
-      coach: 'Zach Walters',
-    };
-    MOCK_SESSIONS_LIVE.push(newSession);
-    return { success: true, session: newSession };
+  getAvailability: async (year, month) => {
+    const { data } = await supabase.from('coaches').select('id').eq('on_roster', true).limit(1).single();
+    if (!data) return {};
+    return coachesApi.getAvailability(data.id, year, month);
+  },
+  book: async (sessionData) => {
+    const { data, error } = await supabase.from('coaching_sessions').insert([{
+      user_id: sessionData.userId, player_name: sessionData.playerName,
+      is_member: sessionData.isMember ?? false, game: sessionData.game,
+      title: sessionData.title, coach_id: sessionData.coachId, coach: sessionData.coach,
+      duration: sessionData.duration, hours: sessionData.hours,
+      iso_date: sessionData.isoDate, time: sessionData.time, status: 'upcoming',
+    }]).select().single();
+    if (error) return { success: false, error: error.message };
+    return { success: true, session: normalizeSession(data) };
   },
   cancel: async (sessionId) => {
-    await delay(300);
-    MOCK_SESSIONS_LIVE = MOCK_SESSIONS_LIVE.filter(s => s.id !== sessionId);
-    return { success: true };
+    const { error } = await supabase.from('coaching_sessions').delete().eq('id', sessionId);
+    return error ? { success: false } : { success: true };
   },
   getAllAdmin: async () => {
-    await delay(500);
-    return [...MOCK_SESSIONS_LIVE];
+    const { data, error } = await supabase.from('coaching_sessions').select('*').order('iso_date');
+    if (error) throw error;
+    return (data || []).map(normalizeSession);
   },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  SCHOLARSHIPS API
+//  SCHOLARSHIPS API  →  scholarships, scholarship_applications
 // ─────────────────────────────────────────────────────────────────────────────
-let MOCK_APPLICATIONS = [
-  { id: 'app_001', scholarshipId: 'sch2', userId: 'user_001', playerName: 'Alex Rivera', school: 'Rapid City Stevens HS', status: 'pending', submittedAt: '2025-02-15', essayExcerpt: 'I believe esports has shaped my leadership...' },
-  { id: 'app_002', scholarshipId: 'sch1', userId: 'user_010', playerName: 'Casey Park',  school: 'Aberdeen Central HS',   status: 'approved', submittedAt: '2025-02-01', essayExcerpt: 'As a Native American student, I...' },
-];
 
 export const scholarshipsApi = {
   getAll: async () => {
-    await delay(300);
-    return [
-      { id: 'sch1', tag: 'Native American Students', name: 'Terrance C. Walters Memorial Scholarship Fund', amount: '$1,000', amountNote: 'Growing to $5,000 · Awarded to 5 students', deadline: 'May 1, 2026', featured: false, description: "For Native American students who have excelled academically and in their school's esports program.", requirements: ['Active HCEA membership', 'Demonstrated academic excellence', 'Reference letter from school esports head coach'] },
-      { id: 'sch2', tag: 'Leadership Excellence', name: 'Higher Caliber Scholarship Fund', amount: '$10,000', amountNote: 'Single award · Annual', deadline: 'May 1, 2026', featured: true, description: 'Awarded to one student demonstrating exceptional leadership in school and community.', requirements: ['Active HCEA membership', 'Exceptional school & community leadership', 'Reference from head coach or program manager', 'Reference from a community leader'] },
-    ];
+    const { data, error } = await supabase.from('scholarships').select('*').order('created_at');
+    if (error) throw error;
+    return data || [];
   },
   apply: async (scholarshipId, userId, formData) => {
-    await delay(700);
-    const app = { id: `app_${Date.now()}`, scholarshipId, userId, ...formData, status: 'pending', submittedAt: new Date().toISOString().split('T')[0] };
-    MOCK_APPLICATIONS.push(app);
-    return { success: true, applicationId: app.id };
+    const { data, error } = await supabase.from('scholarship_applications').insert([{
+      scholarship_id: scholarshipId, user_id: userId, ...formData, status: 'pending',
+    }]).select().single();
+    if (error) return { success: false, error: error.message };
+    return { success: true, applicationId: data.id };
   },
   getMyApplications: async (userId) => {
-    await delay(300);
-    return MOCK_APPLICATIONS.filter(a => a.userId === userId);
+    const { data } = await supabase.from('scholarship_applications').select('*').eq('user_id', userId);
+    return data || [];
   },
-  getAllApplications: async () => { await delay(400); return [...MOCK_APPLICATIONS]; },
+  getAllApplications: async () => {
+    const { data } = await supabase.from('scholarship_applications').select('*').order('submitted_at', { ascending: false });
+    return data || [];
+  },
   updateApplicationStatus: async (appId, status) => {
-    await delay(300);
-    MOCK_APPLICATIONS = MOCK_APPLICATIONS.map(a => a.id === appId ? { ...a, status } : a);
-    return { success: true };
+    const { error } = await supabase.from('scholarship_applications').update({ status }).eq('id', appId);
+    return error ? { success: false } : { success: true };
   },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  COACH APPLICATION API
+//  COACH APPLICATION API  →  coach_applications
 // ─────────────────────────────────────────────────────────────────────────────
-let MOCK_COACH_APPLICATIONS = [
-  {
-    id: 'ca_001', userId: 'user_002', status: 'pending',
-    submittedAt: Date.now() - 172800000, updatedAt: Date.now() - 172800000,
-    reviewedBy: null, reviewNote: null,
-    firstName: 'Jordan', lastName: 'Kim',
-    email: 'jordan@email.com', phone: '605-555-0101', location: 'Sioux Falls, SD',
-    yearsPlaying: '5-7', yearsCoaching: '1-2', competitiveLevel: 'Semi-professional',
-    primaryGames: ['League of Legends', 'Valorant'],
-    gameRanks: { 'League of Legends': 'Platinum I', 'Valorant': 'Diamond 2' },
-    philosophy: 'I believe in a structured, data-driven approach to improvement.',
-    coachingStyle: 'Analytical', targetAgeGroups: ['13-15', '16-18'],
-    experience: 'Coached my high school esports team for 2 seasons.',
-    references: [{ name: 'Coach Mike Hanson', role: 'HS Esports Director', contact: 'mhanson@sfschools.com' }],
-    certifications: '', availableDays: [1,2,3,4,5],
-    preferredHours: 'Afternoons and evenings (3PM–9PM CST)',
-    proposedMemberRate: 35, proposedNonMemberRate: 50,
-    personalStatement: "I want to give back to the esports community that shaped me.",
-    agreedToTerms: true, backgroundCheckConsent: true,
-  },
-  {
-    id: 'ca_002', userId: 'user_003', status: 'under_review',
-    submittedAt: Date.now() - 432000000, updatedAt: Date.now() - 86400000,
-    reviewedBy: 'user_head_admin', reviewNote: 'Strong candidate. Verifying game ranks.',
-    firstName: 'Taylor', lastName: 'Nguyen',
-    email: 'taylor@email.com', phone: '605-555-0202', location: 'Aberdeen, SD',
-    yearsPlaying: '7+', yearsCoaching: '3-5', competitiveLevel: 'Professional',
-    primaryGames: ['Rocket League', 'Fortnite'],
-    gameRanks: { 'Rocket League': 'Champion III', 'Fortnite': 'Top 500 PR' },
-    philosophy: 'Mental resilience is the most undercoached skill in esports.',
-    coachingStyle: 'Holistic', targetAgeGroups: ['16-18', '18+'],
-    experience: 'Coached collegiate Rocket League team for 3 seasons.',
-    references: [
-      { name: 'Dr. Sarah Lee', role: 'University Esports Coordinator', contact: 'slee@univ.edu' },
-      { name: 'Marcus Webb', role: 'Former Player / Now Pro', contact: '@mwebb_rl' },
-    ],
-    certifications: 'NACE Certified Esports Competitor & Coach (2023)',
-    availableDays: [1,3,5,6], preferredHours: 'Evenings and weekends',
-    proposedMemberRate: 40,
-    personalStatement: "Esports gave me a path when I had none.",
-    agreedToTerms: true, backgroundCheckConsent: true,
-  },
-];
 
 export const coachAppApi = {
   submit: async (userId, formData) => {
-    await delay(600);
-    const existing = MOCK_COACH_APPLICATIONS.find(
-      a => a.userId === userId && ['pending','under_review'].includes(a.status)
-    );
+    const { data: existing } = await supabase.from('coach_applications').select('id')
+      .eq('user_id', userId).in('status', ['pending', 'under_review']).single();
     if (existing) return { success: false, error: 'You already have an active application in progress.' };
-    const app = {
-      id: `ca_${Date.now()}`, userId, status: 'pending',
-      submittedAt: Date.now(), updatedAt: Date.now(),
-      reviewedBy: null, reviewNote: null, ...formData,
-    };
-    MOCK_COACH_APPLICATIONS.push(app);
-    return { success: true, applicationId: app.id };
+    const { data, error } = await supabase.from('coach_applications').insert([{
+      user_id: userId, ...formData, status: 'pending',
+    }]).select().single();
+    if (error) return { success: false, error: error.message };
+    return { success: true, applicationId: data.id };
   },
   getMyApplication: async (userId) => {
-    await delay(300);
-    return MOCK_COACH_APPLICATIONS
-      .filter(a => a.userId === userId)
-      .sort((a, b) => b.submittedAt - a.submittedAt)[0] || null;
+    const { data } = await supabase.from('coach_applications').select('*')
+      .eq('user_id', userId).order('submitted_at', { ascending: false }).limit(1).single();
+    return data || null;
   },
   getAll: async (status) => {
-    await delay(400);
-    let apps = [...MOCK_COACH_APPLICATIONS];
-    if (status) apps = apps.filter(a => a.status === status);
-    return apps.sort((a, b) => b.submittedAt - a.submittedAt);
+    let query = supabase.from('coach_applications').select('*').order('submitted_at', { ascending: false });
+    if (status) query = query.eq('status', status);
+    const { data } = await query;
+    return data || [];
   },
   updateStatus: async (appId, status, reviewNote, reviewerId) => {
-    await delay(350);
-    const app = MOCK_COACH_APPLICATIONS.find(a => a.id === appId);
-    if (!app) return { success: false };
-    app.status = status;
-    app.reviewNote = reviewNote || app.reviewNote;
-    app.reviewedBy = reviewerId;
-    app.updatedAt = Date.now();
-    return { success: true };
+    const { error } = await supabase.from('coach_applications').update({
+      status, review_note: reviewNote, reviewed_by: reviewerId, updated_at: new Date().toISOString(),
+    }).eq('id', appId);
+    return error ? { success: false } : { success: true };
   },
   getSummary: async () => {
-    await delay(200);
-    const counts = { pending:0, under_review:0, approved:0, rejected:0, total:0 };
-    MOCK_COACH_APPLICATIONS.forEach(a => {
-      counts[a.status] = (counts[a.status] || 0) + 1;
-      counts.total++;
-    });
+    const { data } = await supabase.from('coach_applications').select('status');
+    const counts = { pending: 0, under_review: 0, approved: 0, rejected: 0, total: 0 };
+    (data || []).forEach(a => { counts[a.status] = (counts[a.status] || 0) + 1; counts.total++; });
     return counts;
   },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  ACTIVITY API
+//  ACTIVITY API  →  activity_log
 // ─────────────────────────────────────────────────────────────────────────────
+
 export const activityApi = {
   getRecent: async (userId) => {
-    await delay(300);
-    return [
-      { id: 'a1', type: 'tournament',  text: 'Registered for TFT Tournament',                    time: '2 hours ago',  dot: 'green' },
-      { id: 'a2', type: 'session',     text: 'Completed Coaching Session – League of Legends',    time: 'Feb 20, 2025', dot: 'blue'  },
-      { id: 'a3', type: 'scholarship', text: 'Submitted Higher Caliber Scholarship application',  time: 'Feb 15, 2025', dot: 'gold'  },
-      { id: 'a4', type: 'team',        text: 'Created team: Rapid City Reapers',                  time: 'Jan 15, 2025', dot: 'green' },
-    ];
+    let query = supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(20);
+    if (userId) query = query.eq('user_id', userId);
+    const { data } = await query;
+    return (data || []).map(a => ({
+      id:   a.id,
+      type: a.type,
+      text: a.text,
+      dot:  a.dot_color,
+      time: new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    }));
+  },
+  log: async (userId, type, text, dotColor = 'blue') => {
+    await supabase.from('activity_log').insert([{ user_id: userId, type, text, dot_color: dotColor }]);
   },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  CONTACT API
+//  CONTACT API  →  contact_submissions
 // ─────────────────────────────────────────────────────────────────────────────
+
 export const contactApi = {
-  send: async (formData) => { await delay(600); return { success: true }; },
+  send: async (formData) => {
+    const { error } = await supabase.from('contact_submissions').insert([formData]);
+    return error ? { success: false, error: error.message } : { success: true };
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  ADMIN: USERS API
+//  ADMIN: USERS API  →  profiles
 // ─────────────────────────────────────────────────────────────────────────────
-export const adminApi = {
 
+export const adminApi = {
   getPlayers: async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) { console.warn('getPlayers: no session'); return []; }
-    // Include roles[] column alongside legacy role string
-    const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles' +
-      '?select=id,first_name,last_name,email,school,grade,role,roles,created_at' +
-      '&order=created_at.desc';
-    const res = await fetch(url, {
-      headers: {
-        'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi',
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!res.ok) { console.error('getPlayers error:', res.status, await res.text()); return []; }
+    if (!session?.access_token) { console.warn('getPlayers: no session'); return []; }
+    const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,first_name,last_name,email,school,grade,role,roles,created_at,coach_id&order=created_at.desc`;
+    const res = await fetch(url, { headers: await authHeaders() });
+    if (!res.ok) { console.error('getPlayers error:', res.status); return []; }
     const data = await res.json();
     return (data || []).map(p => {
-      // Normalize: prefer roles[] array, fall back to legacy role string
-      let roles = [];
-      if (Array.isArray(p.roles) && p.roles.length > 0) {
-        roles = p.roles.map(r => r.toLowerCase());
-      } else if (p.role && p.role !== 'player') {
-        roles = [p.role.toLowerCase()];
-      }
+      let roles = Array.isArray(p.roles) && p.roles.length > 0
+        ? p.roles.map(r => r.toLowerCase())
+        : p.role && p.role !== 'player' ? [p.role.toLowerCase()] : [];
       if (!roles.includes('player')) roles = [...roles, 'player'];
       return {
-        id:               p.id,
-        name:             ((p.first_name || '') + ' ' + (p.last_name || '')).trim() || p.email,
-        email:            p.email,
-        school:           p.school || '',
-        grade:            p.grade  || '',
-        roles,                        // ← full array e.g. ['head_admin','coach','player']
-        role:             roles[0],   // ← legacy primary role
-        membershipActive: false,
-        joinedAt:         p.created_at ? p.created_at.slice(0, 10) : '',
+        id: p.id,
+        name: ((p.first_name || '') + ' ' + (p.last_name || '')).trim() || p.email,
+        email: p.email, school: p.school || '', grade: p.grade || '',
+        coachId: p.coach_id || null, roles, role: roles[0],
+        membershipActive: false, joinedAt: p.created_at ? p.created_at.slice(0, 10) : '',
       };
     });
   },
-
   updatePlayer: async (userId, updates) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) return { success: false, error: 'Not authenticated' };
-    const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles?id=eq.' + userId;
-    const res = await fetch(url, {
-      method: 'PATCH',
-      headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body: JSON.stringify(updates),
-    });
+    const url = `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
+    const res = await fetch(url, { method: 'PATCH', headers: { ...(await authHeaders()), 'Prefer': 'return=minimal' }, body: JSON.stringify(updates) });
     return res.ok ? { success: true } : { success: false, error: await res.text() };
   },
-
   deletePlayer: async (userId) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) return { success: false, error: 'Not authenticated' };
-    const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles?id=eq.' + userId;
-    const res = await fetch(url, {
-      method: 'DELETE',
-      headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-    });
+    const url = `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
+    const res = await fetch(url, { method: 'DELETE', headers: await authHeaders() });
     return res.ok ? { success: true } : { success: false, error: await res.text() };
   },
-
-  // ── ADD a single role to a user ──────────────────────────────────────────
   addRole: async (userId, role, currentRoles = []) => {
     const VALID = ['player', 'coach', 'org_manager', 'league_admin', 'head_admin'];
     if (!VALID.includes(role)) return { success: false, error: 'Invalid role.' };
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) return { success: false, error: 'Not authenticated' };
-    // Merge without duplicates; always keep 'player'
     const newRoles = [...new Set([...currentRoles, role, 'player'])];
-    const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles?id=eq.' + userId;
-    const res = await fetch(url, {
-      method: 'PATCH',
-      headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ roles: newRoles, role: newRoles[0] }),
-    });
+    const url = `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
+    const res = await fetch(url, { method: 'PATCH', headers: { ...(await authHeaders()), 'Prefer': 'return=minimal' }, body: JSON.stringify({ roles: newRoles, role: newRoles[0] }) });
     return res.ok ? { success: true, roles: newRoles } : { success: false, error: await res.text() };
   },
-
-  // ── REMOVE a single role from a user ────────────────────────────────────
   removeRole: async (userId, role, currentRoles = []) => {
     if (role === 'player') return { success: false, error: 'Cannot remove base player role.' };
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) return { success: false, error: 'Not authenticated' };
     const newRoles = currentRoles.filter(r => r !== role);
     if (!newRoles.includes('player')) newRoles.push('player');
-    const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles?id=eq.' + userId;
-    const res = await fetch(url, {
-      method: 'PATCH',
-      headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ roles: newRoles, role: newRoles[0] }),
-    });
+    const url = `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
+    const res = await fetch(url, { method: 'PATCH', headers: { ...(await authHeaders()), 'Prefer': 'return=minimal' }, body: JSON.stringify({ roles: newRoles, role: newRoles[0] }) });
     return res.ok ? { success: true, roles: newRoles } : { success: false, error: await res.text() };
   },
-
-  // ── LEGACY: kept for backward compat ────────────────────────────────────
   setPlayerRole: async (userId, role) => {
     const valid = ['player', 'coach', 'org_manager', 'league_admin', 'head_admin'];
     const dbRole = role.toLowerCase();
     if (!valid.includes(dbRole)) return { success: false, error: 'Invalid role.' };
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) return { success: false, error: 'Not authenticated' };
-    const url = 'https://yelicgqkqerpmmifhewn.supabase.co/rest/v1/profiles?id=eq.' + userId;
-    const res = await fetch(url, {
-      method: 'PATCH',
-      headers: { 'apikey': 'sb_publishable_8brgEBU1zPSCdl6oVXu6Bg_IHMHwShi', 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ role: dbRole }),
-    });
+    const url = `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
+    const res = await fetch(url, { method: 'PATCH', headers: { ...(await authHeaders()), 'Prefer': 'return=minimal' }, body: JSON.stringify({ role: dbRole }) });
     return res.ok ? { success: true } : { success: false, error: await res.text() };
   },
 };
 
-
 // ─────────────────────────────────────────────────────────────────────────────
-//  ORGS API
+//  ORGS API  →  organizations, youth_players, youth_teams, youth_team_members, youth_player_tournaments
 // ─────────────────────────────────────────────────────────────────────────────
-let MOCK_ORGS = [];
-let MOCK_YOUTH_PLAYERS = [];
-let MOCK_YOUTH_TEAMS = [];
 
 export const orgsApi = {
-  getAll: async () => { await delay(350); return [...MOCK_ORGS]; },
-  create: async (data) => {
-    await delay(500);
-    const org = { id: `org_${Date.now()}`, ...data, createdAt: new Date().toISOString().split('T')[0], active: true };
-    MOCK_ORGS.push(org);
-    return { success: true, org };
-  },
-  update: async (id, updates) => {
-    await delay(400);
-    MOCK_ORGS = MOCK_ORGS.map(o => o.id === id ? { ...o, ...updates } : o);
-    return { success: true };
-  },
-  delete: async (id) => {
-    await delay(300);
-    MOCK_ORGS = MOCK_ORGS.filter(o => o.id !== id);
-    return { success: true };
-  },
-  getMyOrg: async (managerId) => {
-    await delay(300);
-    return MOCK_ORGS.find(o => o.managerId === managerId) || null;
-  },
-  getYouthPlayers: async (orgId) => {
-    await delay(350);
-    return MOCK_YOUTH_PLAYERS.filter(p => p.orgId === orgId);
-  },
-  createYouthPlayer: async (orgId, data) => {
-    await delay(500);
-    const player = { id: `youth_${Date.now()}`, orgId, ...data, teamIds: [], tournamentIds: [], createdAt: new Date().toISOString().split('T')[0] };
-    MOCK_YOUTH_PLAYERS.push(player);
-    return { success: true, player };
-  },
-  updateYouthPlayer: async (playerId, updates) => {
-    await delay(400);
-    MOCK_YOUTH_PLAYERS = MOCK_YOUTH_PLAYERS.map(p => p.id === playerId ? { ...p, ...updates } : p);
-    return { success: true };
-  },
-  deleteYouthPlayer: async (playerId) => {
-    await delay(300);
-    MOCK_YOUTH_PLAYERS = MOCK_YOUTH_PLAYERS.filter(p => p.id !== playerId);
-    return { success: true };
-  },
-  getYouthTeams: async (orgId) => {
-    await delay(300);
-    return MOCK_YOUTH_TEAMS.filter(t => t.orgId === orgId);
-  },
-  createYouthTeam: async (orgId, data) => {
-    await delay(500);
-    const team = { id: `yteam_${Date.now()}`, orgId, ...data, memberIds: [], createdAt: new Date().toISOString().split('T')[0] };
-    MOCK_YOUTH_TEAMS.push(team);
-    return { success: true, team };
-  },
-  addPlayerToTeam: async (teamId, playerId) => {
-    await delay(300);
-    const team = MOCK_YOUTH_TEAMS.find(t => t.id === teamId);
-    if (team && !team.memberIds.includes(playerId)) {
-      team.memberIds.push(playerId);
-      MOCK_YOUTH_PLAYERS = MOCK_YOUTH_PLAYERS.map(p => p.id === playerId ? { ...p, teamIds: [...(p.teamIds||[]), teamId] } : p);
-    }
-    return { success: true };
-  },
-  removePlayerFromTeam: async (teamId, playerId) => {
-    await delay(300);
-    const team = MOCK_YOUTH_TEAMS.find(t => t.id === teamId);
-    if (team) team.memberIds = team.memberIds.filter(id => id !== playerId);
-    MOCK_YOUTH_PLAYERS = MOCK_YOUTH_PLAYERS.map(p =>
-      p.id === playerId ? { ...p, teamIds: (p.teamIds||[]).filter(id => id !== teamId) } : p
-    );
-    return { success: true };
-  },
-  deleteYouthTeam: async (teamId) => {
-    await delay(300);
-    MOCK_YOUTH_TEAMS = MOCK_YOUTH_TEAMS.filter(t => t.id !== teamId);
-    return { success: true };
-  },
-  registerYouthForTournament: async (playerId, tournamentId) => {
-    await delay(400);
-    MOCK_YOUTH_PLAYERS = MOCK_YOUTH_PLAYERS.map(p =>
-      p.id === playerId ? { ...p, tournamentIds: [...(p.tournamentIds||[]), tournamentId] } : p
-    );
-    return { success: true };
-  },
+  getAll: async () => { const { data } = await supabase.from('organizations').select('*').order('created_at', { ascending: false }); return data || []; },
+  create: async (orgData) => { const { data, error } = await supabase.from('organizations').insert([orgData]).select().single(); return error ? { success: false, error: error.message } : { success: true, org: data }; },
+  update: async (id, updates) => { const { error } = await supabase.from('organizations').update(updates).eq('id', id); return error ? { success: false } : { success: true }; },
+  delete: async (id) => { const { error } = await supabase.from('organizations').delete().eq('id', id); return error ? { success: false } : { success: true }; },
+  getMyOrg: async (managerId) => { const { data } = await supabase.from('organizations').select('*').eq('manager_id', managerId).single(); return data || null; },
+  getYouthPlayers: async (orgId) => { const { data } = await supabase.from('youth_players').select('*').eq('org_id', orgId); return data || []; },
+  createYouthPlayer: async (orgId, playerData) => { const { data, error } = await supabase.from('youth_players').insert([{ org_id: orgId, ...playerData }]).select().single(); return error ? { success: false, error: error.message } : { success: true, player: data }; },
+  updateYouthPlayer: async (playerId, updates) => { const { error } = await supabase.from('youth_players').update(updates).eq('id', playerId); return error ? { success: false } : { success: true }; },
+  deleteYouthPlayer: async (playerId) => { const { error } = await supabase.from('youth_players').delete().eq('id', playerId); return error ? { success: false } : { success: true }; },
+  getYouthTeams: async (orgId) => { const { data } = await supabase.from('youth_teams').select('*, youth_team_members(*)').eq('org_id', orgId); return data || []; },
+  createYouthTeam: async (orgId, teamData) => { const { data, error } = await supabase.from('youth_teams').insert([{ org_id: orgId, ...teamData }]).select().single(); return error ? { success: false, error: error.message } : { success: true, team: data }; },
+  addPlayerToTeam: async (teamId, playerId) => { const { error } = await supabase.from('youth_team_members').insert([{ team_id: teamId, player_id: playerId }]); return error ? { success: false } : { success: true }; },
+  removePlayerFromTeam: async (teamId, playerId) => { const { error } = await supabase.from('youth_team_members').delete().eq('team_id', teamId).eq('player_id', playerId); return error ? { success: false } : { success: true }; },
+  deleteYouthTeam: async (teamId) => { await supabase.from('youth_team_members').delete().eq('team_id', teamId); const { error } = await supabase.from('youth_teams').delete().eq('id', teamId); return error ? { success: false } : { success: true }; },
+  registerYouthForTournament: async (playerId, tournamentId) => { const { error } = await supabase.from('youth_player_tournaments').insert([{ player_id: playerId, tournament_id: tournamentId }]); return error ? { success: false } : { success: true }; },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  MATCH ROOM API
+//  MATCH ROOM API  →  match_rooms, match_room_messages, match_room_games
 // ─────────────────────────────────────────────────────────────────────────────
-const SERIES_WINS_NEEDED = { 'bo1': 1, 'bo3': 2, 'bo5': 3, 'bo7': 4 };
 
-let MATCH_ROOMS = {
-  'm4': {
-    matchId: 'm4', tournamentId: 't4', seriesFormat: 'bo3', games: [], status: 'pending',
-    chat: [
-      { id: 'msg_001', userId: 'user_admin', userName: 'Admin', role: 'admin', text: '👋 Welcome to the match room! Use this chat to coordinate your match start.', ts: Date.now() - 480000, system: false },
-      { id: 'msg_002', userId: 'sys', userName: 'System', role: 'system', text: 'Match room opened. Series format: Best of 3.', ts: Date.now() - 470000, system: true },
-    ],
-  },
-  'm5': {
-    matchId: 'm5', tournamentId: 't4', seriesFormat: 'bo3', games: [], status: 'pending',
-    chat: [
-      { id: 'msg_010', userId: 'sys', userName: 'System', role: 'system', text: 'Match room opened. Series format: Best of 3.', ts: Date.now() - 300000, system: true },
-    ],
-  },
-};
+const SERIES_WINS_NEEDED = { bo1: 1, bo3: 2, bo5: 3, bo7: 4 };
 
 export const matchRoomApi = {
   getRoom: async (tournamentId, matchId) => {
-    await delay(300);
-    if (!MATCH_ROOMS[matchId]) {
-      MATCH_ROOMS[matchId] = {
-        matchId, tournamentId, seriesFormat: 'bo3', games: [], status: 'pending',
-        chat: [{ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: 'Match room opened. Use this chat to coordinate your match start and report scores.', ts: Date.now(), system: true }],
-      };
+    let { data: room } = await supabase.from('match_rooms').select('*').eq('match_id', matchId).single();
+    if (!room) {
+      const { data: newRoom } = await supabase.from('match_rooms').insert([{
+        match_id: matchId, tournament_id: tournamentId, series_format: 'bo3', status: 'pending',
+      }]).select().single();
+      room = newRoom;
+      await supabase.from('match_room_messages').insert([{
+        match_id: matchId, user_id: 'sys', user_name: 'System', role: 'system',
+        text: 'Match room opened. Use this chat to coordinate your match start and report scores.', is_system: true,
+      }]);
     }
-    return { ...MATCH_ROOMS[matchId] };
+    const { data: messages } = await supabase.from('match_room_messages').select('*').eq('match_id', matchId).order('created_at');
+    const { data: games }    = await supabase.from('match_room_games').select('*').eq('match_id', matchId).order('game_num');
+    return { ...room, seriesFormat: room.series_format, chat: messages || [], games: games || [] };
   },
   setSeriesFormat: async (matchId, format) => {
-    await delay(200);
-    if (!MATCH_ROOMS[matchId]) return { success: false };
-    MATCH_ROOMS[matchId].seriesFormat = format;
-    const label = { bo1:'Best of 1', bo3:'Best of 3', bo5:'Best of 5', bo7:'Best of 7' }[format];
-    MATCH_ROOMS[matchId].chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `Series format changed to ${label}.`, ts: Date.now(), system: true });
+    await supabase.from('match_rooms').update({ series_format: format }).eq('match_id', matchId);
+    const label = { bo1: 'Best of 1', bo3: 'Best of 3', bo5: 'Best of 5', bo7: 'Best of 7' }[format];
+    await supabase.from('match_room_messages').insert([{ match_id: matchId, user_id: 'sys', user_name: 'System', role: 'system', text: `Series format changed to ${label}.`, is_system: true }]);
     return { success: true };
   },
   sendMessage: async (matchId, userId, userName, role, text) => {
-    await delay(150);
-    if (!MATCH_ROOMS[matchId]) return { success: false };
-    const msg = { id: `msg_${Date.now()}_${Math.random().toString(36).slice(2,6)}`, userId, userName, role, text: text.trim(), ts: Date.now(), system: false };
-    MATCH_ROOMS[matchId].chat.push(msg);
-    return { success: true, message: msg };
+    const { data, error } = await supabase.from('match_room_messages').insert([{ match_id: matchId, user_id: userId, user_name: userName, role, text: text.trim(), is_system: false }]).select().single();
+    return error ? { success: false } : { success: true, message: data };
   },
   reportGame: async (matchId, reportingTeamId, winnerTeamId, losingTeamId) => {
-    await delay(300);
-    const room = MATCH_ROOMS[matchId];
-    if (!room) return { success: false };
-    const gameNum = room.games.length + 1;
-    room.games.push({ gameNum, reportingTeamId, winnerTeamId, losingTeamId, confirmedBy: null, confirmed: false, ts: Date.now() });
-    room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `Game ${gameNum} reported – waiting for opponent confirmation.`, ts: Date.now(), system: true });
+    const { data: existing } = await supabase.from('match_room_games').select('game_num').eq('match_id', matchId).order('game_num', { ascending: false }).limit(1).single();
+    const gameNum = (existing?.game_num ?? 0) + 1;
+    await supabase.from('match_room_games').insert([{ match_id: matchId, game_num: gameNum, reporting_team_id: reportingTeamId, winner_team_id: winnerTeamId, losing_team_id: losingTeamId, confirmed: false }]);
+    await supabase.from('match_room_messages').insert([{ match_id: matchId, user_id: 'sys', user_name: 'System', role: 'system', text: `Game ${gameNum} reported — waiting for opponent confirmation.`, is_system: true }]);
     return { success: true, gameNum };
   },
   confirmGame: async (matchId, gameNum, confirmingTeamId) => {
-    await delay(300);
-    const room = MATCH_ROOMS[matchId];
-    if (!room) return { success: false };
-    const game = room.games.find(g => g.gameNum === gameNum && !g.confirmed);
-    if (!game) return { success: false };
-    game.confirmed = true;
-    game.confirmedBy = confirmingTeamId;
-    const winsNeeded = SERIES_WINS_NEEDED[room.seriesFormat] || 2;
-    const allConfirmed = room.games.filter(g => g.confirmed);
-    const winCounts = {};
-    allConfirmed.forEach(g => { winCounts[g.winnerTeamId] = (winCounts[g.winnerTeamId] || 0) + 1; });
+    await supabase.from('match_room_games').update({ confirmed: true, confirmed_by: confirmingTeamId }).eq('match_id', matchId).eq('game_num', gameNum);
+    const { data: room }  = await supabase.from('match_rooms').select('series_format').eq('match_id', matchId).single();
+    const { data: games } = await supabase.from('match_room_games').select('*').eq('match_id', matchId).eq('confirmed', true);
+    const winsNeeded = SERIES_WINS_NEEDED[room?.series_format] || 2;
+    const winCounts  = {};
+    (games || []).forEach(g => { winCounts[g.winner_team_id] = (winCounts[g.winner_team_id] || 0) + 1; });
     const seriesWinner = Object.entries(winCounts).find(([, w]) => w >= winsNeeded);
     if (seriesWinner) {
-      room.status = 'complete';
-      room.seriesWinnerId = seriesWinner[0];
-      room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `🏆 Series complete! Match winner determined. Admins will update the bracket shortly.`, ts: Date.now(), system: true });
+      await supabase.from('match_rooms').update({ status: 'complete', series_winner_id: seriesWinner[0] }).eq('match_id', matchId);
+      await supabase.from('match_room_messages').insert([{ match_id: matchId, user_id: 'sys', user_name: 'System', role: 'system', text: '🏆 Series complete! Match winner determined. Admins will update the bracket shortly.', is_system: true }]);
     } else {
-      room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `Game ${gameNum} confirmed. Series continues.`, ts: Date.now(), system: true });
+      await supabase.from('match_room_messages').insert([{ match_id: matchId, user_id: 'sys', user_name: 'System', role: 'system', text: `Game ${gameNum} confirmed. Series continues.`, is_system: true }]);
     }
-    const scoreStr = Object.entries(winCounts).map(([id, w]) => `${id}: ${w}`).join(' | ');
-    return { success: true, winCounts, seriesWinner: seriesWinner ? seriesWinner[0] : null, scoreStr };
+    return { success: true, winCounts, seriesWinner: seriesWinner ? seriesWinner[0] : null };
   },
   disputeGame: async (matchId, gameNum, disputingTeamId, reason) => {
-    await delay(300);
-    const room = MATCH_ROOMS[matchId];
-    if (!room) return { success: false };
-    const game = room.games.find(g => g.gameNum === gameNum);
-    if (game) game.disputed = true;
-    room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `⚠️ Game ${gameNum} disputed by a team. Reason: "${reason}" – An admin has been notified.`, ts: Date.now(), system: true });
+    await supabase.from('match_room_games').update({ disputed: true }).eq('match_id', matchId).eq('game_num', gameNum);
+    await supabase.from('match_room_messages').insert([{ match_id: matchId, user_id: 'sys', user_name: 'System', role: 'system', text: `⚠️ Game ${gameNum} disputed. Reason: "${reason}" — An admin has been notified.`, is_system: true }]);
     return { success: true };
   },
   adminSetWinner: async (matchId, winnerTeamId, score1, score2) => {
-    await delay(300);
-    const room = MATCH_ROOMS[matchId];
-    if (!room) return { success: false };
-    room.status = 'complete';
-    room.seriesWinnerId = winnerTeamId;
-    room.adminOverride = true;
-    room.chat.push({ id: `sys_${Date.now()}`, userId: 'sys', userName: 'System', role: 'system', text: `⚙️ Admin has set the final series result: ${score1}–${score2}. Match complete.`, ts: Date.now(), system: true });
+    await supabase.from('match_rooms').update({ status: 'complete', series_winner_id: winnerTeamId, admin_override: true }).eq('match_id', matchId);
+    await supabase.from('match_room_messages').insert([{ match_id: matchId, user_id: 'sys', user_name: 'System', role: 'system', text: `⚙️ Admin has set the final result: ${score1}–${score2}. Match complete.`, is_system: true }]);
     return { success: true };
   },
   getMessages: async (matchId, since) => {
-    await delay(100);
-    const room = MATCH_ROOMS[matchId];
-    if (!room) return [];
-    return since ? room.chat.filter(m => m.ts > since) : room.chat;
+    let query = supabase.from('match_room_messages').select('*').eq('match_id', matchId).order('created_at');
+    if (since) query = query.gt('created_at', new Date(since).toISOString());
+    const { data } = await query;
+    return data || [];
   },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  SEASONAL LEAGUE API
+//  SEASONAL LEAGUE API  →  leagues, league_groups, league_group_teams, league_standings, league_matches
 // ─────────────────────────────────────────────────────────────────────────────
-const LEAGUE_GAMES = Object.keys(GAME_TEAM_SIZES);
-
-let MOCK_LEAGUES = [
-  {
-    id: 'league_001',
-    name: 'SD Esports Spring League 2026',
-    game: 'League of Legends',
-    season: 'Spring 2026',
-    status: 'active',
-    startDate: 'Feb 1, 2026',
-    endDate: 'Apr 30, 2026',
-    weeksTotal: 8,
-    currentWeek: 3,
-    description: 'Statewide seasonal league for South Dakota high school and college teams.',
-    createdBy: 'user_admin',
-    createdAt: '2025-12-01',
-    groups: [
-      {
-        id: 'grp_A', name: 'Group A', label: 'North Division',
-        teamIds: ['team_001', 'team_rr1', 'team_rr2', 'team_rr3', 'team_rr4', 'team_rr5', 'team_rr6', 'team_rr7'],
-        standings: [
-          { teamId: 'team_001',  teamName: 'Rapid City Reapers',   wins: 5, losses: 1, points: 15, gamesPlayed: 6, streak: 'W3' },
-          { teamId: 'team_rr1',  teamName: 'Pierre Phantoms',      wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'W1' },
-          { teamId: 'team_rr2',  teamName: 'Sioux Falls Surge',    wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'L1' },
-          { teamId: 'team_rr3',  teamName: 'Aberdeen Aces',        wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'W2' },
-          { teamId: 'team_rr4',  teamName: 'Watertown Wolves',     wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'L2' },
-          { teamId: 'team_rr5',  teamName: 'Huron Hawks',          wins: 2, losses: 4, points: 6,  gamesPlayed: 6, streak: 'L1' },
-          { teamId: 'team_rr6',  teamName: 'Mitchell Mavericks',   wins: 1, losses: 5, points: 3,  gamesPlayed: 6, streak: 'L3' },
-          { teamId: 'team_rr7',  teamName: 'Brookings Blitz',      wins: 0, losses: 6, points: 0,  gamesPlayed: 6, streak: 'L6' },
-        ],
-      },
-      {
-        id: 'grp_B', name: 'Group B', label: 'South Division',
-        teamIds: ['team_b1','team_b2','team_b3','team_b4','team_b5','team_b6','team_b7','team_b8'],
-        standings: [
-          { teamId: 'team_b1', teamName: 'Vermillion Vipers',    wins: 5, losses: 1, points: 15, gamesPlayed: 6, streak: 'W2' },
-          { teamId: 'team_b2', teamName: 'Yankton Yetis',        wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'W1' },
-          { teamId: 'team_b3', teamName: 'Madison Monarchs',     wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'L1' },
-          { teamId: 'team_b4', teamName: 'Canton Cobras',        wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'W1' },
-          { teamId: 'team_b5', teamName: 'Dell Rapids Dragons',  wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'L1' },
-          { teamId: 'team_b6', teamName: 'Lennox Lions',         wins: 2, losses: 4, points: 6,  gamesPlayed: 6, streak: 'L2' },
-          { teamId: 'team_b7', teamName: 'Tea Titans',           wins: 1, losses: 5, points: 3,  gamesPlayed: 6, streak: 'L4' },
-          { teamId: 'team_b8', teamName: 'Brandon Blazers',      wins: 0, losses: 6, points: 0,  gamesPlayed: 6, streak: 'L6' },
-        ],
-      },
-      {
-        id: 'grp_C', name: 'Group C', label: 'East Division',
-        teamIds: ['team_c1','team_c2','team_c3','team_c4','team_c5','team_c6','team_c7','team_c8'],
-        standings: [
-          { teamId: 'team_c1', teamName: 'Sisseton Saints',      wins: 5, losses: 1, points: 15, gamesPlayed: 6, streak: 'W4' },
-          { teamId: 'team_c2', teamName: 'Milbank Maulers',      wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'W2' },
-          { teamId: 'team_c3', teamName: 'Waubay Warriors',      wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'W1' },
-          { teamId: 'team_c4', teamName: 'Clear Lake Cyclones',  wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'L1' },
-          { teamId: 'team_c5', teamName: 'Webster Wolves',       wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'W1' },
-          { teamId: 'team_c6', teamName: 'Britton Bulldogs',     wins: 2, losses: 4, points: 6,  gamesPlayed: 6, streak: 'L3' },
-          { teamId: 'team_c7', teamName: 'Groton Giants',        wins: 1, losses: 5, points: 3,  gamesPlayed: 6, streak: 'L2' },
-          { teamId: 'team_c8', teamName: 'Frederick Force',      wins: 0, losses: 6, points: 0,  gamesPlayed: 6, streak: 'L5' },
-        ],
-      },
-      {
-        id: 'grp_D', name: 'Group D', label: 'West Division',
-        teamIds: ['team_d1','team_d2','team_d3','team_d4','team_d5','team_d6','team_d7','team_d8'],
-        standings: [
-          { teamId: 'team_d1', teamName: 'Sturgis Strikers',     wins: 5, losses: 1, points: 15, gamesPlayed: 6, streak: 'W3' },
-          { teamId: 'team_d2', teamName: 'Lead Legends',         wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'L1' },
-          { teamId: 'team_d3', teamName: 'Deadwood Demons',      wins: 4, losses: 2, points: 12, gamesPlayed: 6, streak: 'W2' },
-          { teamId: 'team_d4', teamName: 'Spearfish Spartans',   wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'W1' },
-          { teamId: 'team_d5', teamName: 'Belle Fourche Bison',  wins: 3, losses: 3, points: 9,  gamesPlayed: 6, streak: 'L2' },
-          { teamId: 'team_d6', teamName: 'Hot Springs Hawks',    wins: 2, losses: 4, points: 6,  gamesPlayed: 6, streak: 'L1' },
-          { teamId: 'team_d7', teamName: 'Custer Cougars',       wins: 1, losses: 5, points: 3,  gamesPlayed: 6, streak: 'L3' },
-          { teamId: 'team_d8', teamName: 'Edgemont Eagles',      wins: 0, losses: 6, points: 0,  gamesPlayed: 6, streak: 'L6' },
-        ],
-      },
-    ],
-    schedule: [],
-  },
-];
-
-let MOCK_LEAGUE_MATCHES = [
-  {
-    id: 'lm_001', leagueId: 'league_001', groupId: 'grp_A', week: 3, round: 'Week 3',
-    team1: { id: 'team_001', name: 'Rapid City Reapers' },
-    team2: { id: 'team_rr3', name: 'Aberdeen Aces' },
-    status: 'pending', score1: null, score2: null, winner: null,
-    scheduledDate: 'Mar 5, 2026', scheduledTime: '7:00 PM CST',
-    reportedBy: null, confirmedBy: null,
-  },
-  {
-    id: 'lm_002', leagueId: 'league_001', groupId: 'grp_A', week: 3, round: 'Week 3',
-    team1: { id: 'team_rr1', name: 'Pierre Phantoms' },
-    team2: { id: 'team_rr4', name: 'Watertown Wolves' },
-    status: 'pending', score1: null, score2: null, winner: null,
-    scheduledDate: 'Mar 5, 2026', scheduledTime: '7:00 PM CST',
-    reportedBy: null, confirmedBy: null,
-  },
-  {
-    id: 'lm_003', leagueId: 'league_001', groupId: 'grp_A', week: 3, round: 'Week 3',
-    team1: { id: 'team_rr2', name: 'Sioux Falls Surge' },
-    team2: { id: 'team_rr5', name: 'Huron Hawks' },
-    status: 'pending', score1: null, score2: null, winner: null,
-    scheduledDate: 'Mar 5, 2026', scheduledTime: '7:00 PM CST',
-    reportedBy: null, confirmedBy: null,
-  },
-  {
-    id: 'lm_004', leagueId: 'league_001', groupId: 'grp_A', week: 2, round: 'Week 2',
-    team1: { id: 'team_001', name: 'Rapid City Reapers' },
-    team2: { id: 'team_rr2', name: 'Sioux Falls Surge' },
-    status: 'complete', score1: 2, score2: 0, winner: 'team_001',
-    scheduledDate: 'Feb 26, 2026', scheduledTime: '7:00 PM CST',
-    reportedBy: 'team_001', confirmedBy: 'team_rr2',
-  },
-];
 
 export const leagueApi = {
-  getAll: async () => { await delay(400); return [...MOCK_LEAGUES]; },
-  getById: async (id) => { await delay(250); return MOCK_LEAGUES.find(l => l.id === id) || null; },
-  create: async (data) => {
-    await delay(600);
-    const groups = ['A','B','C','D'].map(letter => ({
-      id: `grp_${data.id}_${letter}`,
-      name: `Group ${letter}`,
-      label: { A:'North Division', B:'South Division', C:'East Division', D:'West Division' }[letter],
-      teamIds: [], standings: [],
-    }));
-    const league = { id: `league_${Date.now()}`, ...data, status: 'draft', currentWeek: 0, groups, schedule: [], createdAt: new Date().toISOString().split('T')[0] };
-    MOCK_LEAGUES.push(league);
+  getAll: async () => {
+    const { data, error } = await supabase.from('leagues').select('*, league_groups(*, league_standings(*))').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+  getById: async (id) => {
+    const { data } = await supabase.from('leagues').select('*, league_groups(*, league_standings(*))').eq('id', id).single();
+    return data || null;
+  },
+  create: async (leagueData) => {
+    const { data: league, error } = await supabase.from('leagues').insert([{ ...leagueData, status: 'draft', current_week: 0 }]).select().single();
+    if (error) return { success: false, error: error.message };
+    await supabase.from('league_groups').insert(['A', 'B', 'C', 'D'].map(l => ({
+      league_id: league.id, name: `Group ${l}`,
+      label: { A: 'North Division', B: 'South Division', C: 'East Division', D: 'West Division' }[l],
+    })));
     return { success: true, league };
   },
-  update: async (id, updates) => {
-    await delay(400);
-    MOCK_LEAGUES = MOCK_LEAGUES.map(l => l.id === id ? { ...l, ...updates } : l);
-    return { success: true };
-  },
-  delete: async (id) => {
-    await delay(300);
-    MOCK_LEAGUES = MOCK_LEAGUES.filter(l => l.id !== id);
-    return { success: true };
-  },
+  update: async (id, updates) => { const { error } = await supabase.from('leagues').update(updates).eq('id', id); return error ? { success: false } : { success: true }; },
+  delete: async (id) => { const { error } = await supabase.from('leagues').delete().eq('id', id); return error ? { success: false } : { success: true }; },
   advanceStatus: async (id) => {
-    await delay(400);
-    const order = ['draft','active','playoffs','complete'];
-    const league = MOCK_LEAGUES.find(l => l.id === id);
-    if (!league) return { success: false };
-    const next = order[order.indexOf(league.status) + 1];
-    if (next) league.status = next;
+    const order = ['draft', 'active', 'playoffs', 'complete'];
+    const { data } = await supabase.from('leagues').select('status').eq('id', id).single();
+    const next = order[order.indexOf(data?.status) + 1];
+    if (next) await supabase.from('leagues').update({ status: next }).eq('id', id);
     return { success: true, status: next };
   },
   addTeamToGroup: async (leagueId, groupId, team) => {
-    await delay(300);
-    const league = MOCK_LEAGUES.find(l => l.id === leagueId);
-    if (!league) return { success: false };
-    const group = league.groups.find(g => g.id === groupId);
-    if (!group) return { success: false };
-    if (!group.teamIds.includes(team.id)) {
-      group.teamIds.push(team.id);
-      group.standings.push({ teamId: team.id, teamName: team.name, wins: 0, losses: 0, points: 0, gamesPlayed: 0, streak: '–' });
-    }
+    await supabase.from('league_group_teams').insert([{ league_id: leagueId, group_id: groupId, team_id: team.id, team_name: team.name }]);
+    await supabase.from('league_standings').insert([{ league_id: leagueId, group_id: groupId, team_id: team.id, team_name: team.name, wins: 0, losses: 0, points: 0, games_played: 0, streak: '—' }]);
     return { success: true };
   },
   removeTeamFromGroup: async (leagueId, groupId, teamId) => {
-    await delay(300);
-    const league = MOCK_LEAGUES.find(l => l.id === leagueId);
-    if (!league) return { success: false };
-    const group = league.groups.find(g => g.id === groupId);
-    if (!group) return { success: false };
-    group.teamIds = group.teamIds.filter(id => id !== teamId);
-    group.standings = group.standings.filter(s => s.teamId !== teamId);
+    await supabase.from('league_group_teams').delete().eq('group_id', groupId).eq('team_id', teamId);
+    await supabase.from('league_standings').delete().eq('group_id', groupId).eq('team_id', teamId);
     return { success: true };
   },
   scheduleMatch: async (leagueId, matchData) => {
-    await delay(400);
-    const match = { id: `lm_${Date.now()}`, leagueId, ...matchData, status: 'pending', score1: null, score2: null, winner: null, reportedBy: null, confirmedBy: null };
-    MOCK_LEAGUE_MATCHES.push(match);
-    return { success: true, match };
+    const { data, error } = await supabase.from('league_matches').insert([{ league_id: leagueId, ...matchData, status: 'pending' }]).select().single();
+    return error ? { success: false, error: error.message } : { success: true, match: data };
   },
   getMatches: async (leagueId, { groupId, week } = {}) => {
-    await delay(300);
-    let matches = MOCK_LEAGUE_MATCHES.filter(m => m.leagueId === leagueId);
-    if (groupId) matches = matches.filter(m => m.groupId === groupId);
-    if (week !== undefined) matches = matches.filter(m => m.week === week);
-    return matches;
+    let query = supabase.from('league_matches').select('*').eq('league_id', leagueId);
+    if (groupId) query = query.eq('group_id', groupId);
+    if (week !== undefined) query = query.eq('week', week);
+    const { data } = await query;
+    return data || [];
   },
   reportMatchResult: async (matchId, reportingTeamId, score1, score2) => {
-    await delay(400);
-    const match = MOCK_LEAGUE_MATCHES.find(m => m.id === matchId);
-    if (!match) return { success: false };
-    match.reportedBy = reportingTeamId;
-    match._pendingScore = { score1, score2, reportingTeamId };
-    return { success: true };
+    const { error } = await supabase.from('league_matches').update({ reported_by: reportingTeamId, pending_score1: score1, pending_score2: score2 }).eq('id', matchId);
+    return error ? { success: false } : { success: true };
   },
   confirmMatchResult: async (matchId, confirmingTeamId) => {
-    await delay(400);
-    const match = MOCK_LEAGUE_MATCHES.find(m => m.id === matchId);
-    if (!match || !match._pendingScore) return { success: false };
-    const { score1, score2 } = match._pendingScore;
-    match.score1 = score1;
-    match.score2 = score2;
-    match.winner = score1 > score2 ? match.team1.id : match.team2.id;
-    match.confirmedBy = confirmingTeamId;
-    match.status = 'complete';
-    delete match._pendingScore;
-    const league = MOCK_LEAGUES.find(l => l.id === match.leagueId);
-    if (league) {
-      const group = league.groups.find(g => g.id === match.groupId);
-      if (group) {
-        const winnerStanding = group.standings.find(s => s.teamId === match.winner);
-        const loserStanding  = group.standings.find(s => s.teamId === (match.winner === match.team1.id ? match.team2.id : match.team1.id));
-        if (winnerStanding) { winnerStanding.wins++; winnerStanding.points += 3; winnerStanding.gamesPlayed++; winnerStanding.streak = 'W1'; }
-        if (loserStanding)  { loserStanding.losses++;  loserStanding.gamesPlayed++; loserStanding.streak = 'L1'; }
-        group.standings.sort((a, b) => b.points - a.points || b.wins - a.wins);
-      }
-    }
+    const { data: match } = await supabase.from('league_matches').select('*').eq('id', matchId).single();
+    if (!match) return { success: false };
+    const score1  = match.pending_score1;
+    const score2  = match.pending_score2;
+    const winner  = score1 > score2 ? match.team1_id : match.team2_id;
+    const loserId = winner === match.team1_id ? match.team2_id : match.team1_id;
+    await supabase.from('league_matches').update({ score1, score2, winner_id: winner, confirmed_by: confirmingTeamId, status: 'complete', pending_score1: null, pending_score2: null }).eq('id', matchId);
+    await supabase.rpc('increment_standing_win',  { p_league_id: match.league_id, p_group_id: match.group_id, p_team_id: winner   }).catch(() => {});
+    await supabase.rpc('increment_standing_loss', { p_league_id: match.league_id, p_group_id: match.group_id, p_team_id: loserId  }).catch(() => {});
     return { success: true };
   },
   getPendingReport: async (matchId) => {
-    await delay(100);
-    const match = MOCK_LEAGUE_MATCHES.find(m => m.id === matchId);
-    return match?._pendingScore || null;
+    const { data } = await supabase.from('league_matches').select('pending_score1, pending_score2, reported_by').eq('id', matchId).single();
+    if (!data?.pending_score1) return null;
+    return { score1: data.pending_score1, score2: data.pending_score2, reportingTeamId: data.reported_by };
   },
   getPlayoffSeedings: async (leagueId) => {
-    await delay(300);
-    const league = MOCK_LEAGUES.find(l => l.id === leagueId);
-    if (!league) return null;
-    const divisional = {};
-    const championship = [];
-    league.groups.forEach(g => {
-      const sorted = [...g.standings].sort((a, b) => b.points - a.points || b.wins - a.wins);
-      divisional[g.id] = sorted.slice(0, 8);
-      championship.push(...sorted.slice(0, 4));
-    });
+    const { data: groups } = await supabase.from('league_groups').select('id').eq('league_id', leagueId);
+    if (!groups) return null;
+    const divisional = {}, championship = [];
+    for (const g of groups) {
+      const { data: standings } = await supabase.from('league_standings').select('*').eq('group_id', g.id).order('points', { ascending: false });
+      divisional[g.id] = (standings || []).slice(0, 8);
+      championship.push(...(standings || []).slice(0, 4));
+    }
     return { divisional, championship };
   },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  MATCH FLAGS API
+//  MATCH FLAGS API  →  match_flags, match_flag_notes
 // ─────────────────────────────────────────────────────────────────────────────
+
 export const matchFlagApi = {
-  flag:               async (matchId, reason, reportedBy) => { return { success: true, id: 'flag_' + Date.now() }; },
-  resolve:            async (flagId, resolvedBy, note, eventEndTs) => { return { success: true }; },
-  getForMatch:        async (matchId)  => { return []; },
-  getActive:          async ()         => { return []; },
-  getHistory:         async (filters)  => { return []; },
-  getRetentionSummary: async ()        => { return { active: 0, totalResolved: 0, expiringThisWeek: 0 }; },
-  clearFlag:          async (flagId)   => { return { success: true }; },
-  setEventEndDate:    async (eventId, endTs) => { return { success: true }; },
+  flag: async (matchId, reason, reportedBy) => {
+    const { data, error } = await supabase.from('match_flags').insert([{ match_id: matchId, reason, reported_by: reportedBy, status: 'active' }]).select().single();
+    return error ? { success: false } : { success: true, id: data.id };
+  },
+  resolve: async (flagId, resolvedBy, note) => {
+    await supabase.from('match_flags').update({ status: 'resolved', resolved_by: resolvedBy, resolved_at: new Date().toISOString() }).eq('id', flagId);
+    if (note) await supabase.from('match_flag_notes').insert([{ flag_id: flagId, note, created_by: resolvedBy }]);
+    return { success: true };
+  },
+  getForMatch: async (matchId) => { const { data } = await supabase.from('match_flags').select('*, match_flag_notes(*)').eq('match_id', matchId); return data || []; },
+  getActive: async () => { const { data } = await supabase.from('match_flags').select('*').eq('status', 'active').order('created_at', { ascending: false }); return data || []; },
+  getHistory: async (filters = {}) => {
+    let query = supabase.from('match_flags').select('*').order('created_at', { ascending: false });
+    if (filters.status) query = query.eq('status', filters.status);
+    const { data } = await query;
+    return data || [];
+  },
+  getRetentionSummary: async () => {
+    const { data } = await supabase.from('match_flags').select('status');
+    const active   = (data || []).filter(f => f.status === 'active').length;
+    const resolved = (data || []).filter(f => f.status === 'resolved').length;
+    return { active, totalResolved: resolved, expiringThisWeek: 0 };
+  },
+  clearFlag: async (flagId) => { const { error } = await supabase.from('match_flags').update({ status: 'cleared' }).eq('id', flagId); return error ? { success: false } : { success: true }; },
+  setEventEndDate: async (eventId, endTs) => { return { success: true }; },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  PUBLIC API  ← FIXED: all methods Landing.jsx needs are here
+//  PUBLIC API
 // ─────────────────────────────────────────────────────────────────────────────
+
 export const publicApi = {
-  getAll: async () => { return []; },
-
+  getAll:      async () => { return []; },
   getTopPosts: async () => { return []; },
-
   getUpcomingTournament: async () => {
-    await delay(200);
-    return MOCK_TOURNAMENTS.find(t => t.status === 'open') || null;
+    const { data } = await supabase.from('tournaments').select('*').eq('status', 'open').order('created_at').limit(1).single();
+    return data || null;
   },
-
   getActiveleague: async () => {
-    await delay(200);
-    return MOCK_LEAGUES.find(l => l.status === 'active') || null;
+    const { data } = await supabase.from('leagues').select('*').eq('status', 'active').order('created_at').limit(1).single();
+    return data || null;
   },
-
   getTopTeam: async () => {
-    await delay(200);
-    const league = MOCK_LEAGUES.find(l => l.status === 'active');
+    const { data: league } = await supabase.from('leagues').select('id, name').eq('status', 'active').limit(1).single();
     if (!league) return null;
-    let topStanding = null;
-    league.groups.forEach(g => {
-      const best = g.standings[0];
-      if (!topStanding || best.points > topStanding.points) {
-        topStanding = { ...best, leagueName: league.name };
-      }
-    });
-    return topStanding;
+    const { data: standing } = await supabase.from('league_standings').select('*').eq('league_id', league.id).order('points', { ascending: false }).limit(1).single();
+    return standing ? { ...standing, leagueName: league.name } : null;
   },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  SOCIAL API
+//  SOCIAL API  →  posts, post_comments, post_votes, comment_votes, user_timeouts
 // ─────────────────────────────────────────────────────────────────────────────
+
 export const socialApi = {
-  getCommunities:  async ()              => { return []; },
-  getCommunity:    async (id)            => { return null; },
-  createCommunity: async (data)          => { return { success: true, id: 'comm_' + Date.now() }; },
-  getFeedPosts:    async (communityId)   => { return []; },
-  getTopPosts:     async ()              => { return []; },
-  getPosts:        async (communityId)   => { return []; },
-  createPost:      async (data)          => { return { success: true, id: 'post_' + Date.now() }; },
-  createForumPost: async (data)          => { return { success: true, id: 'post_' + Date.now() }; },
-  deletePost:      async (postId)        => { return { success: true }; },
-  flagPost:        async (postId)        => { return { success: true }; },
-  pinPost:         async (postId)        => { return { success: true }; },
-  toggleUpvote:    async (postId, uid)   => { return { success: true }; },
-  addComment:      async (postId, data)  => { return { success: true, id: 'cmt_' + Date.now() }; },
-  deleteComment:   async (commentId)     => { return { success: true }; },
-  upvoteComment:   async (commentId, uid)=> { return { success: true }; },
-  joinCommunity:   async (commId, uid)   => { return { success: true }; },
-  leaveCommunity:  async (commId, uid)   => { return { success: true }; },
-  parseMediaUrl:   async (url)           => { return null; },
-  timeoutUser:     async (uid, duration) => { return { success: true }; },
+  getCommunities:  async ()     => { return []; },
+  getCommunity:    async (id)   => { return null; },
+  createCommunity: async (data) => { return { success: true }; },
+  getFeedPosts: async () => { const { data } = await supabase.from('posts').select('*, post_comments(*), post_votes(*)').order('created_at', { ascending: false }).limit(50); return data || []; },
+  getTopPosts:  async () => { const { data } = await supabase.from('posts_with_score').select('*').order('score', { ascending: false }).limit(10); return data || []; },
+  getPosts:     async () => { const { data } = await supabase.from('posts').select('*, post_comments(*), post_votes(*)').order('created_at', { ascending: false }); return data || []; },
+  createPost: async (postData) => { const { data, error } = await supabase.from('posts').insert([postData]).select().single(); return error ? { success: false } : { success: true, id: data.id }; },
+  createForumPost: async (postData) => { const { data, error } = await supabase.from('posts').insert([postData]).select().single(); return error ? { success: false } : { success: true, id: data.id }; },
+  deletePost: async (postId) => {
+    await supabase.from('post_comments').delete().eq('post_id', postId);
+    await supabase.from('post_votes').delete().eq('post_id', postId);
+    const { error } = await supabase.from('posts').delete().eq('id', postId);
+    return error ? { success: false } : { success: true };
+  },
+  flagPost: async (postId) => { await supabase.from('posts').update({ flagged: true }).eq('id', postId); return { success: true }; },
+  pinPost:  async (postId) => { await supabase.from('posts').update({ pinned: true }).eq('id', postId); return { success: true }; },
+  toggleUpvote: async (postId, uid) => {
+    const { data: existing } = await supabase.from('post_votes').select('id').eq('post_id', postId).eq('user_id', uid).single();
+    if (existing) { await supabase.from('post_votes').delete().eq('id', existing.id); }
+    else          { await supabase.from('post_votes').insert([{ post_id: postId, user_id: uid }]); }
+    return { success: true };
+  },
+  addComment: async (postId, commentData) => { const { data, error } = await supabase.from('post_comments').insert([{ post_id: postId, ...commentData }]).select().single(); return error ? { success: false } : { success: true, id: data.id }; },
+  deleteComment: async (commentId) => {
+    await supabase.from('comment_votes').delete().eq('comment_id', commentId);
+    const { error } = await supabase.from('post_comments').delete().eq('id', commentId);
+    return error ? { success: false } : { success: true };
+  },
+  upvoteComment: async (commentId, uid) => {
+    const { data: existing } = await supabase.from('comment_votes').select('id').eq('comment_id', commentId).eq('user_id', uid).single();
+    if (existing) { await supabase.from('comment_votes').delete().eq('id', existing.id); }
+    else          { await supabase.from('comment_votes').insert([{ comment_id: commentId, user_id: uid }]); }
+    return { success: true };
+  },
+  joinCommunity:  async () => { return { success: true }; },
+  leaveCommunity: async () => { return { success: true }; },
+  parseMediaUrl:  async ()  => { return null; },
+  timeoutUser: async (uid, duration) => {
+    const { error } = await supabase.from('user_timeouts').insert([{ user_id: uid, expires_at: new Date(Date.now() + duration).toISOString() }]);
+    return error ? { success: false } : { success: true };
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  CLANS API
+//  CLANS API  →  clans, clan_members
 // ─────────────────────────────────────────────────────────────────────────────
+
 export const clansApi = {
-  getAll:     async ()        => { return []; },
-  getMyClans: async (uid)     => { return []; },
-  create:     async (data)    => { return { success: true, id: 'clan_' + Date.now() }; },
-  update:     async (id, data)=> { return { success: true }; },
-  delete:     async (id)      => { return { success: true }; },
-  addMember:        async (clanId, uid)          => { return { success: true }; },
-  removeMember:     async (clanId, uid)          => { return { success: true }; },
-  updateMemberRole: async (clanId, uid, role)    => { return { success: true }; },
+  getAll: async () => { const { data } = await supabase.from('clans').select('*, clan_members(*)').order('created_at', { ascending: false }); return data || []; },
+  getMyClans: async (uid) => { const { data } = await supabase.from('clan_members').select('clan_id, clans(*, clan_members(*))').eq('user_id', uid); return (data || []).map(r => r.clans).filter(Boolean); },
+  create: async (clanData) => { const { data, error } = await supabase.from('clans').insert([clanData]).select().single(); return error ? { success: false } : { success: true, id: data.id }; },
+  update: async (id, clanData) => { const { error } = await supabase.from('clans').update(clanData).eq('id', id); return error ? { success: false } : { success: true }; },
+  delete: async (id) => { await supabase.from('clan_members').delete().eq('clan_id', id); const { error } = await supabase.from('clans').delete().eq('id', id); return error ? { success: false } : { success: true }; },
+  addMember: async (clanId, uid) => { const { error } = await supabase.from('clan_members').insert([{ clan_id: clanId, user_id: uid }]); return error ? { success: false } : { success: true }; },
+  removeMember: async (clanId, uid) => { const { error } = await supabase.from('clan_members').delete().eq('clan_id', clanId).eq('user_id', uid); return error ? { success: false } : { success: true }; },
+  updateMemberRole: async (clanId, uid, role) => { const { error } = await supabase.from('clan_members').update({ role }).eq('clan_id', clanId).eq('user_id', uid); return error ? { success: false } : { success: true }; },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  CASH MATCH API
+//  CASH MATCH API  →  cash_matches
 // ─────────────────────────────────────────────────────────────────────────────
+
 export const cashMatchApi = {
-  getOpenMatches:  async ()         => { return []; },
-  getMyMatches:    async (uid)      => { return []; },
-  create:          async (data)     => { return { success: true, id: 'cm_' + Date.now() }; },
-  cancel:          async (id)       => { return { success: true }; },
-  accept:          async (id, uid)  => { return { success: true }; },
-  dispute:         async (id, data) => { return { success: true }; },
-  reportResult:    async (id, data) => { return { success: true }; },
-  confirmResult:   async (id)       => { return { success: true }; },
+  getOpenMatches: async () => { const { data } = await supabase.from('cash_matches').select('*').eq('status', 'open').order('created_at', { ascending: false }); return data || []; },
+  getMyMatches: async (uid) => { const { data } = await supabase.from('cash_matches').select('*').or(`team1_captain.eq.${uid},team2_captain.eq.${uid},created_by.eq.${uid}`).order('created_at', { ascending: false }); return data || []; },
+  create: async (matchData) => { const { data, error } = await supabase.from('cash_matches').insert([matchData]).select().single(); return error ? { success: false } : { success: true, id: data.id }; },
+  cancel: async (id) => { const { error } = await supabase.from('cash_matches').update({ status: 'cancelled' }).eq('id', id); return error ? { success: false } : { success: true }; },
+  accept: async (id, uid) => { const { error } = await supabase.from('cash_matches').update({ status: 'active' }).eq('id', id); return error ? { success: false } : { success: true }; },
+  dispute: async (id, disputeData) => { const { error } = await supabase.from('cash_matches').update({ status: 'disputed', ...disputeData }).eq('id', id); return error ? { success: false } : { success: true }; },
+  reportResult: async (id, resultData) => { const { error } = await supabase.from('cash_matches').update(resultData).eq('id', id); return error ? { success: false } : { success: true }; },
+  confirmResult: async (id) => { const { error } = await supabase.from('cash_matches').update({ status: 'complete', completed_at: new Date().toISOString() }).eq('id', id); return error ? { success: false } : { success: true }; },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  HALO MLG SETTINGS & LADDER API
+//  HALO MLG SETTINGS (static) & LADDER API  →  user_stats
 // ─────────────────────────────────────────────────────────────────────────────
+
 export const HALO_MLG_SETTINGS = {
   version: 'V8',
   modes: ['Slayer', 'CTF', 'Ball', 'Oddball', 'Territories'],
   maps: [
-    { id: 'guardian',   name: 'Guardian',    modes: ['Slayer','CTF','Ball'] },
-    { id: 'narrows',    name: 'Narrows',     modes: ['Slayer','CTF','Ball','Territories'] },
-    { id: 'construct',  name: 'Construct',   modes: ['Slayer','CTF','Ball'] },
-    { id: 'highground', name: 'High Ground', modes: ['Slayer','CTF','Territories'] },
-    { id: 'sandtrap',   name: 'Sand Trap',   modes: ['Slayer','CTF','Oddball'] },
-    { id: 'epitaph',    name: 'Epitaph',     modes: ['Slayer','Ball','Territories'] },
-    { id: 'snowbound',  name: 'Snowbound',   modes: ['Slayer','CTF','Oddball'] },
-    { id: 'isolation',  name: 'Isolation',   modes: ['Slayer','Ball','Territories'] },
+    { id: 'guardian',   name: 'Guardian',    modes: ['Slayer', 'CTF', 'Ball'] },
+    { id: 'narrows',    name: 'Narrows',     modes: ['Slayer', 'CTF', 'Ball', 'Territories'] },
+    { id: 'construct',  name: 'Construct',   modes: ['Slayer', 'CTF', 'Ball'] },
+    { id: 'highground', name: 'High Ground', modes: ['Slayer', 'CTF', 'Territories'] },
+    { id: 'sandtrap',   name: 'Sand Trap',   modes: ['Slayer', 'CTF', 'Oddball'] },
+    { id: 'epitaph',    name: 'Epitaph',     modes: ['Slayer', 'Ball', 'Territories'] },
+    { id: 'snowbound',  name: 'Snowbound',   modes: ['Slayer', 'CTF', 'Oddball'] },
+    { id: 'isolation',  name: 'Isolation',   modes: ['Slayer', 'Ball', 'Territories'] },
   ],
-  seriesPool: { 'bo1': 1, 'bo3': 3, 'bo5': 5, 'bo7': 7 },
+  seriesPool: { bo1: 1, bo3: 3, bo5: 5, bo7: 7 },
 };
 
 export const ladderApi = {
-  getStandings:    async (gameId)       => { return []; },
-  getQueueStatus:  async (gameId, uid)  => { return { inQueue: false, position: 0, estimatedWait: 0 }; },
-  joinQueue:       async (gameId, uid)  => { return { success: true }; },
-  leaveQueue:      async (gameId, uid)  => { return { success: true }; },
-  pollQueue:       async (gameId, uid)  => { return { matched: false }; },
-  getRoom:         async (matchId)      => { return null; },
-  getMessages:     async (matchId)      => { return []; },
-  sendMessage:     async (matchId, msg) => { return { success: true }; },
-  reportGame:      async (matchId, data)=> { return { success: true }; },
-  confirmGame:     async (matchId, gameId) => { return { success: true }; },
-  disputeGame:     async (matchId, gameId) => { return { success: true }; },
-  adminSetWinner:  async (matchId, winnerId) => { return { success: true }; },
-  setSeriesFormat: async (matchId, fmt) => { return { success: true }; },
-  getRecentMatches:async (gameId)       => { return []; },
-  getTopTeam:      async (gameId)       => { return null; },
+  getStandings:     async (gameId)          => { const { data } = await supabase.from('user_stats').select('*').eq('game_id', gameId).order('rating', { ascending: false }); return data || []; },
+  getQueueStatus:   async (gameId, uid)     => { return { inQueue: false, position: 0, estimatedWait: 0 }; },
+  joinQueue:        async (gameId, uid)     => { return { success: true }; },
+  leaveQueue:       async (gameId, uid)     => { return { success: true }; },
+  pollQueue:        async (gameId, uid)     => { return { matched: false }; },
+  getRoom:          async (matchId)         => { return matchRoomApi.getRoom(null, matchId); },
+  getMessages:      async (matchId)         => { return matchRoomApi.getMessages(matchId); },
+  sendMessage:      async (matchId, msg)    => { return matchRoomApi.sendMessage(matchId, msg.userId, msg.userName, msg.role, msg.text); },
+  reportGame:       async (matchId, data)   => { return matchRoomApi.reportGame(matchId, data.reportingTeamId, data.winnerTeamId, data.losingTeamId); },
+  confirmGame:      async (matchId, gameId) => { return matchRoomApi.confirmGame(matchId, gameId, null); },
+  disputeGame:      async (matchId, gameId) => { return { success: true }; },
+  adminSetWinner:   async (matchId, wId)    => { return matchRoomApi.adminSetWinner(matchId, wId, 0, 0); },
+  setSeriesFormat:  async (matchId, fmt)    => { return matchRoomApi.setSeriesFormat(matchId, fmt); },
+  getRecentMatches: async (gameId)          => { const { data } = await supabase.from('match_rooms').select('*').eq('status', 'complete').order('created_at', { ascending: false }).limit(10); return data || []; },
+  getTopTeam:       async (gameId)          => { const { data } = await supabase.from('user_stats').select('*').eq('game_id', gameId).order('rating', { ascending: false }).limit(1).single(); return data || null; },
 };
