@@ -310,25 +310,31 @@ export const coachesApi = {
     return (data || []).map(normalizeCoach);
   },
   addToRoster: async (app) => {
-    const { data: existing } = await supabase.from('coaches').select('id').eq('user_id', app.userId).single();
+    // maybeSingle returns null instead of throwing when no row exists
+    const { data: existing } = await supabase.from('coaches').select('id').eq('user_id', app.userId).maybeSingle();
     if (existing) {
       await supabase.from('coaches').update({ is_active: true }).eq('id', existing.id);
       return { success: true, coachId: existing.id };
     }
+    // Support both { firstName, lastName } (from coach app) and { name } (from player role assignment)
+    const firstName = app.firstName || (app.name || '').split(' ')[0] || '';
+    const lastName  = app.lastName  || (app.name || '').split(' ').slice(1).join(' ') || '';
+    const fullName  = `${firstName} ${lastName}`.trim();
     const { data: newCoach, error } = await supabase.from('coaches').insert([{
-      user_id: app.userId,
-      name: `${app.firstName} ${app.lastName}`,
-      title: 'Coach',
-      initials: `${(app.firstName || '?')[0]}${(app.lastName || '?')[0]}`.toUpperCase(),
-      accent_color: '#059669',
-      experience: `${app.yearsCoaching} years coaching`,
-      location: app.location || 'South Dakota',
-      rating: 5.0, total_sessions: 0,
-      bio: app.experience || '',
-      philosophy: app.philosophy || '',
-      available_days: app.availableDays || [1, 2, 3, 4, 5],
-      available_hours: ['4:00 PM CST', '5:30 PM CST', '7:00 PM CST'],
-      is_active: true,
+      user_id:         app.userId,
+      name:            fullName,
+      title:           'Coach',
+      initials:        `${(firstName[0] || '?')}${(lastName[0] || '?')}`.toUpperCase(),
+      accent_color:    '#059669',
+      experience:      app.yearsCoaching ? `${app.yearsCoaching} years coaching` : '',
+      location:        app.location || '',
+      rating:          5.0,
+      total_sessions:  0,
+      bio:             app.experience  || '',
+      philosophy:      app.philosophy  || '',
+      available_days:  app.availableDays || [1, 2, 3, 4, 5],
+      available_hours: app.preferredHours ? [app.preferredHours] : ['4:00 PM CST', '5:30 PM CST', '7:00 PM CST'],
+      is_active:       true,
     }]).select().single();
     if (error) return { success: false, error: error.message };
     return { success: true, coachId: newCoach.id };
