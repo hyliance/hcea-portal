@@ -281,6 +281,7 @@ function normalizeCoach(c) {
     availableDays:  c.available_days  ?? [],
     availableHours: c.available_hours ?? [],
     isActive:       c.is_active,
+    onRoster:       c.is_active,
     games: (c.coach_games || [])
       .sort((a, b) => a.sort_order - b.sort_order)
       .map(g => ({ id: g.game_id, label: g.label, icon: g.icon, rank: g.rank, specialty: g.specialty })),
@@ -629,17 +630,21 @@ export const adminApi = {
   addRole: async (userId, role, currentRoles = []) => {
     const VALID = ['player', 'coach', 'org_manager', 'league_admin', 'head_admin'];
     if (!VALID.includes(role)) return { success: false, error: 'Invalid role.' };
+    const RANK = { head_admin: 5, league_admin: 4, coach: 3, org_manager: 2, player: 1 };
     const newRoles = [...new Set([...currentRoles, role, 'player'])];
+    const primaryRole = [...newRoles].sort((a, b) => (RANK[b] || 0) - (RANK[a] || 0))[0];
     const url = `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
-    const res = await fetch(url, { method: 'PATCH', headers: { ...(await authHeaders()), 'Prefer': 'return=minimal' }, body: JSON.stringify({ roles: newRoles, role: newRoles[0] }) });
+    const res = await fetch(url, { method: 'PATCH', headers: { ...(await authHeaders()), 'Prefer': 'return=minimal' }, body: JSON.stringify({ roles: newRoles, role: primaryRole }) });
     return res.ok ? { success: true, roles: newRoles } : { success: false, error: await res.text() };
   },
   removeRole: async (userId, role, currentRoles = []) => {
     if (role === 'player') return { success: false, error: 'Cannot remove base player role.' };
+    const RANK = { head_admin: 5, league_admin: 4, coach: 3, org_manager: 2, player: 1 };
     const newRoles = currentRoles.filter(r => r !== role);
     if (!newRoles.includes('player')) newRoles.push('player');
+    const primaryRole = [...newRoles].sort((a, b) => (RANK[b] || 0) - (RANK[a] || 0))[0];
     const url = `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
-    const res = await fetch(url, { method: 'PATCH', headers: { ...(await authHeaders()), 'Prefer': 'return=minimal' }, body: JSON.stringify({ roles: newRoles, role: newRoles[0] }) });
+    const res = await fetch(url, { method: 'PATCH', headers: { ...(await authHeaders()), 'Prefer': 'return=minimal' }, body: JSON.stringify({ roles: newRoles, role: primaryRole }) });
     return res.ok ? { success: true, roles: newRoles } : { success: false, error: await res.text() };
   },
   setPlayerRole: async (userId, role) => {

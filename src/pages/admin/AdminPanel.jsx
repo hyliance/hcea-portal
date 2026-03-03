@@ -280,8 +280,8 @@ function PlayersManagement() {
       }
     }
 
-    setPlayers(prev => prev.map(p => p.id === userId ? { ...p, roles: res.roles, role: res.roles[0] } : p));
-    if (selected?.id === userId) setSelected(prev => ({ ...prev, roles: res.roles, role: res.roles[0] }));
+    setPlayers(prev => prev.map(p => p.id === userId ? { ...p, roles: res.roles, role: getPrimary(res.roles) } : p));
+    if (selected?.id === userId) setSelected(prev => ({ ...prev, roles: res.roles, role: getPrimary(res.roles) }));
     setPendingId(null);
   };
 
@@ -307,8 +307,8 @@ function PlayersManagement() {
       await adminApi.updatePlayer(userId, { coach_id: null });
     }
 
-    setPlayers(prev => prev.map(p => p.id === userId ? { ...p, roles: res.roles, role: res.roles[0] } : p));
-    if (selected?.id === userId) setSelected(prev => ({ ...prev, roles: res.roles, role: res.roles[0] }));
+    setPlayers(prev => prev.map(p => p.id === userId ? { ...p, roles: res.roles, role: getPrimary(res.roles) } : p));
+    if (selected?.id === userId) setSelected(prev => ({ ...prev, roles: res.roles, role: getPrimary(res.roles) }));
     setPendingId(null);
   };
 

@@ -34,6 +34,7 @@ const NAV_BY_ROLE = {
     // Coaching
     { id: 'coaches',      icon: '🎓', label: 'Coaches',             section: 'Coaching' },
     { id: 'sessions',     icon: '🎯', label: 'Sessions',            section: null },
+    { id: 'coach_apply',  icon: '📝', label: 'Become a Coach',      section: null },
     // HCEA Academy — organizations are HCEA-only
     { id: 'hcea_programs',  icon: '📚', label: 'Programs',          section: 'HCEA Academy' },
     { id: 'scholarships',   icon: '🏅', label: 'Scholarships',      section: null },
@@ -53,6 +54,9 @@ const NAV_BY_ROLE = {
     { id: 'leagues_ladders', icon: '🏅', label: 'Leagues & Ladders', section: 'Competitive' },
     { id: 'tournaments',  icon: '🏆', label: 'Tournaments',         section: null },
     { id: 'teams',        icon: '🛡️', label: 'Teams',               section: null },
+    // Coaching
+    { id: 'coaches',      icon: '🎓', label: 'Find a Coach',        section: 'Coaching' },
+    { id: 'coach_apply',  icon: '📝', label: 'Become a Coach',      section: null },
     // No HCEA section — no orgs, no scholarships, no coach apps
     { id: 'profile',      icon: '👤', label: 'My Profile',          section: 'Account' },
   ],
@@ -69,6 +73,7 @@ const NAV_BY_ROLE = {
     { id: 'cash_match',   icon: '💰', label: 'Cash Matches',         section: null },
     { id: 'coaches',      icon: '🎓', label: 'Coaches',             section: 'Coaching' },
     { id: 'sessions',     icon: '🎯', label: 'Sessions',            section: null },
+    { id: 'coach_apply',  icon: '📝', label: 'Become a Coach',      section: null },
     { id: 'hcea_programs',  icon: '📚', label: 'Programs',          section: 'HCEA Academy' },
     { id: 'scholarships',   icon: '🏅', label: 'Scholarships',      section: null },
     { id: 'profile',      icon: '👤', label: 'My Profile',          section: 'Account' },
@@ -85,6 +90,7 @@ const NAV_BY_ROLE = {
     { id: 'cash_match',   icon: '💰', label: 'Cash Matches',         section: null },
     { id: 'sessions',     icon: '🎯', label: 'My Sessions',         section: 'Coaching' },
     { id: 'coaches',      icon: '🎓', label: 'Coach Profile',       section: null },
+    { id: 'coach_apply',  icon: '📝', label: 'Become a Coach',      section: null },
     { id: 'hcea_programs',icon: '📚', label: 'HCEA Programs',       section: 'HCEA Academy' },
     { id: 'profile',      icon: '👤', label: 'My Profile',          section: 'Account' },
   ],
@@ -98,6 +104,9 @@ const NAV_BY_ROLE = {
     { id: 'leagues_ladders', icon: '🏅', label: 'Leagues & Ladders', section: null },
     { id: 'org_scholarships', icon: '🏅', label: 'Scholarships',     section: null },
     { id: 'hcea_programs',    icon: '📚', label: 'HCEA Programs',    section: null },
+    // Coaching
+    { id: 'coaches',          icon: '🎓', label: 'Find a Coach',     section: 'Coaching' },
+    { id: 'coach_apply',      icon: '📝', label: 'Become a Coach',   section: null },
     { id: 'profile',          icon: '👤', label: 'My Profile',       section: 'Account' },
   ],
 
