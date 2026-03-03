@@ -325,6 +325,7 @@ export const coachesApi = {
       const lastName  = app.lastName  || (app.name || '').split(' ').slice(1).join(' ') || '';
       const fullName  = `${firstName} ${lastName}`.trim();
       const { data: newCoach, error } = await supabase.from('coaches').insert([{
+        id:              crypto.randomUUID(),
         user_id:         userId,
         name:            fullName,
         title:           'Coach',
