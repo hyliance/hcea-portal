@@ -582,8 +582,6 @@ function appFormToDb(userId, formData) {
     references:               formData.references           || [],
     available_days:           formData.availableDays        || [],
     preferred_hours:          formData.preferredHours,
-    proposed_member_rate:     51,
-    proposed_non_member_rate: 60,
     personal_statement:       formData.personalStatement,
     agreed_to_terms:          formData.agreedToTerms        || false,
     background_check_consent: formData.backgroundCheckConsent || false,
