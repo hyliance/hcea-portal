@@ -579,7 +579,6 @@ function appFormToDb(userId, formData) {
     target_age_groups:        formData.targetAgeGroups      || [],
     experience:               formData.experience,
     certifications:           formData.certifications       || null,
-    references:               formData.references           || [],
     available_days:           formData.availableDays        || [],
     preferred_hours:          formData.preferredHours,
     personal_statement:       formData.personalStatement,
