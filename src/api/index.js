@@ -280,7 +280,7 @@ function normalizeCoach(c) {
     social:         c.social          ?? {},
     availableDays:  c.available_days  ?? [],
     availableHours: c.available_hours ?? [],
-    onRoster:       c.on_roster,
+    isActive:       c.is_active,
     games: (c.coach_games || [])
       .sort((a, b) => a.sort_order - b.sort_order)
       .map(g => ({ id: g.game_id, label: g.label, icon: g.icon, rank: g.rank, specialty: g.specialty })),
@@ -298,7 +298,7 @@ export const coachesApi = {
   getAll: async () => {
     const { data, error } = await supabase
       .from('coaches').select('*, coach_games(*), coach_accolades(*), coach_reviews(*)')
-      .eq('on_roster', true).order('created_at');
+      .eq('is_active', true).order('created_at');
     if (error) throw error;
     return (data || []).map(normalizeCoach);
   },
@@ -312,7 +312,7 @@ export const coachesApi = {
   addToRoster: async (app) => {
     const { data: existing } = await supabase.from('coaches').select('id').eq('user_id', app.userId).single();
     if (existing) {
-      await supabase.from('coaches').update({ on_roster: true }).eq('id', existing.id);
+      await supabase.from('coaches').update({ is_active: true }).eq('id', existing.id);
       return { success: true, coachId: existing.id };
     }
     const { data: newCoach, error } = await supabase.from('coaches').insert([{
@@ -328,13 +328,13 @@ export const coachesApi = {
       philosophy: app.philosophy || '',
       available_days: app.availableDays || [1, 2, 3, 4, 5],
       available_hours: ['4:00 PM CST', '5:30 PM CST', '7:00 PM CST'],
-      on_roster: true,
+      is_active: true,
     }]).select().single();
     if (error) return { success: false, error: error.message };
     return { success: true, coachId: newCoach.id };
   },
   removeFromRoster: async (coachId) => {
-    const { error } = await supabase.from('coaches').update({ on_roster: false }).eq('id', coachId);
+    const { error } = await supabase.from('coaches').update({ is_active: false }).eq('id', coachId);
     return error ? { success: false } : { success: true };
   },
   getAvailability: async (coachId, year, month) => {
@@ -434,7 +434,7 @@ export const sessionsApi = {
     return (data || []).map(normalizeSession);
   },
   getAvailability: async (year, month) => {
-    const { data } = await supabase.from('coaches').select('id').eq('on_roster', true).limit(1).single();
+    const { data } = await supabase.from('coaches').select('id').eq('is_active', true).limit(1).single();
     if (!data) return {};
     return coachesApi.getAvailability(data.id, year, month);
   },
