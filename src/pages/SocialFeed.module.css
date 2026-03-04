@@ -332,6 +332,30 @@
 /* Sidebar card title flex for count badge */
 .sidebarCardTitle { display:flex; align-items:center; gap:0.4rem; }
 
+/* ── QUICK COMPOSE (Twitter-like) ──────────────────────────────────────────── */
+.quickCompose { display:flex; gap:0.8rem; background:var(--sf-card); border:1px solid var(--sf-border); padding:0.85rem 1rem; cursor:pointer; transition:border-color 0.15s; margin-bottom:0.5rem; }
+.quickCompose:hover { border-color:var(--sf-border2); }
+.qcAvatar { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700; color:#fff; flex-shrink:0; }
+.qcRight  { flex:1; min-width:0; display:flex; flex-direction:column; gap:0.55rem; }
+.qcPlaceholder { font-size:0.92rem; color:var(--sf-muted); padding:0.3rem 0; }
+.qcShortcuts { display:flex; flex-wrap:wrap; gap:0.35rem; border-top:1px solid var(--sf-border); padding-top:0.55rem; }
+.qcShortcut { display:inline-flex; align-items:center; gap:0.3rem; background:rgba(255,255,255,0.04); border:1px solid var(--sf-border); color:var(--sf-muted); font-family:'Barlow',sans-serif; font-size:0.75rem; font-weight:600; padding:0.22rem 0.65rem; cursor:pointer; transition:all 0.12s; }
+.qcShortcut:hover { border-color:var(--cc,var(--sf-bright)); color:var(--cc,var(--sf-bright)); background:rgba(255,255,255,0.06); }
+
+/* ── CATEGORY PAGE HEADER (Reddit-like) ────────────────────────────────────── */
+.catPageHeader { position:relative; margin-bottom:0.8rem; overflow:hidden; border:1px solid var(--sf-border); background:var(--sf-card); }
+.catPageBanner { height:72px; width:100%; }
+.catPageBody   { display:flex; align-items:flex-start; gap:1rem; padding:0 1rem 1rem; }
+.catPageIcon   { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.6rem; margin-top:-18px; flex-shrink:0; }
+.catPageInfo   { flex:1; min-width:0; padding-top:0.3rem; }
+.catPageName   { font-family:'Barlow Condensed',sans-serif; font-size:1.25rem; font-weight:800; letter-spacing:0.03em; margin:0 0 0.2rem; }
+.catPageDesc   { font-size:0.83rem; color:var(--sf-muted); margin:0; line-height:1.5; }
+.catPageBack   { flex-shrink:0; margin-top:0.5rem; background:rgba(255,255,255,0.05); border:1px solid var(--sf-border2); color:var(--sf-muted); font-family:'Barlow',sans-serif; font-size:0.8rem; padding:0.3rem 0.9rem; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.catPageBack:hover { background:rgba(255,255,255,0.09); color:var(--sf-text); }
+
+/* Sort bar meta label */
+.sortMeta { margin-left:auto; font-size:0.75rem; color:var(--sf-muted); align-self:center; padding-right:0.5rem; }
+
 /* ── CATEGORY FILTER BAR ───────────────────────────────────────────────────── */
 .catBar { display:flex; gap:0.35rem; overflow-x:auto; padding:0.6rem 1rem; max-width:1200px; margin:0 auto; scrollbar-width:none; }
 .catBar::-webkit-scrollbar { display:none; }

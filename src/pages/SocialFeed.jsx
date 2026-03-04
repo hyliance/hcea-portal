@@ -523,10 +523,50 @@ function canSubmit(cat, fields, title, text, mediaUrl, me) {
   return true;
 }
 
+// ── QUICK COMPOSE (Twitter-like) ──────────────────────────────────────────────
+function QuickCompose({ me, onOpen }) {
+  const QUICK_CATS = FEED_CATEGORIES.filter(c => ['scrims','lft','discussion','highlight','announcements'].includes(c.id));
+  return (
+    <div className={styles.quickCompose} onClick={()=>onOpen(null)}>
+      <div className={styles.qcAvatar} style={{background: me?.avatarColor || '#1d4ed8'}}>{me?.initials}</div>
+      <div className={styles.qcRight}>
+        <div className={styles.qcPlaceholder}>What's happening in the scene?</div>
+        <div className={styles.qcShortcuts} onClick={e=>e.stopPropagation()}>
+          {QUICK_CATS.map(cat=>(
+            <button key={cat.id} className={styles.qcShortcut} style={{'--cc':cat.color}}
+              onClick={()=>onOpen(cat)} title={cat.label}>
+              {cat.icon} <span>{cat.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── CATEGORY PAGE HEADER (Reddit-like) ────────────────────────────────────────
+function CategoryPageHeader({ cat, onBack }) {
+  return (
+    <div className={styles.catPageHeader}>
+      <div className={styles.catPageBanner} style={{background:`linear-gradient(135deg,${cat.color}44 0%,${cat.color}11 60%,transparent 100%)`}} />
+      <div className={styles.catPageBody}>
+        <div className={styles.catPageIcon} style={{background:cat.color+'1a',border:`2px solid ${cat.color}55`}}>
+          {cat.icon}
+        </div>
+        <div className={styles.catPageInfo}>
+          <h2 className={styles.catPageName} style={{color:cat.color}}>{cat.label}</h2>
+          <p className={styles.catPageDesc}>{cat.description}</p>
+        </div>
+        <button className={styles.catPageBack} onClick={onBack}>← All Posts</button>
+      </div>
+    </div>
+  );
+}
+
 // ── CREATE POST MODAL ─────────────────────────────────────────────────────────
-function CreatePostModal({ me, onClose, onPost }) {
-  const [step, setStep]         = useState(1);
-  const [category, setCategory] = useState(null);
+function CreatePostModal({ me, onClose, onPost, initialCategory = null }) {
+  const [step, setStep]         = useState(initialCategory ? 2 : 1);
+  const [category, setCategory] = useState(initialCategory);
   const [title, setTitle]       = useState('');
   const [text, setText]         = useState('');
   const [fields, setFields]     = useState({});
@@ -619,50 +659,63 @@ export default function SocialFeed() {
   const { user, userAge } = useAuth();
   const isAdmin = ['admin','head_admin','league_admin'].includes(user?.role);
 
-  const [posts, setPosts]               = useState([]);
+  // view: 'home' (mixed timeline) | 'category' (subreddit-style page)
+  const [view, setView]                 = useState('home');
+  const [activeCat, setActiveCat]       = useState(null); // FEED_CATEGORIES item
+  const [allPosts, setAllPosts]         = useState([]);
   const [sort, setSort]                 = useState('hot');
-  const [activeCategory, setActiveCategory] = useState(null);
   const [loading, setLoading]           = useState(true);
   const [postsLoading, setPostsLoading] = useState(false);
   const [allowed, setAllowed]           = useState(true);
-  const [showCreatePost, setShowPost]   = useState(false);
+  const [createModal, setCreateModal]   = useState(null); // null | FEED_CATEGORIES item | 'open'
 
-  const loadPosts = useCallback(async (category = activeCategory, s = sort) => {
+  const loadPosts = useCallback(async (s = sort) => {
     setPostsLoading(true);
-    const res = await socialApi.getFeedPosts(user?.id, userAge, s, category);
+    const res = await socialApi.getFeedPosts(user?.id, userAge, s, null);
     setAllowed(res.allowed !== false);
-    setPosts(res.posts || []);
+    setAllPosts(res.posts || []);
     setPostsLoading(false);
     setLoading(false);
-  }, [user?.id, userAge, sort, activeCategory]);
+  }, [user?.id, userAge, sort]);
 
-  useEffect(() => { loadPosts(activeCategory, sort); }, [activeCategory, sort]);
+  useEffect(() => { loadPosts(sort); }, [sort]);
 
-  const toggleCategory = (id) => setActiveCategory(prev => prev === id ? null : id);
+  // Posts shown in the current view
+  const visiblePosts = view === 'category' && activeCat
+    ? allPosts.filter(p => p.category === activeCat.id)
+    : allPosts;
 
-  const upvote      = async (id) => {
+  const openCategory = (id) => {
+    const cat = FEED_CATEGORIES.find(c => c.id === id);
+    if (cat) { setActiveCat(cat); setView('category'); }
+  };
+  const goHome = () => { setView('home'); setActiveCat(null); };
+
+  const upvote = async (id) => {
     await socialApi.toggleUpvote(id, user.id);
-    setPosts(p=>p.map(post=>post.id!==id?post:{...post, myUpvote:!post.myUpvote, score:post.myUpvote?post.score-1:post.score+1}));
+    setAllPosts(p=>p.map(post=>post.id!==id?post:{...post, myUpvote:!post.myUpvote, score:post.myUpvote?post.score-1:post.score+1}));
   };
-  const addComment  = async (postId, text, media) => {
+  const addComment = async (postId, text, media) => {
     const res = await socialApi.addComment(postId, user.id, `${user.firstName} ${user.lastName}`, user.role, user.initials, user.avatarColor, text, userAge, media);
-    if (res.success) setPosts(p=>p.map(post=>post.id!==postId?post:{...post, comments:[...post.comments,res.comment]}));
+    if (res.success) setAllPosts(p=>p.map(post=>post.id!==postId?post:{...post, comments:[...post.comments,res.comment]}));
   };
-  const deletePost  = async (id) => { await socialApi.deletePost(id); setPosts(p=>p.filter(post=>post.id!==id)); };
+  const deletePost = async (id) => { await socialApi.deletePost(id); setAllPosts(p=>p.filter(post=>post.id!==id)); };
   const deleteComment = async (pId,cId) => {
     await socialApi.deleteComment(pId, cId);
-    setPosts(p=>p.map(post=>post.id!==pId?post:{...post,comments:post.comments.filter(c=>c.id!==cId)}));
+    setAllPosts(p=>p.map(post=>post.id!==pId?post:{...post,comments:post.comments.filter(c=>c.id!==cId)}));
   };
   const voteComment = async (pId,cId) => {
     await socialApi.upvoteComment(pId, cId, user.id);
-    setPosts(p=>p.map(post=>post.id!==pId?post:{...post,comments:post.comments.map(c=>c.id!==cId?c:{...c, upvotes:c.upvotes.includes(user.id)?c.upvotes.filter(x=>x!==user.id):[...c.upvotes,user.id]})}));
+    setAllPosts(p=>p.map(post=>post.id!==pId?post:{...post,comments:post.comments.map(c=>c.id!==cId?c:{...c, upvotes:c.upvotes.includes(user.id)?c.upvotes.filter(x=>x!==user.id):[...c.upvotes,user.id]})}));
   };
-  const flagPost    = async (id) => { await socialApi.flagPost(id, user.id, 'User report'); setPosts(p=>p.map(post=>post.id!==id?post:{...post,flagged:true})); };
-  const pinPost     = async (id, pinned) => { await socialApi.pinPost(id, pinned); setPosts(p=>p.map(post=>post.id!==id?post:{...post,pinned})); };
+  const flagPost = async (id) => { await socialApi.flagPost(id, user.id, 'User report'); setAllPosts(p=>p.map(post=>post.id!==id?post:{...post,flagged:true})); };
+  const pinPost  = async (id, pinned) => { await socialApi.pinPost(id, pinned); setAllPosts(p=>p.map(post=>post.id!==id?post:{...post,pinned})); };
 
   const onPostCreated = (post) => {
-    if (!activeCategory || activeCategory === post.category) {
-      setPosts(p => [post, ...p]);
+    setAllPosts(p => [post, ...p]);
+    // If we're not on the right category page, navigate there
+    if (view === 'category' && activeCat?.id !== post.category) {
+      openCategory(post.category);
     }
   };
 
@@ -674,7 +727,13 @@ export default function SocialFeed() {
     </div>
   );
 
-  const activeCat = FEED_CATEGORIES.find(c => c.id === activeCategory);
+  const postCardProps = {
+    me: {...user, id:user?.id||'guest'}, isAdmin,
+    onUpvote:upvote, onComment:addComment,
+    onDelPost:deletePost, onDelComment:deleteComment,
+    onVoteComment:voteComment, onFlag:flagPost, onPin:pinPost,
+    onCategoryClick: openCategory,
+  };
 
   return (
     <div className={styles.wrap}>
@@ -682,33 +741,32 @@ export default function SocialFeed() {
       {/* ── TOP BAR ── */}
       <div className={styles.topBar}>
         <div className={styles.topBarLeft}>
-          <h2 className={styles.feedTitle}>
-            {activeCat ? <>{activeCat.icon} {activeCat.label}</> : '🏠 Social Feed'}
-          </h2>
+          {view === 'category' ? (
+            <div className={styles.breadcrumb}>
+              <button onClick={goHome}>🏠 Feed</button>
+              <span>›</span>
+              <span style={{color: activeCat.color}}>{activeCat.icon} {activeCat.label}</span>
+            </div>
+          ) : (
+            <h2 className={styles.feedTitle}>🏠 Social Feed</h2>
+          )}
         </div>
-        <button className={styles.createPostBtn} onClick={()=>setShowPost(true)}>✏️ Create Post</button>
-      </div>
-
-      {/* ── CATEGORY FILTER BAR ── */}
-      <div className={styles.catBar}>
-        <button
-          className={`${styles.catFilterBtn} ${!activeCategory ? styles.catFilterOn : ''}`}
-          onClick={() => setActiveCategory(null)}>
-          All
-        </button>
-        {FEED_CATEGORIES.map(cat => (
-          <button key={cat.id}
-            className={`${styles.catFilterBtn} ${activeCategory === cat.id ? styles.catFilterOn : ''}`}
-            style={activeCategory === cat.id ? {'--cc': cat.color} : {}}
-            onClick={() => toggleCategory(cat.id)}>
-            {cat.icon} {cat.label}
-          </button>
-        ))}
+        <button className={styles.createPostBtn} onClick={()=>setCreateModal('open')}>✏️ Create Post</button>
       </div>
 
       {/* ── MAIN LAYOUT ── */}
       <div className={styles.layout}>
         <div className={styles.feed}>
+
+          {/* Category page header (Reddit-like) */}
+          {view === 'category' && activeCat && (
+            <CategoryPageHeader cat={activeCat} onBack={goHome} />
+          )}
+
+          {/* Quick compose bar (Twitter-like) — only on home */}
+          {view === 'home' && (
+            <QuickCompose me={user} onOpen={(cat) => setCreateModal(cat || 'open')} />
+          )}
 
           {/* Sort bar */}
           <div className={styles.sortBar}>
@@ -716,28 +774,34 @@ export default function SocialFeed() {
               <button key={id} className={`${styles.sortBtn} ${sort===id?styles.sortBtnOn:''}`}
                 onClick={()=>setSort(id)}>{label}</button>
             ))}
+            {view === 'home' && (
+              <span className={styles.sortMeta}>Showing all categories</span>
+            )}
+            {view === 'category' && (
+              <span className={styles.sortMeta}>{visiblePosts.length} post{visiblePosts.length!==1?'s':''}</span>
+            )}
           </div>
 
           {/* Posts */}
           {loading||postsLoading ? <div className={styles.loadingWrap}><Spinner/></div>
-          : posts.length===0 ? (
+          : visiblePosts.length===0 ? (
             <div className={styles.emptyFeed}>
               <div className={styles.emptyIcon}>{activeCat ? activeCat.icon : '📭'}</div>
-              <div className={styles.emptyTitle}>{activeCat ? `No ${activeCat.label} posts yet` : 'Feed is empty'}</div>
-              <p>{activeCat ? `Be the first to post in ${activeCat.label}!` : 'Select a category or create the first post.'}</p>
-              <button className={styles.btnPrimary} onClick={()=>setShowPost(true)}>✏️ Create a Post</button>
+              <div className={styles.emptyTitle}>
+                {activeCat ? `No ${activeCat.label} posts yet` : 'Feed is empty'}
+              </div>
+              <p>{activeCat
+                ? `Be the first to post in ${activeCat.label}!`
+                : 'Create the first post to get things started.'}</p>
+              <button className={styles.btnPrimary}
+                onClick={()=>setCreateModal(activeCat || 'open')}>
+                ✏️ Create a Post
+              </button>
             </div>
           ) : (
             <div className={styles.postList}>
-              {posts.map(post=>(
-                <PostCard key={post.id} post={post}
-                  me={{...user, id:user?.id||'guest'}}
-                  isAdmin={isAdmin}
-                  onUpvote={upvote} onComment={addComment}
-                  onDelPost={deletePost} onDelComment={deleteComment}
-                  onVoteComment={voteComment}
-                  onFlag={flagPost} onPin={pinPost}
-                  onCategoryClick={toggleCategory}/>
+              {visiblePosts.map(post=>(
+                <PostCard key={post.id} post={post} {...postCardProps} />
               ))}
             </div>
           )}
@@ -746,16 +810,19 @@ export default function SocialFeed() {
         {/* ── SIDEBAR ── */}
         <aside className={styles.sidebar}>
           <div className={styles.sidebarCard}>
-            <button className={styles.sidebarCreatePost} onClick={()=>setShowPost(true)}>✏️ Create Post</button>
+            <button className={styles.sidebarCreatePost} onClick={()=>setCreateModal('open')}>✏️ Create Post</button>
+            {view === 'category' && (
+              <button className={styles.sidebarCreateCom} onClick={goHome}>🏠 All Posts</button>
+            )}
           </div>
 
           <div className={styles.sidebarCard}>
-            <div className={styles.sidebarCardTitle}>Categories</div>
+            <div className={styles.sidebarCardTitle}>Browse Categories</div>
             {FEED_CATEGORIES.map(cat => (
               <button key={cat.id}
-                className={`${styles.catNavItem} ${activeCategory === cat.id ? styles.catNavItemOn : ''}`}
-                style={activeCategory === cat.id ? {'--cc': cat.color} : {}}
-                onClick={() => toggleCategory(cat.id)}>
+                className={`${styles.catNavItem} ${view==='category'&&activeCat?.id===cat.id ? styles.catNavItemOn : ''}`}
+                style={view==='category'&&activeCat?.id===cat.id ? {'--cc': cat.color} : {}}
+                onClick={() => openCategory(cat.id)}>
                 <span className={styles.catNavIcon}>{cat.icon}</span>
                 <div className={styles.catNavInfo}>
                   <span className={styles.catNavLabel}>{cat.label}</span>
@@ -767,8 +834,13 @@ export default function SocialFeed() {
         </aside>
       </div>
 
-      {showCreatePost && (
-        <CreatePostModal me={user} onClose={()=>setShowPost(false)} onPost={onPostCreated}/>
+      {createModal && (
+        <CreatePostModal
+          me={user}
+          initialCategory={createModal !== 'open' ? createModal : null}
+          onClose={()=>setCreateModal(null)}
+          onPost={onPostCreated}
+        />
       )}
     </div>
   );
