@@ -39,6 +39,18 @@ export const BRACKET_FORMATS = [
   { id: 'group_stage', label: 'Group Stage + Playoffs', desc: 'Groups feed into a single-elim playoff bracket.' },
 ];
 
+export const FEED_CATEGORIES = [
+  { id: 'scrims',        icon: '⚔️',  label: 'Scrims',        color: '#ef4444', description: 'Scrim requests — game, platform, region, rank, format' },
+  { id: 'lft',           icon: '🔎',  label: 'LFT',           color: '#3b82f6', description: 'Looking for Team — post your roles, rank & availability' },
+  { id: 'lfo',           icon: '🏢',  label: 'LFO',           color: '#8b5cf6', description: 'Looking for Organization — players & clans seeking pickup' },
+  { id: 'announcements', icon: '📢',  label: 'Announcements', color: '#f59e0b', description: 'Official posts from verified Orgs, Clans & Admins', restricted: true },
+  { id: 'montages',      icon: '🎬',  label: 'Montages',      color: '#06b6d4', description: 'YouTube / Twitch video montages with game tagging' },
+  { id: 'vod_review',    icon: '🎯',  label: 'VoD Review',    color: '#10b981', description: 'Request or offer analytical VOD breakdowns' },
+  { id: 'roster_move',   icon: '🔄',  label: 'Roster Move',   color: '#6366f1', description: 'Player joins, departures & role changes' },
+  { id: 'discussion',    icon: '💬',  label: 'Discussion',    color: '#64748b', description: 'Open discussion with optional game tagging' },
+  { id: 'highlight',     icon: '⚡',  label: 'Highlight',     color: '#f97316', description: 'Short clip embeds from YouTube, Twitch & Streamable' },
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  GAME MANAGEMENT API  →  game_titles, game_maps, game_modes, game_seasons
 // ─────────────────────────────────────────────────────────────────────────────
@@ -964,15 +976,80 @@ export const publicApi = {
 //  SOCIAL API  →  posts, post_comments, post_votes, comment_votes, user_timeouts
 // ─────────────────────────────────────────────────────────────────────────────
 
+function normalizePost(p, userId) {
+  const votes    = p.post_votes    || [];
+  const comments = p.post_comments || [];
+  const score    = votes.filter(v => !v.is_downvote).length;
+  const myUpvote = votes.some(v => v.user_id === userId);
+  return {
+    id:              p.id,
+    userId:          p.user_id,
+    userName:        p.user_name,
+    userRole:        p.user_role,
+    userInitials:    p.user_initials,
+    userAvatarColor: p.user_avatar_color,
+    category:        p.category || p.community_id || 'discussion',
+    title:           p.title || '',
+    text:            p.text  || '',
+    media:           p.media || null,
+    score,
+    myUpvote,
+    comments: comments.map(c => ({
+      id:              c.id,
+      userId:          c.user_id,
+      userName:        c.user_name,
+      userRole:        c.user_role,
+      userInitials:    c.user_initials,
+      userAvatarColor: c.user_avatar_color,
+      text:            c.text  || '',
+      media:           c.media || null,
+      upvotes:         [],
+      createdAt:       c.created_at ? new Date(c.created_at).getTime() : Date.now(),
+    })),
+    pinned:    p.pinned    || false,
+    flagged:   p.flagged   || false,
+    createdAt: p.created_at ? new Date(p.created_at).getTime() : Date.now(),
+  };
+}
+
 export const socialApi = {
-  getCommunities:  async ()     => { return []; },
-  getCommunity:    async (id)   => { return null; },
-  createCommunity: async (data) => { return { success: true }; },
-  getFeedPosts: async () => { const { data } = await supabase.from('posts').select('*, post_comments(*), post_votes(*)').order('created_at', { ascending: false }).limit(50); return data || []; },
-  getTopPosts:  async () => { const { data } = await supabase.from('posts_with_score').select('*').order('score', { ascending: false }).limit(10); return data || []; },
-  getPosts:     async () => { const { data } = await supabase.from('posts').select('*, post_comments(*), post_votes(*)').order('created_at', { ascending: false }); return data || []; },
-  createPost: async (postData) => { const { data, error } = await supabase.from('posts').insert([postData]).select().single(); return error ? { success: false } : { success: true, id: data.id }; },
-  createForumPost: async (postData) => { const { data, error } = await supabase.from('posts').insert([postData]).select().single(); return error ? { success: false } : { success: true, id: data.id }; },
+  getCommunities: async () => FEED_CATEGORIES.map(c => ({ ...c, name: c.label, memberCount: 0, postCount: 0, members: [], isOfficial: true })),
+  getCommunity:   async (id) => { const c = FEED_CATEGORIES.find(c => c.id === id); return c ? { ...c, name: c.label, memberCount: 0, postCount: 0, members: [], isOfficial: true } : null; },
+  createCommunity: async () => ({ success: false, error: 'Categories are system-defined.' }),
+
+  getFeedPosts: async (userId, userAge, sort = 'new', category = null) => {
+    let query = supabase.from('posts').select('*, post_comments(*), post_votes(*)').limit(100);
+    if (category) query = query.eq('community_id', category);
+    const { data, error } = await query.order('created_at', { ascending: false });
+    if (error) return { allowed: true, posts: [] };
+    let posts = (data || []).map(p => normalizePost(p, userId));
+    if (sort === 'top') posts = posts.sort((a, b) => b.score - a.score);
+    if (sort === 'hot') posts = posts.sort((a, b) => {
+      const age = (ts) => Math.max(1, (Date.now() - ts) / 3600000);
+      return (b.score / age(b.createdAt)) - (a.score / age(a.createdAt));
+    });
+    return { allowed: true, posts };
+  },
+
+  createForumPost: async (userId, userName, userRole, userInitials, userAvatarColor, category, title, text, _tags, media) => {
+    const { data, error } = await supabase.from('posts').insert([{
+      id:                crypto.randomUUID(),
+      user_id:           userId,
+      user_name:         userName,
+      user_role:         userRole,
+      user_initials:     userInitials,
+      user_avatar_color: userAvatarColor,
+      community_id:      category,
+      title,
+      text:              text || '',
+      media:             media || null,
+      pinned:            false,
+      flagged:           false,
+    }]).select().single();
+    if (error) return { success: false, error: error.message };
+    return { success: true, post: normalizePost(data, userId) };
+  },
+
   deletePost: async (postId) => {
     await supabase.from('post_comments').delete().eq('post_id', postId);
     await supabase.from('post_votes').delete().eq('post_id', postId);
@@ -980,28 +1057,70 @@ export const socialApi = {
     return error ? { success: false } : { success: true };
   },
   flagPost: async (postId) => { await supabase.from('posts').update({ flagged: true }).eq('id', postId); return { success: true }; },
-  pinPost:  async (postId) => { await supabase.from('posts').update({ pinned: true }).eq('id', postId); return { success: true }; },
+  pinPost:  async (postId, pinned) => { await supabase.from('posts').update({ pinned }).eq('id', postId); return { success: true }; },
+
   toggleUpvote: async (postId, uid) => {
-    const { data: existing } = await supabase.from('post_votes').select('id').eq('post_id', postId).eq('user_id', uid).single();
-    if (existing) { await supabase.from('post_votes').delete().eq('id', existing.id); }
-    else          { await supabase.from('post_votes').insert([{ post_id: postId, user_id: uid }]); }
+    const { data: ex } = await supabase.from('post_votes').select('id').eq('post_id', postId).eq('user_id', uid).maybeSingle();
+    if (ex) await supabase.from('post_votes').delete().eq('id', ex.id);
+    else    await supabase.from('post_votes').insert([{ post_id: postId, user_id: uid }]);
     return { success: true };
   },
-  addComment: async (postId, commentData) => { const { data, error } = await supabase.from('post_comments').insert([{ post_id: postId, ...commentData }]).select().single(); return error ? { success: false } : { success: true, id: data.id }; },
-  deleteComment: async (commentId) => {
+
+  addComment: async (postId, userId, userName, userRole, userInitials, userAvatarColor, text, _userAge, media) => {
+    const { data, error } = await supabase.from('post_comments').insert([{
+      id:                crypto.randomUUID(),
+      post_id:           postId,
+      user_id:           userId,
+      user_name:         userName,
+      user_role:         userRole,
+      user_initials:     userInitials,
+      user_avatar_color: userAvatarColor,
+      text:              text || '',
+      media:             media || null,
+    }]).select().single();
+    if (error) return { success: false };
+    return {
+      success: true,
+      comment: {
+        id: data.id, userId: data.user_id, userName: data.user_name,
+        userRole: data.user_role, userInitials: data.user_initials,
+        userAvatarColor: data.user_avatar_color,
+        text: data.text, media: data.media || null,
+        upvotes: [], createdAt: new Date(data.created_at).getTime(),
+      },
+    };
+  },
+
+  deleteComment: async (postId, commentId) => {
     await supabase.from('comment_votes').delete().eq('comment_id', commentId);
     const { error } = await supabase.from('post_comments').delete().eq('id', commentId);
     return error ? { success: false } : { success: true };
   },
-  upvoteComment: async (commentId, uid) => {
-    const { data: existing } = await supabase.from('comment_votes').select('id').eq('comment_id', commentId).eq('user_id', uid).single();
-    if (existing) { await supabase.from('comment_votes').delete().eq('id', existing.id); }
-    else          { await supabase.from('comment_votes').insert([{ comment_id: commentId, user_id: uid }]); }
+
+  upvoteComment: async (postId, commentId, uid) => {
+    const { data: ex } = await supabase.from('comment_votes').select('id').eq('comment_id', commentId).eq('user_id', uid).maybeSingle();
+    if (ex) await supabase.from('comment_votes').delete().eq('id', ex.id);
+    else    await supabase.from('comment_votes').insert([{ comment_id: commentId, user_id: uid }]);
     return { success: true };
   },
-  joinCommunity:  async () => { return { success: true }; },
-  leaveCommunity: async () => { return { success: true }; },
-  parseMediaUrl:  async ()  => { return null; },
+
+  joinCommunity:  async () => ({ success: true }),
+  leaveCommunity: async () => ({ success: true }),
+
+  parseMediaUrl: (url) => {
+    if (!url?.trim()) return null;
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+    if (yt) return { type: 'youtube', embedUrl: `https://www.youtube.com/embed/${yt[1]}`, url };
+    const twClip = url.match(/twitch\.tv\/\w+\/clip\/(\w+)/);
+    if (twClip) return { type: 'twitch', embedUrl: `https://clips.twitch.tv/embed?clip=${twClip[1]}&parent=${host}`, url };
+    const twVod = url.match(/twitch\.tv\/videos\/(\d+)/);
+    if (twVod) return { type: 'twitch', embedUrl: `https://player.twitch.tv/?video=${twVod[1]}&parent=${host}`, url };
+    const streamable = url.match(/streamable\.com\/([a-zA-Z0-9]+)/);
+    if (streamable) return { type: 'youtube', embedUrl: `https://streamable.com/e/${streamable[1]}`, url };
+    return null;
+  },
+
   timeoutUser: async (uid, duration) => {
     const { error } = await supabase.from('user_timeouts').insert([{ user_id: uid, expires_at: new Date(Date.now() + duration).toISOString() }]);
     return error ? { success: false } : { success: true };

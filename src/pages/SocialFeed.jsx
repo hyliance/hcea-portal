@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { socialApi } from '../api';
+import { socialApi, FEED_CATEGORIES, GAME_TEAM_SIZES } from '../api';
 import { Spinner } from '../components/UI';
 import GiphyPicker from '../components/GiphyPicker';
 import styles from './SocialFeed.module.css';
 
+const GAMES_LIST = Object.keys(GAME_TEAM_SIZES);
 const ROLE_COLORS = { head_admin:'#7c3aed', league_admin:'#f59e0b', admin:'#ef4444', coach:'#1d4ed8', player:'#059669', org_manager:'#6366f1' };
 const ROLE_LABELS = { head_admin:'Head Admin', league_admin:'League Admin', admin:'Admin', coach:'Coach', player:'', org_manager:'Org' };
-const COMMUNITY_ICONS = ['💬','🎮','🏆','🎯','⚔️','🔫','🎬','🖥️','📈','🌟','🔥','💡','🎲','🏅','🎸','🤝','🧠','🚀','💰','📢'];
-const COMMUNITY_COLORS = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#06b6d4','#ec4899','#f97316','#84cc16','#6366f1'];
+const RESTRICTED_ROLES = ['admin', 'head_admin', 'league_admin', 'org_manager'];
 
 function timeAgo(ts) {
   const d = Date.now() - ts;
@@ -18,10 +18,11 @@ function timeAgo(ts) {
   return `${Math.floor(d/86400000)}d ago`;
 }
 
-// ── MEDIA ────────────────────────────────────────────────────────────────────
+// ── MEDIA ─────────────────────────────────────────────────────────────────────
 function MediaBlock({ media }) {
   const [err, setErr] = useState(false);
   if (!media?.type) return null;
+  if (media.type === 'structured') return null; // handled by StructuredPostBody
   if (media.type === 'youtube' || media.type === 'twitch') {
     if (!media.embedUrl) return null;
     return (
@@ -68,19 +69,122 @@ function MediaBlock({ media }) {
   return null;
 }
 
-// ── COMMUNITY PILL ───────────────────────────────────────────────────────────
-function CommunityPill({ community, onClick }) {
-  if (!community) return null;
+// ── CATEGORY BADGE ────────────────────────────────────────────────────────────
+function CategoryBadge({ categoryId, onClick }) {
+  const cat = FEED_CATEGORIES.find(c => c.id === categoryId);
+  if (!cat) return null;
   return (
-    <button className={styles.communityPill} onClick={e=>{e.stopPropagation();onClick?.(community);}}
-      style={{'--cp':community.color}}>
-      <span>{community.icon}</span>
-      <span>c/{community.name}</span>
+    <button className={styles.categoryBadge} style={{'--cc': cat.color}}
+      onClick={e => { e.stopPropagation(); onClick?.(categoryId); }}>
+      <span>{cat.icon}</span>
+      <span>{cat.label}</span>
     </button>
   );
 }
 
-// ── VOTE ─────────────────────────────────────────────────────────────────────
+// ── STRUCTURED POST BODY ──────────────────────────────────────────────────────
+function ScTag({ label, value, accent }) {
+  if (!value) return null;
+  return (
+    <span className={styles.scTag} style={accent ? { '--sct': accent } : {}}>
+      <span className={styles.scTagLabel}>{label}</span>
+      <span className={styles.scTagValue}>{value}</span>
+    </span>
+  );
+}
+
+function StructuredCard({ category, data, description }) {
+  switch (category) {
+    case 'scrims':
+      return (
+        <div className={styles.structuredCard}>
+          <div className={styles.scRow}>
+            {data.game     && <ScTag label="Game"     value={data.game} />}
+            {data.platform && <ScTag label="Platform" value={data.platform} />}
+            {data.region   && <ScTag label="Region"   value={data.region} />}
+            {data.format   && <ScTag label="Format"   value={data.format} accent="#ef4444" />}
+          </div>
+          {data.timeWindow && <div className={styles.scDetail}>🕐 {data.timeWindow}</div>}
+          {data.rankRange  && <div className={styles.scDetail}>🏅 {data.rankRange}</div>}
+          {description     && <p className={styles.scDesc}>{description}</p>}
+        </div>
+      );
+    case 'lft':
+      return (
+        <div className={styles.structuredCard}>
+          <div className={styles.scRow}>
+            {data.game && <ScTag label="Game" value={data.game} />}
+            {data.rank && <ScTag label="Rank" value={data.rank} accent="#3b82f6" />}
+          </div>
+          {data.roles && <div className={styles.scDetail}>🎮 <strong>Roles:</strong> {data.roles}</div>}
+          {(data.days?.length || data.hours) && (
+            <div className={styles.scDetail}>📅 {data.days?.join(', ')}{data.hours ? ` · ${data.hours}` : ''}</div>
+          )}
+          {description && <p className={styles.scDesc}>{description}</p>}
+        </div>
+      );
+    case 'lfo':
+      return (
+        <div className={styles.structuredCard}>
+          <div className={styles.scRow}>
+            {data.game    && <ScTag label="Game"    value={data.game} />}
+            {data.seeking && <ScTag label="Seeking" value={data.seeking} accent="#8b5cf6" />}
+            {data.rank    && <ScTag label="Rank"    value={data.rank} />}
+          </div>
+          {data.role   && <div className={styles.scDetail}>🎯 <strong>Position:</strong> {data.role}</div>}
+          {description && <p className={styles.scDesc}>{description}</p>}
+        </div>
+      );
+    case 'roster_move':
+      return (
+        <div className={styles.structuredCard}>
+          <div className={styles.scRow}>
+            {data.game     && <ScTag label="Game"           value={data.game} />}
+            {data.moveType && <ScTag label={data.playerName || 'Player'} value={data.moveType} accent="#6366f1" />}
+          </div>
+          {(data.fromTeam || data.toTeam) && (
+            <div className={styles.scMoveFlow}>
+              {data.fromTeam && <span className={styles.scMoveTeam}>{data.fromTeam}</span>}
+              {data.fromTeam && data.toTeam && <span className={styles.scMoveArrow}>→</span>}
+              {data.toTeam   && <span className={styles.scMoveTeam}>{data.toTeam}</span>}
+            </div>
+          )}
+          {data.role   && <div className={styles.scDetail}>🎯 {data.role}</div>}
+          {description && <p className={styles.scDesc}>{description}</p>}
+        </div>
+      );
+    case 'vod_review':
+      return (
+        <div className={styles.structuredCard}>
+          <div className={styles.scRow}>
+            {data.game      && <ScTag label="Game"      value={data.game} />}
+            {data.offerType && <ScTag label="Type"      value={data.offerType} accent="#10b981" />}
+          </div>
+          {data.focus  && <div className={styles.scDetail}>🔍 <strong>Focus:</strong> {data.focus}</div>}
+          {description && <p className={styles.scDesc}>{description}</p>}
+        </div>
+      );
+    case 'montages':
+    case 'highlight':
+      return (
+        <div className={styles.structuredCard}>
+          {data.game   && <div className={styles.scRow}><ScTag label="Game" value={data.game} /></div>}
+          {description && <p className={styles.scDesc}>{description}</p>}
+        </div>
+      );
+    default:
+      return description ? <p className={styles.postText}>{description}</p> : null;
+  }
+}
+
+function StructuredPostBody({ media, text }) {
+  if (media?.type === 'structured') {
+    return <StructuredCard category={media.category} data={media.data || {}} description={text} />;
+  }
+  return text ? <p className={styles.postText}>{text}</p> : null;
+}
+
+// ── VOTE ──────────────────────────────────────────────────────────────────────
 function VoteCol({ score, myUpvote, onUpvote }) {
   return (
     <div className={styles.voteCol}>
@@ -91,7 +195,7 @@ function VoteCol({ score, myUpvote, onUpvote }) {
   );
 }
 
-// ── COMMENT ──────────────────────────────────────────────────────────────────
+// ── COMMENT ───────────────────────────────────────────────────────────────────
 function Comment({ comment, postId, me, isAdmin, onUpvote, onDelete }) {
   const isMe = comment.userId === me?.id;
   const voted = comment.upvotes?.includes(me?.id);
@@ -125,7 +229,7 @@ function Comment({ comment, postId, me, isAdmin, onUpvote, onDelete }) {
   );
 }
 
-// ── COMMENT COMPOSE ──────────────────────────────────────────────────────────
+// ── COMMENT COMPOSE ───────────────────────────────────────────────────────────
 function CommentCompose({ me, onSubmit, submitting }) {
   const [text, setText]       = useState('');
   const [media, setMedia]     = useState(null);
@@ -156,7 +260,7 @@ function CommentCompose({ me, onSubmit, submitting }) {
           </div>
         )}
         <div className={styles.ccInputRow}>
-          <textarea className={styles.ccInput} rows={2} placeholder="Add a comment... (Ctrl+Enter to post)"
+          <textarea className={styles.ccInput} rows={2} placeholder="Add a comment… (Ctrl+Enter to post)"
             value={text} onChange={e=>setText(e.target.value)}
             onKeyDown={e=>e.key==='Enter'&&e.ctrlKey&&submit()}/>
           <div className={styles.ccTools}>
@@ -175,9 +279,9 @@ function CommentCompose({ me, onSubmit, submitting }) {
 }
 
 // ── POST CARD ─────────────────────────────────────────────────────────────────
-function PostCard({ post, me, isAdmin, onUpvote, onComment, onDelPost, onDelComment, onVoteComment, onFlag, onPin, onCommunityClick }) {
-  const [open, setOpen]   = useState(false);
-  const [busy, setBusy]   = useState(false);
+function PostCard({ post, me, isAdmin, onUpvote, onComment, onDelPost, onDelComment, onVoteComment, onFlag, onPin, onCategoryClick }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
   const isMe = post.userId === me?.id;
 
   const handleComment = async (text, media) => {
@@ -191,10 +295,9 @@ function PostCard({ post, me, isAdmin, onUpvote, onComment, onDelPost, onDelComm
       <VoteCol score={post.score} myUpvote={post.myUpvote} onUpvote={()=>onUpvote(post.id)}/>
 
       <div className={styles.postContent}>
-        {/* Meta */}
         <div className={styles.postMeta}>
           {post.pinned && <span className={styles.pinnedTag}>📌 Pinned</span>}
-          <CommunityPill community={post.community} onClick={onCommunityClick}/>
+          <CategoryBadge categoryId={post.category} onClick={onCategoryClick} />
           <span className={styles.postBy}>•</span>
           <div className={styles.postAuthorAvatar} style={{background:post.userAvatarColor}}>{post.userInitials}</div>
           <span className={styles.postAuthorName}>{post.userName}</span>
@@ -205,16 +308,14 @@ function PostCard({ post, me, isAdmin, onUpvote, onComment, onDelPost, onDelComm
           {post.flagged && isAdmin && <span className={styles.flagTag}>🚩 Flagged</span>}
         </div>
 
-        {/* Title */}
         <h3 className={styles.postTitle}>{post.title}</h3>
 
-        {/* Body */}
-        {post.text && <p className={styles.postText}>{post.text}</p>}
+        <StructuredPostBody media={post.media} text={post.text} />
 
-        {/* Media */}
-        {post.media && <div className={styles.postMedia}><MediaBlock media={post.media}/></div>}
+        {post.media && post.media.type !== 'structured' && (
+          <div className={styles.postMedia}><MediaBlock media={post.media}/></div>
+        )}
 
-        {/* Action bar */}
         <div className={styles.postActions}>
           <button className={`${styles.postAction} ${open?styles.postActionOn:''}`}
             onClick={()=>setOpen(v=>!v)}>
@@ -229,7 +330,6 @@ function PostCard({ post, me, isAdmin, onUpvote, onComment, onDelPost, onDelComm
           )}
         </div>
 
-        {/* Comments */}
         {open && (
           <div className={styles.commentsWrap}>
             <CommentCompose me={me} onSubmit={handleComment} submitting={busy}/>
@@ -245,211 +345,268 @@ function PostCard({ post, me, isAdmin, onUpvote, onComment, onDelPost, onDelComm
   );
 }
 
-// ── CREATE POST MODAL ────────────────────────────────────────────────────────
-function CreatePostModal({ communities, me, onClose, onPost }) {
-  const [communityId, setCommunityId] = useState('');
-  const [title, setTitle]   = useState('');
-  const [text, setText]     = useState('');
-  const [tab, setTab]       = useState('text');
-  const [media, setMedia]   = useState(null);
-  const [linkUrl, setLink]  = useState('');
-  const [showGif, setGif]   = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError]   = useState('');
-  const fileRef             = useRef(null);
+// ── FORM HELPERS ──────────────────────────────────────────────────────────────
+function FieldRow({ label, children }) {
+  return (
+    <div className={styles.field}>
+      <label>{label}</label>
+      {children}
+    </div>
+  );
+}
 
-  const handleFile = (e) => {
-    const f = e.target.files[0]; if(!f) return;
-    const r = new FileReader();
-    r.onload = ev => setMedia({type:'image',url:ev.target.result,alt:f.name});
-    r.readAsDataURL(f);
-  };
+function GameSelect({ value, onChange, optional }) {
+  return (
+    <select className={styles.formSelect} value={value||''} onChange={e=>onChange(e.target.value)}>
+      <option value="">{optional ? 'Any game (optional)' : 'Select game…'}</option>
+      {GAMES_LIST.map(g=><option key={g} value={g}>{g}</option>)}
+    </select>
+  );
+}
 
-  const buildMedia = () => {
-    if (tab==='image') return media;
-    if (tab==='link' && linkUrl.trim()) return socialApi.parseMediaUrl(linkUrl.trim());
-    return null;
-  };
+function FieldSelect({ opts, value, onChange }) {
+  return (
+    <select className={styles.formSelect} value={value||''} onChange={e=>onChange(e.target.value)}>
+      <option value="">Select…</option>
+      {opts.map(o=><option key={o} value={o}>{o}</option>)}
+    </select>
+  );
+}
+
+function DayPicker({ value=[], onChange }) {
+  const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const toggle = d => onChange(value.includes(d) ? value.filter(x=>x!==d) : [...value, d]);
+  return (
+    <div className={styles.dayPicker}>
+      {DAYS.map(d=>(
+        <button key={d} type="button"
+          className={`${styles.dayBtn} ${value.includes(d)?styles.dayBtnOn:''}`}
+          onClick={()=>toggle(d)}>{d}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── CATEGORY-SPECIFIC FIELDS ──────────────────────────────────────────────────
+function CategoryFields({ catId, fields, set, text, setText, mediaUrl, setMediaUrl, me }) {
+  const PLATFORMS = ['PC','Xbox','PlayStation','Cross-Play'];
+  const REGIONS   = ['NA-East','NA-West','EU','LATAM','APAC','OCE'];
+  const FORMATS   = ['1v1','2v2','3v3','4v4','5v5','6v6'];
+  const SEEK_OPTS = ['Competitive Org','Casual Org','Academy Org','Any'];
+  const MOVE_OPTS = ['Joins','Departs','Role Change','Pickup','Release'];
+  const REVIEW_OPTS = ['Requesting Review','Offering Review'];
+
+  switch (catId) {
+    case 'scrims': return (
+      <>
+        <div className={styles.formRow}>
+          <FieldRow label="Game"><GameSelect value={fields.game} onChange={v=>set('game',v)} /></FieldRow>
+          <FieldRow label="Format"><FieldSelect opts={FORMATS} value={fields.format} onChange={v=>set('format',v)} /></FieldRow>
+        </div>
+        <div className={styles.formRow}>
+          <FieldRow label="Platform"><FieldSelect opts={PLATFORMS} value={fields.platform} onChange={v=>set('platform',v)} /></FieldRow>
+          <FieldRow label="Region"><FieldSelect opts={REGIONS} value={fields.region} onChange={v=>set('region',v)} /></FieldRow>
+        </div>
+        <FieldRow label="Time Window"><input className={styles.formInput} placeholder="e.g. Today 7–9 PM EST" value={fields.timeWindow||''} onChange={e=>set('timeWindow',e.target.value)} /></FieldRow>
+        <FieldRow label="Rank Range"><input className={styles.formInput} placeholder="e.g. Gold — Diamond" value={fields.rankRange||''} onChange={e=>set('rankRange',e.target.value)} /></FieldRow>
+        <FieldRow label="Details (optional)"><textarea className={styles.formTextarea} rows={3} placeholder="Additional info, requirements, contact…" value={text} onChange={e=>setText(e.target.value)} /></FieldRow>
+      </>
+    );
+    case 'lft': return (
+      <>
+        <div className={styles.formRow}>
+          <FieldRow label="Game"><GameSelect value={fields.game} onChange={v=>set('game',v)} /></FieldRow>
+          <FieldRow label="Rank / SR"><input className={styles.formInput} placeholder="e.g. Diamond 2" value={fields.rank||''} onChange={e=>set('rank',e.target.value)} /></FieldRow>
+        </div>
+        <FieldRow label="Roles / Position"><input className={styles.formInput} placeholder="e.g. IGL, Entry Fragger" value={fields.roles||''} onChange={e=>set('roles',e.target.value)} /></FieldRow>
+        <FieldRow label="Availability (days)"><DayPicker value={fields.days||[]} onChange={v=>set('days',v)} /></FieldRow>
+        <FieldRow label="Hours / Timezone"><input className={styles.formInput} placeholder="e.g. Evenings EST, 7–11 PM" value={fields.hours||''} onChange={e=>set('hours',e.target.value)} /></FieldRow>
+        <FieldRow label="About Me"><textarea className={styles.formTextarea} rows={3} placeholder="Tell teams about yourself…" value={text} onChange={e=>setText(e.target.value)} /></FieldRow>
+      </>
+    );
+    case 'lfo': return (
+      <>
+        <div className={styles.formRow}>
+          <FieldRow label="Game"><GameSelect value={fields.game} onChange={v=>set('game',v)} /></FieldRow>
+          <FieldRow label="Seeking"><FieldSelect opts={SEEK_OPTS} value={fields.seeking} onChange={v=>set('seeking',v)} /></FieldRow>
+        </div>
+        <div className={styles.formRow}>
+          <FieldRow label="Role / Position"><input className={styles.formInput} placeholder="e.g. Support, IGL" value={fields.role||''} onChange={e=>set('role',e.target.value)} /></FieldRow>
+          <FieldRow label="Rank / SR"><input className={styles.formInput} placeholder="e.g. Platinum" value={fields.rank||''} onChange={e=>set('rank',e.target.value)} /></FieldRow>
+        </div>
+        <FieldRow label="Pitch"><textarea className={styles.formTextarea} rows={3} placeholder="Why should an org pick you up?" value={text} onChange={e=>setText(e.target.value)} /></FieldRow>
+      </>
+    );
+    case 'announcements': {
+      const canPost = RESTRICTED_ROLES.includes(me?.role);
+      if (!canPost) return (
+        <div className={styles.restrictedNotice}>
+          🔒 Announcements can only be posted by verified Orgs, Clans, Admins, and TOs.
+        </div>
+      );
+      return (
+        <FieldRow label="Body">
+          <textarea className={styles.formTextarea} rows={6} placeholder="Announcement body…" value={text} onChange={e=>setText(e.target.value)} />
+        </FieldRow>
+      );
+    }
+    case 'montages': return (
+      <>
+        <FieldRow label="Game"><GameSelect value={fields.game} onChange={v=>set('game',v)} /></FieldRow>
+        <FieldRow label="Video URL *"><input className={styles.formInput} placeholder="YouTube or Twitch clip URL" value={mediaUrl} onChange={e=>setMediaUrl(e.target.value)} /></FieldRow>
+        <FieldRow label="Description (optional)"><textarea className={styles.formTextarea} rows={2} placeholder="Describe your montage…" value={text} onChange={e=>setText(e.target.value)} /></FieldRow>
+      </>
+    );
+    case 'vod_review': return (
+      <>
+        <div className={styles.formRow}>
+          <FieldRow label="Game"><GameSelect value={fields.game} onChange={v=>set('game',v)} /></FieldRow>
+          <FieldRow label="Type"><FieldSelect opts={REVIEW_OPTS} value={fields.offerType} onChange={v=>set('offerType',v)} /></FieldRow>
+        </div>
+        <FieldRow label="Video URL"><input className={styles.formInput} placeholder="YouTube or Twitch VOD URL" value={mediaUrl} onChange={e=>setMediaUrl(e.target.value)} /></FieldRow>
+        <FieldRow label="Focus Areas"><input className={styles.formInput} placeholder="e.g. Rotations, Positioning, Aim" value={fields.focus||''} onChange={e=>set('focus',e.target.value)} /></FieldRow>
+        <FieldRow label="Details (optional)"><textarea className={styles.formTextarea} rows={2} placeholder="What do you want analyzed?" value={text} onChange={e=>setText(e.target.value)} /></FieldRow>
+      </>
+    );
+    case 'roster_move': return (
+      <>
+        <div className={styles.formRow}>
+          <FieldRow label="Game"><GameSelect value={fields.game} onChange={v=>set('game',v)} /></FieldRow>
+          <FieldRow label="Move Type"><FieldSelect opts={MOVE_OPTS} value={fields.moveType} onChange={v=>set('moveType',v)} /></FieldRow>
+        </div>
+        <div className={styles.formRow}>
+          <FieldRow label="Player / GamerTag"><input className={styles.formInput} placeholder="Player name" value={fields.playerName||''} onChange={e=>set('playerName',e.target.value)} /></FieldRow>
+          <FieldRow label="Role / Position"><input className={styles.formInput} placeholder="e.g. IGL, Support" value={fields.role||''} onChange={e=>set('role',e.target.value)} /></FieldRow>
+        </div>
+        <div className={styles.formRow}>
+          <FieldRow label="From Team"><input className={styles.formInput} placeholder="Previous team (if any)" value={fields.fromTeam||''} onChange={e=>set('fromTeam',e.target.value)} /></FieldRow>
+          <FieldRow label="To Team"><input className={styles.formInput} placeholder="New team (if any)" value={fields.toTeam||''} onChange={e=>set('toTeam',e.target.value)} /></FieldRow>
+        </div>
+        <FieldRow label="Details (optional)"><textarea className={styles.formTextarea} rows={2} placeholder="Additional context…" value={text} onChange={e=>setText(e.target.value)} /></FieldRow>
+      </>
+    );
+    case 'discussion': return (
+      <>
+        <FieldRow label="Game Tag (optional)"><GameSelect value={fields.game} onChange={v=>set('game',v)} optional /></FieldRow>
+        <FieldRow label="Body"><textarea className={styles.formTextarea} rows={5} placeholder="What's on your mind?" value={text} onChange={e=>setText(e.target.value)} /></FieldRow>
+      </>
+    );
+    case 'highlight': return (
+      <>
+        <FieldRow label="Game"><GameSelect value={fields.game} onChange={v=>set('game',v)} /></FieldRow>
+        <FieldRow label="Clip URL *"><input className={styles.formInput} placeholder="YouTube, Twitch clip, or Streamable URL" value={mediaUrl} onChange={e=>setMediaUrl(e.target.value)} /></FieldRow>
+        <FieldRow label="Description (optional)"><textarea className={styles.formTextarea} rows={2} placeholder="Describe your highlight…" value={text} onChange={e=>setText(e.target.value)} /></FieldRow>
+      </>
+    );
+    default: return null;
+  }
+}
+
+function buildPostMedia(cat, fields, mediaUrl) {
+  const videoTypes = ['montages','vod_review','highlight'];
+  if (videoTypes.includes(cat.id) && mediaUrl?.trim()) {
+    const parsed = socialApi.parseMediaUrl(mediaUrl.trim());
+    if (parsed) return { ...parsed, game: fields.game || null };
+  }
+  const structuredTypes = ['scrims','lft','lfo','roster_move'];
+  if (structuredTypes.includes(cat.id)) {
+    return { type: 'structured', category: cat.id, data: fields };
+  }
+  return null;
+}
+
+function canSubmit(cat, fields, title, text, mediaUrl, me) {
+  if (!cat || !title.trim()) return false;
+  if (cat.id === 'announcements' && !RESTRICTED_ROLES.includes(me?.role)) return false;
+  if ((cat.id === 'montages' || cat.id === 'highlight') && !mediaUrl.trim()) return false;
+  return true;
+}
+
+// ── CREATE POST MODAL ─────────────────────────────────────────────────────────
+function CreatePostModal({ me, onClose, onPost }) {
+  const [step, setStep]         = useState(1);
+  const [category, setCategory] = useState(null);
+  const [title, setTitle]       = useState('');
+  const [text, setText]         = useState('');
+  const [fields, setFields]     = useState({});
+  const [mediaUrl, setMediaUrl] = useState('');
+  const [saving, setSaving]     = useState(false);
+  const [error, setError]       = useState('');
+
+  const set = (k, v) => setFields(prev => ({ ...prev, [k]: v }));
 
   const submit = async () => {
-    if (!communityId) { setError('Choose a community.'); return; }
-    if (!title.trim()) { setError('Title is required.'); return; }
     setError(''); setSaving(true);
+    const media = buildPostMedia(category, fields, mediaUrl);
+    // For structured types: structured data is in media; text holds the optional description.
+    // For video types: media holds the embed; text is a plain description.
+    // For discussion/announcements: no special media, text is the body.
     const res = await socialApi.createForumPost(
       me.id, `${me.firstName} ${me.lastName}`,
       me.role, me.initials, me.avatarColor,
-      communityId, title, text, null, buildMedia()
+      category.id, title.trim(), text, null, media
     );
     setSaving(false);
     if (res.success) { onPost(res.post); onClose(); }
-    else setError(res.error||'Failed to post.');
+    else setError(res.error || 'Failed to post.');
   };
 
-  const chosen = communities.find(c=>c.id===communityId);
+  if (step === 1) {
+    return (
+      <div className={styles.modalBackdrop} onClick={e=>e.target===e.currentTarget&&onClose()}>
+        <div className={styles.modal} style={{maxWidth:600}}>
+          <div className={styles.modalHead}>
+            <span className={styles.modalTitle}>Create Post — Choose Category</span>
+            <button className={styles.modalX} onClick={onClose}>✕</button>
+          </div>
+          <div className={styles.modalBody}>
+            <div className={styles.categoryGrid}>
+              {FEED_CATEGORIES.map(cat => (
+                <button key={cat.id} className={styles.categoryCard}
+                  style={{'--cc': cat.color}}
+                  onClick={() => { setCategory(cat); setStep(2); }}>
+                  <span className={styles.catCardIcon}>{cat.icon}</span>
+                  <span className={styles.catCardLabel}>{cat.label}</span>
+                  <span className={styles.catCardDesc}>{cat.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.modalBackdrop} onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className={styles.modal}>
         <div className={styles.modalHead}>
-          <span className={styles.modalTitle}>Create Post</span>
+          <div style={{display:'flex',alignItems:'center',gap:'0.6rem'}}>
+            <button className={styles.backBtn} onClick={()=>setStep(1)}>←</button>
+            <span className={styles.catModalLabel} style={{color:category.color}}>
+              {category.icon} {category.label}
+            </span>
+          </div>
           <button className={styles.modalX} onClick={onClose}>✕</button>
         </div>
         <div className={styles.modalBody}>
-
-          {/* Community picker */}
-          <div className={styles.field}>
-            <label>Community *</label>
-            {chosen ? (
-              <div className={styles.chosenCommunity} style={{'--cp':chosen.color}}>
-                <span>{chosen.icon}</span>
-                <span>c/{chosen.name}</span>
-                <button onClick={()=>setCommunityId('')}>✕</button>
-              </div>
-            ) : (
-              <div className={styles.communityPickList}>
-                {communities.map(c=>(
-                  <button key={c.id} className={styles.communityPickItem}
-                    style={{'--cp':c.color}} onClick={()=>setCommunityId(c.id)}>
-                    <span className={styles.cpiIcon}>{c.icon}</span>
-                    <div><div className={styles.cpiName}>c/{c.name}</div>
-                    <div className={styles.cpiMeta}>{c.memberCount} members</div></div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Title */}
-          <div className={styles.field}>
-            <label>Title * <span className={styles.charCount}>{title.length}/200</span></label>
+          <FieldRow label={<>Title * <span className={styles.charCount}>{title.length}/200</span></>}>
             <input className={styles.formInput} value={title}
-              onChange={e=>setTitle(e.target.value.slice(0,200))} placeholder="Give your post a title..." maxLength={200}/>
-          </div>
+              onChange={e=>setTitle(e.target.value.slice(0,200))} placeholder="Post title…" maxLength={200}/>
+          </FieldRow>
 
-          {/* Type tabs */}
-          <div className={styles.postTypeTabs}>
-            {[['text','📝 Text'],['image','🖼️ Image/GIF'],['link','🔗 Link']].map(([id,label])=>(
-              <button key={id} className={`${styles.ptt} ${tab===id?styles.pttOn:''}`}
-                onClick={()=>{setTab(id);setMedia(null);}}>
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {tab==='text' && (
-            <textarea className={styles.formTextarea} rows={4} value={text}
-              onChange={e=>setText(e.target.value)} placeholder="Body text (optional)..."/>
-          )}
-          {tab==='image' && (
-            <div className={styles.mediaUploadZone}>
-              {media ? (
-                <div className={styles.mediaPreview}>
-                  <img src={media.url} alt="preview"/>
-                  <button className={styles.removePrev} onClick={()=>setMedia(null)}>✕ Remove</button>
-                </div>
-              ) : (
-                <div className={styles.mediaUploadBtns}>
-                  <button className={styles.uploadBtn} onClick={()=>fileRef.current.click()}>📁 Upload Image</button>
-                  <button className={styles.uploadBtn} onClick={()=>setGif(true)}>🎞️ Pick a GIF</button>
-                  <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleFile}/>
-                </div>
-              )}
-            </div>
-          )}
-          {tab==='link' && (
-            <input className={styles.formInput} value={linkUrl}
-              onChange={e=>setLink(e.target.value)} placeholder="https://..."/>
-          )}
+          <CategoryFields catId={category.id} fields={fields} set={set}
+            text={text} setText={setText} mediaUrl={mediaUrl} setMediaUrl={setMediaUrl} me={me} />
 
           {error && <div className={styles.formErr}>{error}</div>}
         </div>
         <div className={styles.modalFoot}>
           <button className={styles.btnGhost} onClick={onClose}>Cancel</button>
-          <button className={styles.btnPrimary} disabled={saving||!communityId||!title.trim()} onClick={submit}>
-            {saving?'Posting…':'Post'}
-          </button>
-        </div>
-      </div>
-      {showGif && <GiphyPicker onSelect={g=>{setMedia(g);setGif(false);}} onClose={()=>setGif(false)}/>}
-    </div>
-  );
-}
-
-// ── CREATE COMMUNITY MODAL ───────────────────────────────────────────────────
-function CreateCommunityModal({ me, onClose, onCreated }) {
-  const [name, setName]     = useState('');
-  const [desc, setDesc]     = useState('');
-  const [icon, setIcon]     = useState('💬');
-  const [color, setColor]   = useState('#3b82f6');
-  const [saving, setSaving] = useState(false);
-  const [error, setError]   = useState('');
-
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-
-  const submit = async () => {
-    if (!name.trim()) { setError('Name required.'); return; }
-    if (!desc.trim()) { setError('Description required.'); return; }
-    setSaving(true);
-    const res = await socialApi.createCommunity(me.id, {name, description:desc, icon, color});
-    setSaving(false);
-    if (res.success) { onCreated(res.community); onClose(); }
-    else setError(res.error||'Failed.');
-  };
-
-  return (
-    <div className={styles.modalBackdrop} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div className={styles.modal} style={{maxWidth:460}}>
-        <div className={styles.modalHead}>
-          <span className={styles.modalTitle}>Create Community</span>
-          <button className={styles.modalX} onClick={onClose}>✕</button>
-        </div>
-        <div className={styles.modalBody}>
-
-          {/* Live preview */}
-          <div className={styles.communityPreview} style={{borderColor:color}}>
-            <div className={styles.cpIcon} style={{background:color+'22',borderColor:color+'66'}}>{icon}</div>
-            <div>
-              <div className={styles.cpName} style={{color}}>c/{name||'community-name'}</div>
-              <div className={styles.cpSlug}>/{slug||'community-name'}</div>
-            </div>
-          </div>
-
-          <div className={styles.field}>
-            <label>Name * <span className={styles.charCount}>{name.length}/30</span></label>
-            <input className={styles.formInput} value={name} onChange={e=>setName(e.target.value.slice(0,30))}
-              placeholder="e.g. Rocket League"/>
-          </div>
-          <div className={styles.field}>
-            <label>Description *</label>
-            <textarea className={styles.formTextarea} rows={3} value={desc}
-              onChange={e=>setDesc(e.target.value.slice(0,300))} placeholder="What is this community about?"/>
-          </div>
-          <div className={styles.field}>
-            <label>Icon</label>
-            <div className={styles.iconGrid}>
-              {COMMUNITY_ICONS.map(ic=>(
-                <button key={ic} className={`${styles.iconOpt} ${icon===ic?styles.iconOptOn:''}`}
-                  style={icon===ic?{background:color+'33',borderColor:color}:{}}
-                  onClick={()=>setIcon(ic)}>{ic}</button>
-              ))}
-            </div>
-          </div>
-          <div className={styles.field}>
-            <label>Color</label>
-            <div className={styles.colorRow}>
-              {COMMUNITY_COLORS.map(c=>(
-                <button key={c} className={`${styles.colorDot} ${color===c?styles.colorDotOn:''}`}
-                  style={{background:c, outline:color===c?`3px solid ${c}`:'none', outlineOffset:3}}
-                  onClick={()=>setColor(c)}/>
-              ))}
-            </div>
-          </div>
-          {error && <div className={styles.formErr}>{error}</div>}
-        </div>
-        <div className={styles.modalFoot}>
-          <button className={styles.btnGhost} onClick={onClose}>Cancel</button>
-          <button className={styles.btnPrimary} disabled={saving||!name.trim()||!desc.trim()} onClick={submit}>
-            {saving?'Creating…':'Create Community'}
+          <button className={styles.btnPrimary}
+            disabled={saving || !canSubmit(category, fields, title, text, mediaUrl, me)}
+            onClick={submit}>
+            {saving ? 'Posting…' : 'Post'}
           </button>
         </div>
       </div>
@@ -457,163 +614,56 @@ function CreateCommunityModal({ me, onClose, onCreated }) {
   );
 }
 
-// ── COMMUNITY SIDEBAR ITEM ───────────────────────────────────────────────────
-function SidebarCommunity({ community, isMember, onJoin, onLeave, onClick, isPinned, onPin }) {
-  return (
-    <div className={styles.sbCommunity} onClick={()=>onClick(community)}>
-      <div className={styles.sbcIcon} style={{background:community.color+'22',borderColor:community.color+'44'}}>{community.icon}</div>
-      <div className={styles.sbcInfo}>
-        <div className={styles.sbcName}>c/{community.name}</div>
-        <div className={styles.sbcMeta}>{community.memberCount} members</div>
-      </div>
-      <div className={styles.sbcActions}>
-        {onPin && (
-          <button
-            className={`${styles.sbcPin} ${isPinned?styles.sbcPinOn:''}`}
-            onClick={e=>{e.stopPropagation(); onPin(community.id);}}
-            title={isPinned?'Unpin community':'Pin for quick access'}
-          >📌</button>
-        )}
-        <button className={`${styles.sbcJoin} ${isMember?styles.sbcJoined:''}`}
-          style={!isMember?{borderColor:community.color,color:community.color}:{}}
-          onClick={e=>{e.stopPropagation(); isMember?onLeave(community.id):onJoin(community.id);}}>
-          {isMember?'✓':'Join'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── COMMUNITY PAGE HEADER ────────────────────────────────────────────────────
-function CommunityHeader({ community, isMember, onJoin, onLeave }) {
-  return (
-    <div className={styles.communityHeader}>
-      <div className={styles.chBanner} style={{background:`linear-gradient(135deg,${community.color}44,${community.color}11)`}}/>
-      <div className={styles.chBody}>
-        <div className={styles.chIcon} style={{background:community.color+'22',border:`2px solid ${community.color}`}}>{community.icon}</div>
-        <div className={styles.chInfo}>
-          <h2 className={styles.chName}>c/{community.name}</h2>
-          <p className={styles.chDesc}>{community.description}</p>
-          <div className={styles.chMeta}>
-            <span>{community.memberCount} members</span>
-            {community.isOfficial && <span className={styles.officialBadge}>✓ Official</span>}
-          </div>
-        </div>
-        <button className={`${styles.joinBtn} ${isMember?styles.joinBtnOn:''}`}
-          style={!isMember?{background:community.color,borderColor:community.color}:{}}
-          onClick={()=>isMember?onLeave(community.id):onJoin(community.id)}>
-          {isMember?'✓ Joined':'+ Join'}
-        </button>
-      </div>
-      {community.rules?.length>0 && (
-        <div className={styles.chRules}>
-          <div className={styles.chRulesTitle}>Community Rules</div>
-          {community.rules.map((r,i)=>(
-            <div key={i} className={styles.chRule}><span className={styles.chRuleNum}>{i+1}</span><span>{r}</span></div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── MAIN ─────────────────────────────────────────────────────────────────────
+// ── MAIN ──────────────────────────────────────────────────────────────────────
 export default function SocialFeed() {
   const { user, userAge } = useAuth();
   const isAdmin = ['admin','head_admin','league_admin'].includes(user?.role);
 
-  const [view, setView]                   = useState('home');
-  const [activeCommunity, setActive]      = useState(null);
-  const [communities, setCommunities]     = useState([]);
-  const [posts, setPosts]                 = useState([]);
-  const [sort, setSort]                   = useState('hot');
-  const [loading, setLoading]             = useState(true);
-  const [postsLoading, setPostsLoading]   = useState(false);
-  const [allowed, setAllowed]             = useState(true);
-  const [search, setSearch]               = useState('');
-  const [showCreatePost, setShowPost]     = useState(false);
-  const [showCreateCom,  setShowCom]      = useState(false);
-  const [pinnedIds, setPinnedIds]         = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem('hcg_pinned_communities') || '[]'); }
-    catch { return []; }
-  });
+  const [posts, setPosts]               = useState([]);
+  const [sort, setSort]                 = useState('hot');
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [loading, setLoading]           = useState(true);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [allowed, setAllowed]           = useState(true);
+  const [showCreatePost, setShowPost]   = useState(false);
 
-  // Load communities once
-  useEffect(()=>{ socialApi.getCommunities().then(setCommunities); },[]);
-
-  // Load posts whenever view/sort/community changes
-  const loadPosts = useCallback(async (cId=null, s=sort) => {
+  const loadPosts = useCallback(async (category = activeCategory, s = sort) => {
     setPostsLoading(true);
-    const res = await socialApi.getFeedPosts(user?.id, userAge, s, cId);
-    setAllowed(res.allowed!==false);
-    setPosts(res.posts||[]);
+    const res = await socialApi.getFeedPosts(user?.id, userAge, s, category);
+    setAllowed(res.allowed !== false);
+    setPosts(res.posts || []);
     setPostsLoading(false);
     setLoading(false);
-  },[user?.id, userAge, sort]);
+  }, [user?.id, userAge, sort, activeCategory]);
 
-  useEffect(()=>{
-    if (view==='home')       loadPosts(null, sort);
-    else if (view==='community' && activeCommunity) loadPosts(activeCommunity.id, sort);
-  },[view, activeCommunity?.id, sort]);
+  useEffect(() => { loadPosts(activeCategory, sort); }, [activeCategory, sort]);
 
-  // Search filter (communities only, client-side)
-  const searchResults = search.trim()
-    ? communities.filter(c=> c.name.toLowerCase().includes(search.toLowerCase()) ||
-                             c.description.toLowerCase().includes(search.toLowerCase()))
-    : [];
+  const toggleCategory = (id) => setActiveCategory(prev => prev === id ? null : id);
 
-  const openCommunity = useCallback(async (community) => {
-    const full = await socialApi.getCommunity(community.id);
-    setActive(full||community);
-    setView('community');
-    setSearch('');
-  },[]);
-
-  const joinCommunity = async (id) => {
-    await socialApi.joinCommunity(id, user.id);
-    setCommunities(await socialApi.getCommunities());
-    if (activeCommunity?.id===id) setActive(await socialApi.getCommunity(id));
-  };
-  const leaveCommunity = async (id) => {
-    await socialApi.leaveCommunity(id, user.id);
-    setCommunities(await socialApi.getCommunities());
-    if (activeCommunity?.id===id) setActive(await socialApi.getCommunity(id));
-  };
-
-  const togglePin = (id) => {
-    setPinnedIds(prev => {
-      const next = prev.includes(id) ? prev.filter(x=>x!==id) : [...prev, id];
-      try { sessionStorage.setItem('hcg_pinned_communities', JSON.stringify(next)); } catch {}
-      return next;
-    });
-  };
-
-  const upvote          = async (id) => {
+  const upvote      = async (id) => {
     await socialApi.toggleUpvote(id, user.id);
     setPosts(p=>p.map(post=>post.id!==id?post:{...post, myUpvote:!post.myUpvote, score:post.myUpvote?post.score-1:post.score+1}));
   };
-  const addComment      = async (postId, text, media) => {
+  const addComment  = async (postId, text, media) => {
     const res = await socialApi.addComment(postId, user.id, `${user.firstName} ${user.lastName}`, user.role, user.initials, user.avatarColor, text, userAge, media);
     if (res.success) setPosts(p=>p.map(post=>post.id!==postId?post:{...post, comments:[...post.comments,res.comment]}));
   };
-  const deletePost      = async (id) => { await socialApi.deletePost(id); setPosts(p=>p.filter(post=>post.id!==id)); };
-  const deleteComment   = async (pId,cId) => { await socialApi.deleteComment(pId,cId); setPosts(p=>p.map(post=>post.id!==pId?post:{...post,comments:post.comments.filter(c=>c.id!==cId)})); };
-  const voteComment     = async (pId,cId) => {
-    await socialApi.upvoteComment(pId,cId,user.id);
+  const deletePost  = async (id) => { await socialApi.deletePost(id); setPosts(p=>p.filter(post=>post.id!==id)); };
+  const deleteComment = async (pId,cId) => {
+    await socialApi.deleteComment(pId, cId);
+    setPosts(p=>p.map(post=>post.id!==pId?post:{...post,comments:post.comments.filter(c=>c.id!==cId)}));
+  };
+  const voteComment = async (pId,cId) => {
+    await socialApi.upvoteComment(pId, cId, user.id);
     setPosts(p=>p.map(post=>post.id!==pId?post:{...post,comments:post.comments.map(c=>c.id!==cId?c:{...c, upvotes:c.upvotes.includes(user.id)?c.upvotes.filter(x=>x!==user.id):[...c.upvotes,user.id]})}));
   };
-  const flagPost        = async (id) => { await socialApi.flagPost(id, user.id, 'User report'); setPosts(p=>p.map(post=>post.id!==id?post:{...post,flagged:true})); };
-  const pinPost         = async (id, pinned) => { await socialApi.pinPost(id, pinned); setPosts(p=>p.map(post=>post.id!==id?post:{...post,pinned})); };
+  const flagPost    = async (id) => { await socialApi.flagPost(id, user.id, 'User report'); setPosts(p=>p.map(post=>post.id!==id?post:{...post,flagged:true})); };
+  const pinPost     = async (id, pinned) => { await socialApi.pinPost(id, pinned); setPosts(p=>p.map(post=>post.id!==id?post:{...post,pinned})); };
 
   const onPostCreated = (post) => {
-    const community = communities.find(c=>c.id===post.communityId);
-    const enriched = {...post, community: community?{id:community.id,name:community.name,icon:community.icon,color:community.color}:null};
-    if (view==='home'||(view==='community'&&activeCommunity?.id===post.communityId)) {
-      setPosts(p=>[enriched,...p]);
+    if (!activeCategory || activeCategory === post.category) {
+      setPosts(p => [post, ...p]);
     }
-  };
-  const onCommunityCreated = (community) => {
-    setCommunities(prev=>[{...community,memberCount:1,postCount:0},...prev]);
   };
 
   if (!allowed) return (
@@ -624,11 +674,7 @@ export default function SocialFeed() {
     </div>
   );
 
-  const isMember = (id) => communities.find(c=>c.id===id)?.members?.includes(user?.id);
-  const myCommunities      = communities.filter(c=>c.members?.includes(user?.id));
-  const official           = communities.filter(c=>c.isOfficial);
-  const others             = communities.filter(c=>!c.isOfficial);
-  const pinnedCommunities  = pinnedIds.map(id=>communities.find(c=>c.id===id)).filter(Boolean);
+  const activeCat = FEED_CATEGORIES.find(c => c.id === activeCategory);
 
   return (
     <div className={styles.wrap}>
@@ -636,187 +682,93 @@ export default function SocialFeed() {
       {/* ── TOP BAR ── */}
       <div className={styles.topBar}>
         <div className={styles.topBarLeft}>
-          {view==='community'&&activeCommunity ? (
-            <div className={styles.breadcrumb}>
-              <button onClick={()=>{setView('home');setActive(null);}}>🏠 Home</button>
-              <span>›</span>
-              <span style={{color:activeCommunity.color}}>{activeCommunity.icon} c/{activeCommunity.name}</span>
-            </div>
-          ) : (
-            <h2 className={styles.feedTitle}>{view==='search'?'🔍 Find Communities':'🏠 Home Feed'}</h2>
-          )}
-        </div>
-        <div className={styles.searchWrap}>
-          <span>🔍</span>
-          <input className={styles.searchInput} placeholder="Search communities…"
-            value={search}
-            onChange={e=>{setSearch(e.target.value); if(e.target.value) setView('search'); else setView(activeCommunity?'community':'home');}}/>
-          {search&&<button className={styles.searchX} onClick={()=>{setSearch('');setView(activeCommunity?'community':'home');}}>✕</button>}
+          <h2 className={styles.feedTitle}>
+            {activeCat ? <>{activeCat.icon} {activeCat.label}</> : '🏠 Social Feed'}
+          </h2>
         </div>
         <button className={styles.createPostBtn} onClick={()=>setShowPost(true)}>✏️ Create Post</button>
       </div>
 
-      {/* ── SEARCH VIEW ── */}
-      {view==='search' && (
-        <div className={styles.searchView}>
-          <div className={styles.searchViewTitle}>{searchResults.length} result{searchResults.length!==1?'s':''} for "{search}"</div>
-          {searchResults.length===0 ? (
-            <div className={styles.searchEmpty}>
-              <div className={styles.searchEmptyIcon}>🔭</div>
-              <div>No communities found</div>
-              <button className={styles.btnPrimary} style={{marginTop:'1rem'}} onClick={()=>setShowCom(true)}>
-                + Create "{search}"
-              </button>
+      {/* ── CATEGORY FILTER BAR ── */}
+      <div className={styles.catBar}>
+        <button
+          className={`${styles.catFilterBtn} ${!activeCategory ? styles.catFilterOn : ''}`}
+          onClick={() => setActiveCategory(null)}>
+          All
+        </button>
+        {FEED_CATEGORIES.map(cat => (
+          <button key={cat.id}
+            className={`${styles.catFilterBtn} ${activeCategory === cat.id ? styles.catFilterOn : ''}`}
+            style={activeCategory === cat.id ? {'--cc': cat.color} : {}}
+            onClick={() => toggleCategory(cat.id)}>
+            {cat.icon} {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── MAIN LAYOUT ── */}
+      <div className={styles.layout}>
+        <div className={styles.feed}>
+
+          {/* Sort bar */}
+          <div className={styles.sortBar}>
+            {[['hot','🔥 Hot'],['new','✨ New'],['top','🏆 Top']].map(([id,label])=>(
+              <button key={id} className={`${styles.sortBtn} ${sort===id?styles.sortBtnOn:''}`}
+                onClick={()=>setSort(id)}>{label}</button>
+            ))}
+          </div>
+
+          {/* Posts */}
+          {loading||postsLoading ? <div className={styles.loadingWrap}><Spinner/></div>
+          : posts.length===0 ? (
+            <div className={styles.emptyFeed}>
+              <div className={styles.emptyIcon}>{activeCat ? activeCat.icon : '📭'}</div>
+              <div className={styles.emptyTitle}>{activeCat ? `No ${activeCat.label} posts yet` : 'Feed is empty'}</div>
+              <p>{activeCat ? `Be the first to post in ${activeCat.label}!` : 'Select a category or create the first post.'}</p>
+              <button className={styles.btnPrimary} onClick={()=>setShowPost(true)}>✏️ Create a Post</button>
             </div>
           ) : (
-            <div className={styles.searchList}>
-              {searchResults.map(c=>(
-                <div key={c.id} className={styles.searchCard} onClick={()=>openCommunity(c)}>
-                  <div className={styles.scardIcon} style={{background:c.color+'22',borderColor:c.color+'55'}}>{c.icon}</div>
-                  <div className={styles.scardInfo}>
-                    <div className={styles.scardName} style={{color:c.color}}>c/{c.name}</div>
-                    <div className={styles.scardDesc}>{c.description}</div>
-                    <div className={styles.scardMeta}>{c.memberCount} members · {c.postCount} posts{c.isOfficial?' · ✓ Official':''}</div>
-                  </div>
-                  <button className={`${styles.sbcJoin} ${isMember(c.id)?styles.sbcJoined:''}`}
-                    style={!isMember(c.id)?{borderColor:c.color,color:c.color}:{}}
-                    onClick={e=>{e.stopPropagation(); isMember(c.id)?leaveCommunity(c.id):joinCommunity(c.id);}}>
-                    {isMember(c.id)?'✓ Joined':'Join'}
-                  </button>
-                </div>
+            <div className={styles.postList}>
+              {posts.map(post=>(
+                <PostCard key={post.id} post={post}
+                  me={{...user, id:user?.id||'guest'}}
+                  isAdmin={isAdmin}
+                  onUpvote={upvote} onComment={addComment}
+                  onDelPost={deletePost} onDelComment={deleteComment}
+                  onVoteComment={voteComment}
+                  onFlag={flagPost} onPin={pinPost}
+                  onCategoryClick={toggleCategory}/>
               ))}
             </div>
           )}
         </div>
-      )}
 
-      {/* ── MAIN LAYOUT ── */}
-      {view!=='search' && (
-        <div className={styles.layout}>
-          <div className={styles.feed}>
-
-            {/* Community page header */}
-            {view==='community'&&activeCommunity && (
-              <CommunityHeader community={activeCommunity}
-                isMember={isMember(activeCommunity.id)}
-                onJoin={joinCommunity} onLeave={leaveCommunity}/>
-            )}
-
-            {/* Sort bar */}
-            <div className={styles.sortBar}>
-              {[['hot','🔥 Hot'],['new','✨ New'],['top','🏆 Top']].map(([id,label])=>(
-                <button key={id} className={`${styles.sortBtn} ${sort===id?styles.sortBtnOn:''}`}
-                  onClick={()=>setSort(id)}>{label}</button>
-              ))}
-            </div>
-
-            {/* Posts */}
-            {loading||postsLoading ? <div className={styles.loadingWrap}><Spinner/></div>
-            : posts.length===0 ? (
-              <div className={styles.emptyFeed}>
-                <div className={styles.emptyIcon}>📭</div>
-                <div className={styles.emptyTitle}>{view==='community'?'No posts yet':'Your feed is empty'}</div>
-                <p>{view==='community'?'Be the first to post in this community!':'Join communities to see posts here.'}</p>
-                <button className={styles.btnPrimary} onClick={()=>setShowPost(true)}>✏️ Create a Post</button>
-              </div>
-            ) : (
-              <div className={styles.postList}>
-                {posts.map(post=>(
-                  <PostCard key={post.id} post={post}
-                    me={{...user, id:user?.id||'guest'}}
-                    isAdmin={isAdmin}
-                    onUpvote={upvote} onComment={addComment}
-                    onDelPost={deletePost} onDelComment={deleteComment}
-                    onVoteComment={voteComment}
-                    onFlag={flagPost} onPin={pinPost}
-                    onCommunityClick={openCommunity}/>
-                ))}
-              </div>
-            )}
+        {/* ── SIDEBAR ── */}
+        <aside className={styles.sidebar}>
+          <div className={styles.sidebarCard}>
+            <button className={styles.sidebarCreatePost} onClick={()=>setShowPost(true)}>✏️ Create Post</button>
           </div>
 
-          {/* ── SIDEBAR ── */}
-          <aside className={styles.sidebar}>
-            <div className={styles.sidebarCard}>
-              <button className={styles.sidebarCreatePost} onClick={()=>setShowPost(true)}>✏️ Create Post</button>
-              <button className={styles.sidebarCreateCom} onClick={()=>setShowCom(true)}>🏘️ Create Community</button>
-            </div>
-
-            {myCommunities.length>0 && (
-              <div className={styles.sidebarCard}>
-                <div className={styles.sidebarCardTitle}>My Communities</div>
-                {myCommunities.slice(0,5).map(c=>(
-                  <SidebarCommunity key={c.id} community={c} isMember={true}
-                    onJoin={joinCommunity} onLeave={leaveCommunity} onClick={openCommunity}
-                    isPinned={pinnedIds.includes(c.id)} onPin={togglePin}/>
-                ))}
-              </div>
-            )}
-
-            <div className={styles.sidebarCard}>
-              <div className={styles.sidebarCardTitle}>✓ Official</div>
-              {official.map(c=>(
-                <SidebarCommunity key={c.id} community={c} isMember={isMember(c.id)}
-                  onJoin={joinCommunity} onLeave={leaveCommunity} onClick={openCommunity}
-                  isPinned={pinnedIds.includes(c.id)} onPin={togglePin}/>
-              ))}
-            </div>
-
-            {/* ── PINNED COMMUNITIES ── */}
-            <div className={styles.sidebarCard}>
-              <div className={styles.sidebarCardTitle}>
-                <span>📌 Pinned</span>
-                {pinnedCommunities.length > 0 && (
-                  <span className={styles.pinnedCount}>{pinnedCommunities.length}</span>
-                )}
-              </div>
-              {pinnedCommunities.length === 0 ? (
-                <div className={styles.pinnedEmpty}>
-                  <div className={styles.pinnedEmptyIcon}>📌</div>
-                  <div className={styles.pinnedEmptyText}>Pin communities for quick access</div>
-                  <div className={styles.pinnedEmptyHint}>Click the 📌 next to any community</div>
+          <div className={styles.sidebarCard}>
+            <div className={styles.sidebarCardTitle}>Categories</div>
+            {FEED_CATEGORIES.map(cat => (
+              <button key={cat.id}
+                className={`${styles.catNavItem} ${activeCategory === cat.id ? styles.catNavItemOn : ''}`}
+                style={activeCategory === cat.id ? {'--cc': cat.color} : {}}
+                onClick={() => toggleCategory(cat.id)}>
+                <span className={styles.catNavIcon}>{cat.icon}</span>
+                <div className={styles.catNavInfo}>
+                  <span className={styles.catNavLabel}>{cat.label}</span>
+                  <span className={styles.catNavDesc}>{cat.description}</span>
                 </div>
-              ) : (
-                <div className={styles.pinnedList}>
-                  {pinnedCommunities.map(c => (
-                    <div key={c.id} className={styles.pinnedItem} onClick={()=>openCommunity(c)}>
-                      <div className={styles.pinnedItemIcon} style={{background:c.color+'22', borderColor:c.color+'55'}}>{c.icon}</div>
-                      <div className={styles.pinnedItemInfo}>
-                        <div className={styles.pinnedItemName}>c/{c.name}</div>
-                        <div className={styles.pinnedItemMeta}>{c.memberCount} members</div>
-                      </div>
-                      <button
-                        className={styles.pinnedUnpin}
-                        onClick={e=>{e.stopPropagation(); togglePin(c.id);}}
-                        title="Unpin"
-                      >✕</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {others.length>0 && (
-              <div className={styles.sidebarCard}>
-                <div className={styles.sidebarCardTitle}>All Communities</div>
-                {others.map(c=>(
-                  <SidebarCommunity key={c.id} community={c} isMember={isMember(c.id)}
-                    onJoin={joinCommunity} onLeave={leaveCommunity} onClick={openCommunity}
-                    isPinned={pinnedIds.includes(c.id)} onPin={togglePin}/>
-                ))}
-              </div>
-            )}
-          </aside>
-        </div>
-      )}
+              </button>
+            ))}
+          </div>
+        </aside>
+      </div>
 
       {showCreatePost && (
-        <CreatePostModal communities={communities} me={user}
-          onClose={()=>setShowPost(false)} onPost={onPostCreated}/>
-      )}
-      {showCreateCom && (
-        <CreateCommunityModal me={user}
-          onClose={()=>setShowCom(false)} onCreated={onCommunityCreated}/>
+        <CreatePostModal me={user} onClose={()=>setShowPost(false)} onPost={onPostCreated}/>
       )}
     </div>
   );
