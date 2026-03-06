@@ -121,7 +121,7 @@ export const gameApi = {
   },
   addMap: async (gameId, { name, type, notes }) => {
     const { data, error } = await supabase.from('game_maps').insert([{ game_id: gameId, name, type, notes, active: true }]).select().single();
-    if (error) return { success: false };
+    if (error) return { success: false, error: error.message };
     return { success: true, map: data };
   },
   updateMap: async (gameId, mapId, updates) => {

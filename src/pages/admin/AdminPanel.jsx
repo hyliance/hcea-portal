@@ -933,6 +933,7 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
   const [editVals, setEditVals] = useState({});
   const [addForm, setAddForm]   = useState({ name: '', type: 'Standard', notes: '' });
   const [saving, setSaving]     = useState(false);
+  const [addError, setAddError] = useState('');
   const [dragOver, setDragOver] = useState(null);
   const dragItem                = useRef(null);
 
@@ -966,12 +967,15 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
   const addMap = async () => {
     if (!addForm.name.trim()) return;
     setSaving(true);
+    setAddError('');
     const res = await gameApi.addMap(game.id, addForm);
     setSaving(false);
     if (res.success) {
       setMaps(prev => [...prev, res.map]);
       setAddForm({ name: '', type: 'Standard', notes: '' });
       setShowAdd(false);
+    } else {
+      setAddError(res.error || 'Failed to add map.');
     }
   };
 
@@ -1095,6 +1099,7 @@ function MapsTab({ game, maps, setMaps, accentColor }) {
                 onKeyDown={e => e.key === 'Enter' && addMap()} />
             </div>
           </div>
+          {addError && <div className={styles.formError}>{addError}</div>}
           <div className={styles.gmSeasonActions}>
             <button className={styles.gmAddBtn} onClick={addMap} disabled={saving || !addForm.name.trim()}>
               {saving ? 'Adding…' : '+ Add Map'}
