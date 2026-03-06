@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { teamsApi } from '../api';
 import styles from './Profile.module.css';
 
 const ALL_GAMES = ['League of Legends', 'Valorant', 'TFT', 'Fortnite', 'Rocket League', 'Smash Bros.', 'Marvel Rivals'];
@@ -20,6 +21,28 @@ export default function Profile() {
   const [avatarDrag, setAvatarDrag] = useState(false);
   const [avatarError, setAvatarError] = useState('');
   const fileInputRef = useRef(null);
+
+  const [invites, setInvites]         = useState([]);
+  const [inviteLoading, setInviteLoading] = useState({});
+
+  useEffect(() => {
+    if (user?.id) teamsApi.getPendingInvites(user.id).then(setInvites);
+  }, [user?.id]);
+
+  const handleAccept = async (inv) => {
+    setInviteLoading(p => ({ ...p, [inv.id]: 'accepting' }));
+    await teamsApi.acceptInvite(inv.id, inv.teamId, user.id,
+      `${user.firstName} ${user.lastName}`, user.initials, user.avatarColor);
+    setInvites(prev => prev.filter(i => i.id !== inv.id));
+    setInviteLoading(p => ({ ...p, [inv.id]: null }));
+  };
+
+  const handleDecline = async (inv) => {
+    setInviteLoading(p => ({ ...p, [inv.id]: 'declining' }));
+    await teamsApi.declineInvite(inv.id);
+    setInvites(prev => prev.filter(i => i.id !== inv.id));
+    setInviteLoading(p => ({ ...p, [inv.id]: null }));
+  };
 
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
   const toggleGame   = (game) => setGames(prev => prev.includes(game) ? prev.filter(g => g !== game) : [...prev, game]);
@@ -55,6 +78,34 @@ export default function Profile() {
   return (
     <div>
       <div className={styles.header}><h2>My Profile</h2><p>Manage your account and membership details.</p></div>
+
+      {/* ── Team Invites ── */}
+      {invites.length > 0 && (
+        <div className={styles.invitesSection}>
+          <div className={styles.invitesSectionTitle}>Team Invites ({invites.length})</div>
+          {invites.map(inv => (
+            <div key={inv.id} className={styles.inviteCard}>
+              <div className={styles.inviteInfo}>
+                <div className={styles.inviteTeam}>{inv.teamName}</div>
+                <div className={styles.inviteMeta}>{inv.teamGame} · Invited by {inv.captainName}</div>
+              </div>
+              <div className={styles.inviteActions}>
+                <button className={styles.acceptBtn}
+                  onClick={() => handleAccept(inv)}
+                  disabled={!!inviteLoading[inv.id]}>
+                  {inviteLoading[inv.id] === 'accepting' ? '…' : 'Accept'}
+                </button>
+                <button className={styles.declineBtn}
+                  onClick={() => handleDecline(inv)}
+                  disabled={!!inviteLoading[inv.id]}>
+                  {inviteLoading[inv.id] === 'declining' ? '…' : 'Decline'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className={styles.grid}>
 
         {/* ── Profile Card ── */}

@@ -229,14 +229,38 @@ export const teamsApi = {
     }]);
     return { success: true, team };
   },
-  invitePlayer: async (teamId, playerEmail) => {
-    const { error } = await supabase.from('team_invites').insert([{ team_id: teamId, email: playerEmail }]);
+  invitePlayer: async (teamId, playerEmail, invitedUserId = null) => {
+    const { error } = await supabase.from('team_invites').insert([{
+      team_id: teamId, email: playerEmail, invited_user_id: invitedUserId,
+    }]);
     return error ? { success: false, error: error.message } : { success: true };
   },
-  acceptInvite: async (teamId, userId, userName, userInitials, userColor) => {
+  getPendingInvites: async (userId) => {
+    const { data, error } = await supabase
+      .from('team_invites')
+      .select('id, team_id, email, created_at, teams(name, game, captain_name)')
+      .eq('invited_user_id', userId);
+    if (error) return [];
+    return (data || []).map(inv => ({
+      id: inv.id,
+      teamId: inv.team_id,
+      teamName: inv.teams?.name,
+      teamGame: inv.teams?.game,
+      captainName: inv.teams?.captain_name,
+      email: inv.email,
+      createdAt: inv.created_at,
+    }));
+  },
+  acceptInvite: async (inviteId, teamId, userId, userName, userInitials, userColor) => {
     const { error } = await supabase.from('team_members').insert([{
       team_id: teamId, user_id: userId, name: userName, role: 'Member', initials: userInitials, avatar_color: userColor,
     }]);
+    if (error) return { success: false, error: error.message };
+    await supabase.from('team_invites').delete().eq('id', inviteId);
+    return { success: true };
+  },
+  declineInvite: async (inviteId) => {
+    const { error } = await supabase.from('team_invites').delete().eq('id', inviteId);
     return error ? { success: false, error: error.message } : { success: true };
   },
   removeMember: async (teamId, userId) => {

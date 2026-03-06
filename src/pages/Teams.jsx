@@ -213,7 +213,7 @@ function InviteModal({ team, onClose, onInvite }) {
     if (!target) return;
     setLoading(true);
     setError('');
-    const res = await teamsApi.invitePlayer(team.id, target);
+    const res = await teamsApi.invitePlayer(team.id, target, selected?.id || null);
     setLoading(false);
     if (res.success) {
       setSent(prev => [...prev, selected?.name || target]);
