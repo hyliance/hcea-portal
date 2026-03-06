@@ -1591,10 +1591,11 @@ function CreateGameModal({ onClose, onCreated }) {
   const submit = async () => {
     if (!form.name.trim()) { setError('Game name is required.'); return; }
     setSaving(true);
+    const { teamSizeMin, teamSizeMax, teamSizeLabel, ...rest } = form;
     const res = await gameApi.create({
-      ...form,
+      ...rest,
       shortName: form.shortName || form.name.slice(0, 4).toUpperCase(),
-      teamSize: { min: +form.teamSizeMin, max: +form.teamSizeMax, label: form.teamSizeLabel },
+      teamSize: { min: +teamSizeMin, max: +teamSizeMax, label: teamSizeLabel },
     });
     setSaving(false);
     if (res.success) onCreated(res.game);
