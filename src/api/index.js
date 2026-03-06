@@ -158,6 +158,21 @@ export async function getGameNames() {
   return (data || []).map(g => g.name);
 }
 
+export async function searchPlayers(query) {
+  if (!query || query.trim().length < 2) return [];
+  const q = query.trim();
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, first_name, last_name, email')
+    .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%`)
+    .limit(10);
+  return (data || []).map(p => ({
+    id: p.id,
+    name: ((p.first_name || '') + ' ' + (p.last_name || '')).trim() || p.email,
+    email: p.email,
+  }));
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  TEAMS API  →  teams, team_members, team_invites
 // ─────────────────────────────────────────────────────────────────────────────
