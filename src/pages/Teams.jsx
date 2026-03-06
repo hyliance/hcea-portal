@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { teamsApi, GAME_TEAM_SIZES } from '../api';
+import { teamsApi, gameApi } from '../api';
 import { Spinner, Badge } from '../components/UI';
 import RoleGate from '../components/RoleGate';
 import styles from './Teams.module.css';
-
-const GAMES = ['League of Legends','Valorant','Rocket League','Fortnite','Smash Bros.','Marvel Rivals'];
 
 function MemberAvatar({ member, size = 36 }) {
   return (
@@ -118,7 +116,7 @@ function RosterModal({ team, userId, onClose, onKick }) {
   );
 }
 
-function CreateTeamModal({ user, onClose, onCreate }) {
+function CreateTeamModal({ user, onClose, onCreate, gameList = [] }) {
   const [name, setName]   = useState('');
   const [game, setGame]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -154,14 +152,14 @@ function CreateTeamModal({ user, onClose, onCreate }) {
             <label>Game</label>
             <select value={game} onChange={e => setGame(e.target.value)}>
               <option value="">Select a game...</option>
-              {GAMES.map(g => (
-                <option key={g} value={g}>{g} ({GAME_TEAM_SIZES[g]?.label})</option>
+              {gameList.map(g => (
+                <option key={g.id} value={g.name}>{g.name} ({g.teamSize?.label})</option>
               ))}
             </select>
           </div>
           {game && (
             <div className={styles.sizeNote}>
-              Team size for {game}: <strong>{GAME_TEAM_SIZES[game]?.label}</strong>
+              Team size for {game}: <strong>{gameList.find(g => g.name === game)?.teamSize?.label}</strong>
             </div>
           )}
           {error && <div className={styles.errorBox}>{error}</div>}
@@ -223,8 +221,13 @@ export default function Teams() {
   const [inviteTeam, setInviteTeam] = useState(null);
   const [rosterTeam, setRosterTeam] = useState(null);
 
+  const [gameList, setGameList] = useState([]);
+
   const load = () => teamsApi.getAll().then(d => { setTeams(d); setLoading(false); });
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    gameApi.getActive().then(setGameList);
+  }, []);
 
   const filtered = filterGame === 'all' ? teams : teams.filter(t => t.game === filterGame);
 
@@ -280,8 +283,8 @@ export default function Teams() {
       {/* GAME FILTER */}
       <div className={styles.filters}>
         <button className={`${styles.filterBtn} ${filterGame==='all' ? styles.filterOn : ''}`} onClick={() => setFilterGame('all')}>All Games</button>
-        {GAMES.map(g => (
-          <button key={g} className={`${styles.filterBtn} ${filterGame===g ? styles.filterOn : ''}`} onClick={() => setFilterGame(g)}>{g}</button>
+        {gameList.map(g => (
+          <button key={g.id} className={`${styles.filterBtn} ${filterGame===g.name ? styles.filterOn : ''}`} onClick={() => setFilterGame(g.name)}>{g.name}</button>
         ))}
       </div>
 
@@ -310,7 +313,7 @@ export default function Teams() {
 
       {/* MODALS */}
       {showCreate && (
-        <CreateTeamModal user={user} onClose={() => setShowCreate(false)} onCreate={team => { setTeams(prev => [team, ...prev]); setShowCreate(false); }} />
+        <CreateTeamModal user={user} gameList={gameList} onClose={() => setShowCreate(false)} onCreate={team => { setTeams(prev => [team, ...prev]); setShowCreate(false); }} />
       )}
       {inviteTeam && (
         <InviteModal team={inviteTeam} onClose={() => setInviteTeam(null)} onInvite={load} />
