@@ -86,6 +86,14 @@ export const gameApi = {
     if (error) return { success: false };
     return { success: true, active: !current?.active };
   },
+  getModes: async (gameId) => {
+    const { data } = await supabase.from('game_modes').select('name').eq('game_id', gameId).order('sort_order');
+    return (data || []).map(m => m.name);
+  },
+  getSeasons: async (gameId) => {
+    const { data } = await supabase.from('game_seasons').select('*').eq('game_id', gameId).order('created_at');
+    return data || [];
+  },
   addSeason: async (gameId, season) => {
     const { data, error } = await supabase.from('game_seasons').insert([{ ...season, game_id: gameId }]).select().single();
     if (error) return { success: false, error: error.message };

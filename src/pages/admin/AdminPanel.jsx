@@ -1226,18 +1226,32 @@ function GameDetailEditor({ game, onBack, onSaved }) {
     name: game.name, shortName: game.shortName, genre: game.genre,
     platform: game.platform, icon: game.icon, color: game.color,
     featured: game.featured, hasLadder: game.hasLadder,
-    teamSizeMin: game.teamSize.min, teamSizeMax: game.teamSize.max, teamSizeLabel: game.teamSize.label,
+    teamSizeMin: game.teamSize?.min ?? 5, teamSizeMax: game.teamSize?.max ?? 5, teamSizeLabel: game.teamSize?.label ?? '5v5',
   });
   const [coverImage, setCoverImage]   = useState(game.coverImage || '');
   const [imgUploading, setImgUploading] = useState(false);
   const coverImageRef                 = useRef(null);
-  const [modes, setModes]         = useState([...game.modes]);
+  const [modes, setModes]         = useState([]);
   const [newMode, setNewMode]     = useState('');
-  const [seasons, setSeasons]     = useState([...game.seasons]);
-  const [maps, setMaps]           = useState([...(game.maps || [])]);
+  const [seasons, setSeasons]     = useState([]);
+  const [maps, setMaps]           = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(true);
   const [saving, setSaving]       = useState(false);
   const [saved, setSaved]         = useState(false);
   const [editTab, setEditTab]     = useState('info'); // info | modes | seasons | maps
+
+  useEffect(() => {
+    Promise.all([
+      gameApi.getModes(game.id),
+      gameApi.getSeasons(game.id),
+      gameApi.getMaps(game.id),
+    ]).then(([m, s, mp]) => {
+      setModes(m);
+      setSeasons(s);
+      setMaps(mp);
+      setRelatedLoading(false);
+    });
+  }, [game.id]);
 
   // Season form state
   const [showAddSeason, setShowAddSeason] = useState(false);
@@ -1295,6 +1309,8 @@ function GameDetailEditor({ game, onBack, onSaved }) {
   };
 
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
+
+  if (relatedLoading) return <Spinner />;
 
   return (
     <div className={styles.gmDetail}>
