@@ -79,6 +79,16 @@
 .fg input:focus, .fg select:focus { border-color:var(--accent); }
 .fg select option { background:var(--navy2); }
 .sizeNote { background:rgba(29,78,216,0.08); border:1px solid var(--border-blue); color:var(--sky); font-size:0.85rem; padding:0.6rem 0.9rem; }
+.inviteCards { display:flex; flex-direction:column; gap:0.5rem; }
+.pendingInviteCard { display:flex; align-items:center; justify-content:space-between; background:var(--card); border:1px solid var(--accent); padding:0.9rem 1.2rem; gap:1rem; }
+.pendingInviteInfo { display:flex; flex-direction:column; gap:0.2rem; }
+.pendingInviteName { font-weight:700; font-size:1rem; color:var(--white); }
+.pendingInviteMeta { font-size:0.8rem; color:var(--muted); }
+.pendingInviteActions { display:flex; gap:0.5rem; flex-shrink:0; }
+.acceptBtn { background:var(--accent); color:#fff; border:none; padding:0.45rem 1rem; font-family:'Barlow',sans-serif; font-weight:700; font-size:0.85rem; cursor:pointer; }
+.acceptBtn:hover:not(:disabled) { opacity:0.85; }
+.declineBtn { background:transparent; color:var(--muted); border:1px solid var(--border); padding:0.45rem 1rem; font-family:'Barlow',sans-serif; font-size:0.85rem; cursor:pointer; }
+.declineBtn:hover:not(:disabled) { color:var(--red); border-color:var(--red); }
 .errorBox { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); color:var(--red); padding:0.6rem 1rem; font-size:0.85rem; }
 .successBox { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); color:var(--green); padding:0.6rem 1rem; font-size:0.85rem; }
 .searchResultName { font-size:0.9rem; color:var(--white); font-weight:600; }

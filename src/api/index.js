@@ -235,13 +235,19 @@ export const teamsApi = {
     }]);
     return error ? { success: false, error: error.message } : { success: true };
   },
-  getPendingInvites: async (userId) => {
-    const { data, error } = await supabase
-      .from('team_invites')
-      .select('id, team_id, email, created_at, teams(name, game, captain_name)')
-      .eq('invited_user_id', userId);
-    if (error) return [];
-    return (data || []).map(inv => ({
+  getPendingInvites: async (userId, userEmail) => {
+    // Fetch by user ID and by email to catch invites created before invited_user_id was added
+    const [byId, byEmail] = await Promise.all([
+      supabase.from('team_invites').select('id, team_id, email, created_at, teams(name, game, captain_name)').eq('invited_user_id', userId),
+      supabase.from('team_invites').select('id, team_id, email, created_at, teams(name, game, captain_name)').eq('email', userEmail).is('invited_user_id', null),
+    ]);
+    const seen = new Set();
+    const all = [...(byId.data || []), ...(byEmail.data || [])].filter(inv => {
+      if (seen.has(inv.id)) return false;
+      seen.add(inv.id);
+      return true;
+    });
+    return all.map(inv => ({
       id: inv.id,
       teamId: inv.team_id,
       teamName: inv.teams?.name,

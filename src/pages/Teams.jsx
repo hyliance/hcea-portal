@@ -308,17 +308,39 @@ export default function Teams() {
   const [inviteTeam, setInviteTeam] = useState(null);
   const [rosterTeam, setRosterTeam] = useState(null);
 
-  const [gameList, setGameList] = useState([]);
+  const [gameList, setGameList]     = useState([]);
+  const [pendingInvites, setPendingInvites] = useState([]);
+  const [inviteActing, setInviteActing]     = useState({});
 
   const load = () => teamsApi.getAll().then(d => { setTeams(d); setLoading(false); });
+  const loadInvites = () => {
+    if (user?.id && user?.email) teamsApi.getPendingInvites(user.id, user.email).then(setPendingInvites);
+  };
   useEffect(() => {
     load();
+    loadInvites();
     gameApi.getActive().then(setGameList);
   }, []);
 
+  const handleAcceptInvite = async (inv) => {
+    setInviteActing(p => ({ ...p, [inv.id]: 'accepting' }));
+    await teamsApi.acceptInvite(inv.id, inv.teamId, user.id,
+      `${user.firstName} ${user.lastName}`, user.initials, user.avatarColor);
+    setPendingInvites(prev => prev.filter(i => i.id !== inv.id));
+    setInviteActing(p => ({ ...p, [inv.id]: null }));
+    load();
+  };
+
+  const handleDeclineInvite = async (inv) => {
+    setInviteActing(p => ({ ...p, [inv.id]: 'declining' }));
+    await teamsApi.declineInvite(inv.id);
+    setPendingInvites(prev => prev.filter(i => i.id !== inv.id));
+    setInviteActing(p => ({ ...p, [inv.id]: null }));
+  };
+
   const filtered = filterGame === 'all' ? teams : teams.filter(t => t.game === filterGame);
 
-  const myTeams = teams.filter(t => t.members?.some(m => m.id === user?.id));
+  const myTeams = teams.filter(t => t.captainId === user?.id || t.members?.some(m => m.id === user?.id));
 
   const handleDelete = async (team) => {
     if (!window.confirm(`Delete "${team.name}"? This cannot be undone.`)) return;
@@ -351,6 +373,35 @@ export default function Teams() {
           <button className="btn btn-primary" onClick={() => setShowCreate(true)}>+ Create Team</button>
         </RoleGate>
       </div>
+
+      {/* PENDING INVITES */}
+      {pendingInvites.length > 0 && (
+        <div className={styles.myTeamsSection}>
+          <div className={styles.sectionTitle}>Team Invites <span className={styles.count}>{pendingInvites.length}</span></div>
+          <div className={styles.inviteCards}>
+            {pendingInvites.map(inv => (
+              <div key={inv.id} className={styles.pendingInviteCard}>
+                <div className={styles.pendingInviteInfo}>
+                  <div className={styles.pendingInviteName}>{inv.teamName}</div>
+                  <div className={styles.pendingInviteMeta}>{inv.teamGame} · Captain: {inv.captainName}</div>
+                </div>
+                <div className={styles.pendingInviteActions}>
+                  <button className={styles.acceptBtn}
+                    onClick={() => handleAcceptInvite(inv)}
+                    disabled={!!inviteActing[inv.id]}>
+                    {inviteActing[inv.id] === 'accepting' ? '…' : 'Accept'}
+                  </button>
+                  <button className={styles.declineBtn}
+                    onClick={() => handleDeclineInvite(inv)}
+                    disabled={!!inviteActing[inv.id]}>
+                    {inviteActing[inv.id] === 'declining' ? '…' : 'Decline'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* MY TEAMS */}
       {myTeams.length > 0 && (
