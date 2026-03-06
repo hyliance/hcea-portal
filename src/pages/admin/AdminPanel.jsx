@@ -1146,7 +1146,7 @@ function GameManagement() {
             <div className={styles.gmStat}><span>{games.filter(g=>g.active).length}</span>Active</div>
             <div className={styles.gmStat}><span>{games.filter(g=>g.featured).length}</span>Featured</div>
             <div className={styles.gmStat}><span>{games.filter(g=>g.hasLadder).length}</span>Has Ladder</div>
-            <div className={styles.gmStat}><span>{games.reduce((acc,g)=>acc+g.seasons.length,0)}</span>Total Seasons</div>
+            <div className={styles.gmStat}><span>{games.reduce((acc,g)=>acc+(g.seasons?.length??0),0)}</span>Total Seasons</div>
           </div>
 
           {/* Add game button */}
@@ -1213,7 +1213,7 @@ function GameManagement() {
       {showCreate && (
         <CreateGameModal
           onClose={() => setShowCreate(false)}
-          onCreated={(game) => { setGames(prev => [...prev, game]); setShowCreate(false); }}
+          onCreated={() => { load(); setShowCreate(false); }}
         />
       )}
     </div>
