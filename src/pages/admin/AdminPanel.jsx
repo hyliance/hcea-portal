@@ -1181,9 +1181,9 @@ function GameManagement() {
                 <div className={styles.gmCardBody}>
                   <div className={styles.gmCardName} style={{ color: game.color }}>{game.name}</div>
                   <div className={styles.gmCardMeta}>{game.genre} · {game.platform}</div>
-                  <div className={styles.gmCardMeta}>{game.teamSize.label}</div>
+                  <div className={styles.gmCardMeta}>{game.teamSize?.label ?? ''}</div>
                   <div className={styles.gmCardSeasons}>
-                    {game.seasons.length > 0
+                    {(game.seasons?.length ?? 0) > 0
                       ? `${game.seasons.length} Season${game.seasons.length !== 1 ? 's' : ''} · ${game.seasons.find(s=>s.active) ? '🟢 Active' : '⚪ No Active Season'}`
                       : 'No seasons'}
                   </div>
