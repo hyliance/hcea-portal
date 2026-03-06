@@ -180,7 +180,6 @@ function InviteModal({ team, onClose, onInvite }) {
   const [total, setTotal]       = useState(0);
   const [page, setPage]         = useState(0);
   const [selected, setSelected] = useState(null);
-  const [email, setEmail]       = useState('');
   const [loading, setLoading]   = useState(false);
   const [fetching, setFetching] = useState(false);
   const [sent, setSent]         = useState([]);
@@ -209,16 +208,14 @@ function InviteModal({ team, onClose, onInvite }) {
   const handlePage = (p) => { setPage(p); load(query, p); };
 
   const handleInvite = async () => {
-    const target = selected?.email || email.trim();
-    if (!target) return;
+    if (!selected) return;
     setLoading(true);
     setError('');
-    const res = await teamsApi.invitePlayer(team.id, target, selected?.id || null);
+    const res = await teamsApi.invitePlayer(team.id, selected.email, selected.id);
     setLoading(false);
     if (res.success) {
-      setSent(prev => [...prev, selected?.name || target]);
+      setSent(prev => [...prev, selected.name]);
       setSelected(null);
-      setEmail('');
       if (onInvite) onInvite();
     } else {
       setError(res.error || 'Failed to send invite.');
@@ -240,13 +237,13 @@ function InviteModal({ team, onClose, onInvite }) {
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
         <div className={styles.createBody}>
-          {sent.length > 0 && <div className={styles.successBox}>✓ Invited: {sent.join(', ')}</div>}
+          {sent.length > 0 && <div className={styles.successBox}>✓ Invite sent to: {sent.join(', ')}</div>}
           {error && <div className={styles.errorBox}>{error}</div>}
 
           <div className={styles.fg}>
-            <label>Search Players ({total} total)</label>
+            <label>Players ({total} registered)</label>
             <input value={query} onChange={e => handleSearch(e.target.value)}
-              placeholder="Filter by name or email…" autoComplete="off" />
+              placeholder="Search by name…" autoComplete="off" />
           </div>
 
           <div className={styles.playerList}>
@@ -255,7 +252,7 @@ function InviteModal({ team, onClose, onInvite }) {
             ) : players.length === 0 ? (
               <div className={styles.searchHint}>No players found.</div>
             ) : players.map(p => {
-              const onTeam = alreadyIn.has(p.id);
+              const onTeam    = alreadyIn.has(p.id);
               const isSelected = selected?.id === p.id;
               return (
                 <div key={p.id}
@@ -283,15 +280,9 @@ function InviteModal({ team, onClose, onInvite }) {
             </div>
           )}
 
-          <div className={styles.inviteDivider}>— or invite by email —</div>
-          <div className={styles.fg}>
-            <input value={email} onChange={e => { setEmail(e.target.value); setSelected(null); }}
-              placeholder="player@email.com" type="email" disabled={!!selected} />
-          </div>
-
-          <button className="btn btn-primary" style={{ clipPath:'none', padding:'0.75rem', width:'100%' }}
-            onClick={handleInvite} disabled={loading || isFull || (!selected && !email.trim())}>
-            {isFull ? 'Team is Full' : loading ? 'Sending…' : selected ? `Invite ${selected.name} →` : 'Send Invite →'}
+          <button className="btn btn-primary" style={{ clipPath:'none', padding:'0.75rem', width:'100%', marginTop:'0.5rem' }}
+            onClick={handleInvite} disabled={loading || isFull || !selected}>
+            {isFull ? 'Team is Full' : loading ? 'Sending…' : selected ? `Invite ${selected.name} →` : 'Select a player to invite'}
           </button>
         </div>
       </div>
@@ -314,7 +305,7 @@ export default function Teams() {
 
   const load = () => teamsApi.getAll().then(d => { setTeams(d); setLoading(false); });
   const loadInvites = () => {
-    if (user?.id && user?.email) teamsApi.getPendingInvites(user.id, user.email).then(setPendingInvites);
+    if (user?.id) teamsApi.getPendingInvites(user.id).then(setPendingInvites);
   };
   useEffect(() => {
     load();
