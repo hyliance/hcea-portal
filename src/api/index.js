@@ -185,8 +185,8 @@ export const teamsApi = {
     const { data } = await supabase.from('teams').select('*, team_members(*)').in('id', ids);
     return data || [];
   },
-  create: async ({ name, game, captainId, captainName, captainInitials, captainColor }) => {
-    const size = GAME_TEAM_SIZES[game]?.max || 5;
+  create: async ({ name, game, maxSize, captainId, captainName, captainInitials, captainColor }) => {
+    const size = maxSize || 5;
     const { data: team, error } = await supabase.from('teams').insert([{
       name, game, captain_id: captainId, captain_name: captainName, max_size: size, wins: 0, losses: 0,
     }]).select().single();

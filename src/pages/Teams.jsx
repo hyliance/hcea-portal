@@ -126,8 +126,10 @@ function CreateTeamModal({ user, onClose, onCreate, gameList = [] }) {
     if (!name.trim()) return setError('Team name is required.');
     if (!game) return setError('Please select a game.');
     setLoading(true);
+    const selectedGame = gameList.find(g => g.name === game);
     const res = await teamsApi.create({
       name: name.trim(), game,
+      maxSize: selectedGame?.teamSize?.max || 5,
       captainId: user.id, captainName: `${user.firstName} ${user.lastName}`,
       captainInitials: user.initials, captainColor: user.avatarColor,
     });
@@ -231,7 +233,7 @@ export default function Teams() {
 
   const filtered = filterGame === 'all' ? teams : teams.filter(t => t.game === filterGame);
 
-  const myTeams = teams.filter(t => t.members.some(m => m.id === user?.id));
+  const myTeams = teams.filter(t => t.members?.some(m => m.id === user?.id));
 
   const handleDelete = async (team) => {
     if (!window.confirm(`Delete "${team.name}"? This cannot be undone.`)) return;
@@ -313,7 +315,7 @@ export default function Teams() {
 
       {/* MODALS */}
       {showCreate && (
-        <CreateTeamModal user={user} gameList={gameList} onClose={() => setShowCreate(false)} onCreate={team => { setTeams(prev => [team, ...prev]); setShowCreate(false); }} />
+        <CreateTeamModal user={user} gameList={gameList} onClose={() => setShowCreate(false)} onCreate={() => { load(); setShowCreate(false); }} />
       )}
       {inviteTeam && (
         <InviteModal team={inviteTeam} onClose={() => setInviteTeam(null)} onInvite={load} />
