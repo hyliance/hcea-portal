@@ -14,8 +14,8 @@ function MemberAvatar({ member, size = 36 }) {
 }
 
 function TeamCard({ team, myTeams, userId, onInvite, onLeave, onDelete, onViewRoster }) {
-  const isMine    = team.members.some(m => m.id === userId);
   const isCaptain = team.captainId === userId;
+  const isMine    = isCaptain || team.members.some(m => m.id === userId);
   const full      = team.members.length >= team.maxSize;
 
   return (
