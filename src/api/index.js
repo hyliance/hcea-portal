@@ -402,7 +402,6 @@ export const coachesApi = {
     if (coachFields.bio            !== undefined) dbFields.bio             = coachFields.bio;
     if (coachFields.philosophy     !== undefined) dbFields.philosophy      = coachFields.philosophy;
     if (coachFields.accentColor    !== undefined) dbFields.accent_color    = coachFields.accentColor;
-    if (coachFields.social         !== undefined) dbFields.social          = coachFields.social;
     if (coachFields.availableDays  !== undefined) dbFields.available_days  = coachFields.availableDays;
     if (coachFields.availableHours !== undefined) dbFields.available_hours = coachFields.availableHours;
     if (coachFields.initials       !== undefined) dbFields.initials        = coachFields.initials;
@@ -988,7 +987,8 @@ function normalizePost(p, userId) {
     userRole:        p.user_role,
     userInitials:    p.user_initials,
     userAvatarColor: p.user_avatar_color,
-    category:        p.category || p.community_id || 'discussion',
+    category:        p.media?.category || p.category || p.community_id || 'discussion',
+    communityMeta:   p.media?.communityMeta || null,
     title:           p.title || '',
     text:            p.text  || '',
     media:           p.media || null,
@@ -1013,16 +1013,38 @@ function normalizePost(p, userId) {
 }
 
 export const socialApi = {
-  getCommunities: async () => FEED_CATEGORIES.map(c => ({ ...c, name: c.label, memberCount: 0, postCount: 0, members: [], isOfficial: true })),
-  getCommunity:   async (id) => { const c = FEED_CATEGORIES.find(c => c.id === id); return c ? { ...c, name: c.label, memberCount: 0, postCount: 0, members: [], isOfficial: true } : null; },
-  createCommunity: async () => ({ success: false, error: 'Categories are system-defined.' }),
+  getCommunities: async () => {
+    const sys = FEED_CATEGORIES.map(c => ({ ...c, type: 'system', name: c.label }));
+    const { data } = await supabase.from('communities').select('*').order('created_at', { ascending: false });
+    const user = (data || []).map(c => ({
+      id: c.id, name: c.name, slug: c.slug, label: c.name, description: c.description || '',
+      icon: c.icon, color: c.color, type: 'community',
+    }));
+    return [...sys, ...user];
+  },
+  getCommunity: async (id) => {
+    const sys = FEED_CATEGORIES.find(c => c.id === id);
+    if (sys) return { ...sys, type: 'system', name: sys.label };
+    const { data } = await supabase.from('communities').select('*').eq('id', id).maybeSingle();
+    return data ? { id: data.id, name: data.name, slug: data.slug, label: data.name, description: data.description || '', icon: data.icon, color: data.color, type: 'community' } : null;
+  },
+  createCommunity: async (userId, name, description, icon, color) => {
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const { data, error } = await supabase.from('communities').insert([{
+      id: crypto.randomUUID(), name, slug, description: description || '',
+      icon: icon || '🎮', color: color || '#3b82f6', created_by: userId,
+    }]).select().single();
+    if (error) return { success: false, error: error.message };
+    return { success: true, community: { id: data.id, name: data.name, slug: data.slug, label: data.name, description: data.description, icon: data.icon, color: data.color, type: 'community' } };
+  },
 
   getFeedPosts: async (userId, userAge, sort = 'new', category = null) => {
-    let query = supabase.from('posts').select('*, post_comments(*), post_votes(*)').limit(100);
-    if (category) query = query.eq('community_id', category);
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('posts').select('*, post_comments(*), post_votes(*)')
+      .order('created_at', { ascending: false }).limit(200);
     if (error) return { allowed: true, posts: [] };
     let posts = (data || []).map(p => normalizePost(p, userId));
+    if (category) posts = posts.filter(p => p.category === category);
     if (sort === 'top') posts = posts.sort((a, b) => b.score - a.score);
     if (sort === 'hot') posts = posts.sort((a, b) => {
       const age = (ts) => Math.max(1, (Date.now() - ts) / 3600000);
@@ -1031,7 +1053,12 @@ export const socialApi = {
     return { allowed: true, posts };
   },
 
-  createForumPost: async (userId, userName, userRole, userInitials, userAvatarColor, category, title, text, _tags, media) => {
+  createForumPost: async (userId, userName, userRole, userInitials, userAvatarColor, category, title, text, _tags, media, communityMeta = null) => {
+    // Category is embedded in the media JSONB so no extra column is needed
+    const extra = communityMeta ? { communityMeta } : {};
+    const mediaWithCategory = media
+      ? { ...media, category, ...extra }
+      : { category, ...extra };
     const { data, error } = await supabase.from('posts').insert([{
       id:                crypto.randomUUID(),
       user_id:           userId,
@@ -1039,10 +1066,9 @@ export const socialApi = {
       user_role:         userRole,
       user_initials:     userInitials,
       user_avatar_color: userAvatarColor,
-      community_id:      category,
       title,
       text:              text || '',
-      media:             media || null,
+      media:             mediaWithCategory,
       pinned:            false,
       flagged:           false,
     }]).select().single();

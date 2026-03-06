@@ -70,14 +70,19 @@ function MediaBlock({ media }) {
 }
 
 // ── CATEGORY BADGE ────────────────────────────────────────────────────────────
-function CategoryBadge({ categoryId, onClick }) {
+function CategoryBadge({ categoryId, communityMeta, onClick }) {
   const cat = FEED_CATEGORIES.find(c => c.id === categoryId);
-  if (!cat) return null;
+  const display = cat
+    ? { icon: cat.icon, label: cat.label, color: cat.color }
+    : communityMeta
+      ? { icon: communityMeta.icon || '🎮', label: communityMeta.name, color: communityMeta.color || '#3b82f6' }
+      : null;
+  if (!display) return null;
   return (
-    <button className={styles.categoryBadge} style={{'--cc': cat.color}}
+    <button className={styles.categoryBadge} style={{'--cc': display.color}}
       onClick={e => { e.stopPropagation(); onClick?.(categoryId); }}>
-      <span>{cat.icon}</span>
-      <span>{cat.label}</span>
+      <span>{display.icon}</span>
+      <span>{display.label}</span>
     </button>
   );
 }
@@ -297,7 +302,7 @@ function PostCard({ post, me, isAdmin, onUpvote, onComment, onDelPost, onDelComm
       <div className={styles.postContent}>
         <div className={styles.postMeta}>
           {post.pinned && <span className={styles.pinnedTag}>📌 Pinned</span>}
-          <CategoryBadge categoryId={post.category} onClick={onCategoryClick} />
+          <CategoryBadge categoryId={post.category} communityMeta={post.communityMeta} onClick={onCategoryClick} />
           <span className={styles.postBy}>•</span>
           <div className={styles.postAuthorAvatar} style={{background:post.userAvatarColor}}>{post.userInitials}</div>
           <span className={styles.postAuthorName}>{post.userName}</span>
@@ -518,9 +523,84 @@ function buildPostMedia(cat, fields, mediaUrl) {
 
 function canSubmit(cat, fields, title, text, mediaUrl, me) {
   if (!cat || !title.trim()) return false;
+  if (cat.type === 'community') return !!text.trim();
   if (cat.id === 'announcements' && !RESTRICTED_ROLES.includes(me?.role)) return false;
   if ((cat.id === 'montages' || cat.id === 'highlight') && !mediaUrl.trim()) return false;
   return true;
+}
+
+// ── CREATE COMMUNITY MODAL ────────────────────────────────────────────────────
+const COMM_ICONS  = ['🎮','⚡','🔥','🏆','💎','🎯','🎬','🎧','🕹️','🌟','🤝','🎪','🦁','🐺','🔮'];
+const COMM_COLORS = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#06b6d4','#6366f1','#f97316','#ec4899','#14b8a6'];
+
+function CreateCommunityModal({ me, onClose, onCreate }) {
+  const [name, setName]     = useState('');
+  const [desc, setDesc]     = useState('');
+  const [icon, setIcon]     = useState('🎮');
+  const [color, setColor]   = useState('#3b82f6');
+  const [saving, setSaving] = useState(false);
+  const [error, setError]   = useState('');
+
+  const submit = async () => {
+    if (!name.trim()) return;
+    setSaving(true); setError('');
+    const res = await socialApi.createCommunity(me.id, name.trim(), desc.trim(), icon, color);
+    setSaving(false);
+    if (res.success) { onCreate(res.community); onClose(); }
+    else setError(res.error || 'Failed to create community.');
+  };
+
+  return (
+    <div className={styles.modalBackdrop} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className={styles.modal} style={{maxWidth:480}}>
+        <div className={styles.modalHead}>
+          <span className={styles.modalTitle}>Create Community</span>
+          <button className={styles.modalX} onClick={onClose}>✕</button>
+        </div>
+        <div className={styles.modalBody}>
+          <FieldRow label="Community Name *">
+            <input className={styles.formInput} value={name} maxLength={40}
+              onChange={e=>setName(e.target.value.slice(0,40))}
+              placeholder="e.g. Valorant Hub, Rocket League NA…"/>
+          </FieldRow>
+          <FieldRow label="Description (optional)">
+            <textarea className={styles.formTextarea} rows={2} value={desc} maxLength={120}
+              onChange={e=>setDesc(e.target.value.slice(0,120))}
+              placeholder="What is this community about?"/>
+          </FieldRow>
+          <FieldRow label="Icon">
+            <div className={styles.iconPicker}>
+              {COMM_ICONS.map(ic=>(
+                <button key={ic} type="button"
+                  className={`${styles.iconBtn} ${icon===ic?styles.iconBtnOn:''}`}
+                  onClick={()=>setIcon(ic)}>{ic}</button>
+              ))}
+            </div>
+          </FieldRow>
+          <FieldRow label="Color">
+            <div className={styles.colorPicker}>
+              {COMM_COLORS.map(co=>(
+                <button key={co} type="button"
+                  className={`${styles.colorBtn} ${color===co?styles.colorBtnOn:''}`}
+                  style={{'--cc':co}} onClick={()=>setColor(co)}/>
+              ))}
+            </div>
+          </FieldRow>
+          <div className={styles.commPreview} style={{'--cc':color}}>
+            <span className={styles.commPreviewIcon}>{icon}</span>
+            <span className={styles.commPreviewName}>{name||'Community Name'}</span>
+          </div>
+          {error && <div className={styles.formErr}>{error}</div>}
+        </div>
+        <div className={styles.modalFoot}>
+          <button className={styles.btnGhost} onClick={onClose}>Cancel</button>
+          <button className={styles.btnPrimary} disabled={saving||!name.trim()} onClick={submit}>
+            {saving?'Creating…':'Create Community'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── QUICK COMPOSE (Twitter-like) ──────────────────────────────────────────────
@@ -564,7 +644,7 @@ function CategoryPageHeader({ cat, onBack }) {
 }
 
 // ── CREATE POST MODAL ─────────────────────────────────────────────────────────
-function CreatePostModal({ me, onClose, onPost, initialCategory = null }) {
+function CreatePostModal({ me, onClose, onPost, initialCategory = null, communities = [], onCreateCommunity }) {
   const [step, setStep]         = useState(initialCategory ? 2 : 1);
   const [category, setCategory] = useState(initialCategory);
   const [title, setTitle]       = useState('');
@@ -578,40 +658,64 @@ function CreatePostModal({ me, onClose, onPost, initialCategory = null }) {
 
   const submit = async () => {
     setError(''); setSaving(true);
-    const media = buildPostMedia(category, fields, mediaUrl);
-    // For structured types: structured data is in media; text holds the optional description.
-    // For video types: media holds the embed; text is a plain description.
-    // For discussion/announcements: no special media, text is the body.
+    const isComm = category.type === 'community';
+    const media = isComm ? null : buildPostMedia(category, fields, mediaUrl);
+    const communityMeta = isComm
+      ? { id: category.id, name: category.name, icon: category.icon, color: category.color }
+      : null;
     const res = await socialApi.createForumPost(
       me.id, `${me.firstName} ${me.lastName}`,
       me.role, me.initials, me.avatarColor,
-      category.id, title.trim(), text, null, media
+      category.id, title.trim(), text, null, media, communityMeta
     );
     setSaving(false);
     if (res.success) { onPost(res.post); onClose(); }
     else setError(res.error || 'Failed to post.');
   };
 
+  const userComms = communities.filter(c => c.type === 'community');
+
   if (step === 1) {
     return (
       <div className={styles.modalBackdrop} onClick={e=>e.target===e.currentTarget&&onClose()}>
-        <div className={styles.modal} style={{maxWidth:600}}>
+        <div className={styles.modal} style={{maxWidth:620}}>
           <div className={styles.modalHead}>
             <span className={styles.modalTitle}>Create Post — Choose Category</span>
             <button className={styles.modalX} onClick={onClose}>✕</button>
           </div>
           <div className={styles.modalBody}>
+            <div className={styles.communitySectionLabel}>System Categories</div>
             <div className={styles.categoryGrid}>
               {FEED_CATEGORIES.map(cat => (
                 <button key={cat.id} className={styles.categoryCard}
                   style={{'--cc': cat.color}}
-                  onClick={() => { setCategory(cat); setStep(2); }}>
+                  onClick={() => { setCategory({ ...cat, type: 'system' }); setStep(2); }}>
                   <span className={styles.catCardIcon}>{cat.icon}</span>
                   <span className={styles.catCardLabel}>{cat.label}</span>
                   <span className={styles.catCardDesc}>{cat.description}</span>
                 </button>
               ))}
             </div>
+            <hr className={styles.communitySectionDivider}/>
+            <div className={styles.communityRowLabel}>
+              <span className={styles.communitySectionLabel}>Communities</span>
+              <button className={styles.createCommBtn} onClick={onCreateCommunity}>+ New</button>
+            </div>
+            {userComms.length === 0 ? (
+              <div className={styles.sidebarEmpty}>No communities yet — create one!</div>
+            ) : (
+              <div className={styles.categoryGrid}>
+                {userComms.map(comm => (
+                  <button key={comm.id} className={styles.categoryCard}
+                    style={{'--cc': comm.color}}
+                    onClick={() => { setCategory(comm); setStep(2); }}>
+                    <span className={styles.catCardIcon}>{comm.icon}</span>
+                    <span className={styles.catCardLabel}>{comm.name}</span>
+                    <span className={styles.catCardDesc}>{comm.description}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -625,7 +729,7 @@ function CreatePostModal({ me, onClose, onPost, initialCategory = null }) {
           <div style={{display:'flex',alignItems:'center',gap:'0.6rem'}}>
             <button className={styles.backBtn} onClick={()=>setStep(1)}>←</button>
             <span className={styles.catModalLabel} style={{color:category.color}}>
-              {category.icon} {category.label}
+              {category.icon} {category.label || category.name}
             </span>
           </div>
           <button className={styles.modalX} onClick={onClose}>✕</button>
@@ -636,8 +740,20 @@ function CreatePostModal({ me, onClose, onPost, initialCategory = null }) {
               onChange={e=>setTitle(e.target.value.slice(0,200))} placeholder="Post title…" maxLength={200}/>
           </FieldRow>
 
-          <CategoryFields catId={category.id} fields={fields} set={set}
-            text={text} setText={setText} mediaUrl={mediaUrl} setMediaUrl={setMediaUrl} me={me} />
+          {category.type === 'community' ? (
+            <>
+              <FieldRow label="Body *">
+                <textarea className={styles.formTextarea} rows={6}
+                  placeholder="What's on your mind?" value={text} onChange={e=>setText(e.target.value)}/>
+              </FieldRow>
+              <FieldRow label="Game Tag (optional)">
+                <GameSelect value={fields.game} onChange={v=>set('game',v)} optional/>
+              </FieldRow>
+            </>
+          ) : (
+            <CategoryFields catId={category.id} fields={fields} set={set}
+              text={text} setText={setText} mediaUrl={mediaUrl} setMediaUrl={setMediaUrl} me={me}/>
+          )}
 
           {error && <div className={styles.formErr}>{error}</div>}
         </div>
@@ -667,7 +783,9 @@ export default function SocialFeed() {
   const [loading, setLoading]           = useState(true);
   const [postsLoading, setPostsLoading] = useState(false);
   const [allowed, setAllowed]           = useState(true);
-  const [createModal, setCreateModal]   = useState(null); // null | FEED_CATEGORIES item | 'open'
+  const [createModal, setCreateModal]   = useState(null); // null | category item | 'open'
+  const [communities, setCommunities]   = useState([]);
+  const [createCommModal, setCreateCommModal] = useState(false);
 
   const loadPosts = useCallback(async (s = sort) => {
     setPostsLoading(true);
@@ -680,6 +798,10 @@ export default function SocialFeed() {
 
   useEffect(() => { loadPosts(sort); }, [sort]);
 
+  useEffect(() => {
+    socialApi.getCommunities().then(comms => setCommunities(comms));
+  }, []);
+
   // Posts shown in the current view
   const visiblePosts = view === 'category' && activeCat
     ? allPosts.filter(p => p.category === activeCat.id)
@@ -687,9 +809,15 @@ export default function SocialFeed() {
 
   const openCategory = (id) => {
     const cat = FEED_CATEGORIES.find(c => c.id === id);
-    if (cat) { setActiveCat(cat); setView('category'); }
+    if (cat) { setActiveCat({ ...cat, type: 'system' }); setView('category'); return; }
+    const comm = communities.find(c => c.id === id);
+    if (comm) { setActiveCat(comm); setView('category'); }
   };
   const goHome = () => { setView('home'); setActiveCat(null); };
+
+  const onCommunityCreated = (community) => {
+    setCommunities(prev => [...prev, community]);
+  };
 
   const upvote = async (id) => {
     await socialApi.toggleUpvote(id, user.id);
@@ -831,6 +959,27 @@ export default function SocialFeed() {
               </button>
             ))}
           </div>
+
+          <div className={styles.sidebarCard}>
+            <div className={styles.sidebarCardTitleRow}>
+              <span className={styles.sidebarCardTitle}>Communities</span>
+              <button className={styles.createCommBtn} onClick={()=>setCreateCommModal(true)}>+ New</button>
+            </div>
+            {communities.filter(c=>c.type==='community').length === 0 ? (
+              <div className={styles.sidebarEmpty}>No communities yet</div>
+            ) : communities.filter(c=>c.type==='community').map(comm => (
+              <button key={comm.id}
+                className={`${styles.catNavItem} ${view==='category'&&activeCat?.id===comm.id ? styles.catNavItemOn : ''}`}
+                style={view==='category'&&activeCat?.id===comm.id ? {'--cc': comm.color} : {}}
+                onClick={() => openCategory(comm.id)}>
+                <span className={styles.catNavIcon}>{comm.icon}</span>
+                <div className={styles.catNavInfo}>
+                  <span className={styles.catNavLabel}>{comm.name}</span>
+                  {comm.description && <span className={styles.catNavDesc}>{comm.description}</span>}
+                </div>
+              </button>
+            ))}
+          </div>
         </aside>
       </div>
 
@@ -840,6 +989,15 @@ export default function SocialFeed() {
           initialCategory={createModal !== 'open' ? createModal : null}
           onClose={()=>setCreateModal(null)}
           onPost={onPostCreated}
+          communities={communities}
+          onCreateCommunity={()=>{ setCreateModal(null); setCreateCommModal(true); }}
+        />
+      )}
+      {createCommModal && (
+        <CreateCommunityModal
+          me={user}
+          onClose={()=>setCreateCommModal(false)}
+          onCreate={onCommunityCreated}
         />
       )}
     </div>
