@@ -612,19 +612,24 @@ export default function Ladder() {
   const [activeRoom, setActiveRoom]     = useState(null); // matchId string
 
   const load = useCallback(async () => {
-    const seasons = await ladderApi.getSeasons();
-    const active  = seasons.find(s => s.active) || seasons[0];
-    if (!active) { setLoading(false); return; }
-    setSeason(active);
-    const [stand, rec, mine] = await Promise.all([
-      ladderApi.getStandings(active.id, tab),
-      ladderApi.getRecentMatches(active.id, tab),
-      ladderApi.getMyTeams(user?.id, active.id),
-    ]);
-    setStandings(stand);
-    setRecent(rec);
-    setMyTeams(mine);
-    setLoading(false);
+    try {
+      const seasons = await ladderApi.getSeasons();
+      const active  = seasons.find(s => s.active) || seasons[0];
+      if (!active) { setLoading(false); return; }
+      setSeason(active);
+      const [stand, rec, mine] = await Promise.all([
+        ladderApi.getStandings(active.id, tab),
+        ladderApi.getRecentMatches(active.id, tab),
+        ladderApi.getMyTeams(user?.id, active.id),
+      ]);
+      setStandings(stand);
+      setRecent(rec);
+      setMyTeams(mine);
+    } catch (e) {
+      console.error('Ladder load error:', e);
+    } finally {
+      setLoading(false);
+    }
   }, [tab, user?.id]);
 
   useEffect(() => { load(); }, [load]);

@@ -1204,19 +1204,40 @@ export const HALO_MLG_SETTINGS = {
 };
 
 export const ladderApi = {
-  getStandings:     async (gameId)          => { const { data } = await supabase.from('user_stats').select('*').eq('game_id', gameId).order('rating', { ascending: false }); return data || []; },
-  getQueueStatus:   async (gameId, uid)     => { return { inQueue: false, position: 0, estimatedWait: 0 }; },
-  joinQueue:        async (gameId, uid)     => { return { success: true }; },
-  leaveQueue:       async (gameId, uid)     => { return { success: true }; },
-  pollQueue:        async (gameId, uid)     => { return { matched: false }; },
+  getSeasons: async () => {
+    const { data, error } = await supabase.from('ladder_seasons').select('*').order('created_at', { ascending: false });
+    if (error || !data?.length) return [{ id: 'season-1', name: 'Season 1', active: true }];
+    return data;
+  },
+  getStandings: async (seasonId, teamSize) => {
+    const { data } = await supabase.from('ladder_teams').select('*').eq('season_id', seasonId).eq('team_size', teamSize).order('xp', { ascending: false });
+    return (data || []).map(t => ({ id: t.id, name: t.name, tag: t.tag, color: t.color, xp: t.xp || 0, wins: t.wins || 0, losses: t.losses || 0, teamSize: t.team_size }));
+  },
+  getMyTeams: async (userId, seasonId) => {
+    if (!userId) return [];
+    const { data } = await supabase.from('ladder_teams').select('*').eq('season_id', seasonId).eq('created_by', userId);
+    return (data || []).map(t => ({ id: t.id, name: t.name, tag: t.tag, color: t.color, xp: t.xp || 0, wins: t.wins || 0, losses: t.losses || 0, teamSize: t.team_size }));
+  },
+  registerTeam: async (seasonId, teamSize, name, tag, userId, color) => {
+    const { data, error } = await supabase.from('ladder_teams').insert([{ season_id: seasonId, team_size: teamSize, name, tag, color, created_by: userId, xp: 0, wins: 0, losses: 0 }]).select().single();
+    if (error) return { success: false, error: error.message };
+    return { success: true, team: { id: data.id, name: data.name, tag: data.tag, color: data.color, xp: 0, wins: 0, losses: 0, teamSize: data.team_size } };
+  },
+  getQueueStatus:   async ()                => { return {}; },
+  joinQueue:        async (teamId, format)  => { return { success: true }; },
+  leaveQueue:       async (teamId)          => { return { success: true }; },
+  pollQueue:        async (teamId)          => { return { matched: false }; },
   getRoom:          async (matchId)         => { return matchRoomApi.getRoom(null, matchId); },
   getMessages:      async (matchId)         => { return matchRoomApi.getMessages(matchId); },
-  sendMessage:      async (matchId, msg)    => { return matchRoomApi.sendMessage(matchId, msg.userId, msg.userName, msg.role, msg.text); },
-  reportGame:       async (matchId, data)   => { return matchRoomApi.reportGame(matchId, data.reportingTeamId, data.winnerTeamId, data.losingTeamId); },
-  confirmGame:      async (matchId, gameId) => { return matchRoomApi.confirmGame(matchId, gameId, null); },
-  disputeGame:      async (matchId, gameId) => { return { success: true }; },
+  sendMessage:      async (matchId, userId, userName, role, text) => { return matchRoomApi.sendMessage(matchId, userId, userName, role, text); },
+  reportGame:       async (matchId, reportingTeamId, winnerTeamId, losingTeamId) => { return matchRoomApi.reportGame(matchId, reportingTeamId, winnerTeamId, losingTeamId); },
+  confirmGame:      async (matchId, gameNum, teamId) => { return matchRoomApi.confirmGame(matchId, gameNum, teamId); },
+  disputeGame:      async (matchId, gameNum, teamId, reason) => { return { success: true }; },
   adminSetWinner:   async (matchId, wId)    => { return matchRoomApi.adminSetWinner(matchId, wId, 0, 0); },
   setSeriesFormat:  async (matchId, fmt)    => { return matchRoomApi.setSeriesFormat(matchId, fmt); },
-  getRecentMatches: async (gameId)          => { const { data } = await supabase.from('match_rooms').select('*').eq('status', 'complete').order('created_at', { ascending: false }).limit(10); return data || []; },
+  getRecentMatches: async (seasonId, teamSize) => {
+    const { data } = await supabase.from('match_rooms').select('*').eq('status', 'complete').order('created_at', { ascending: false }).limit(20);
+    return (data || []).map(m => ({ id: m.id, team1Id: m.team1_id, team1Name: m.team1_name, team2Id: m.team2_id, team2Name: m.team2_name, winnerId: m.winner_id, seriesFormat: m.series_format || 'bo3', games: m.games?.length || 0, xpAwarded: m.xp_awarded, completedAt: new Date(m.updated_at || m.created_at).getTime() }));
+  },
   getTopTeam:       async (gameId)          => { const { data } = await supabase.from('user_stats').select('*').eq('game_id', gameId).order('rating', { ascending: false }).limit(1).single(); return data || null; },
 };
