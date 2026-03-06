@@ -162,28 +162,40 @@ export async function getGameNames() {
 //  TEAMS API  →  teams, team_members, team_invites
 // ─────────────────────────────────────────────────────────────────────────────
 
+const mapTeam = (t) => ({
+  ...t,
+  captainId:   t.captain_id,
+  captainName: t.captain_name,
+  maxSize:     t.max_size,
+  members:     (t.team_members || []).map(m => ({
+    ...m,
+    id:          m.user_id,
+    avatarColor: m.avatar_color,
+  })),
+});
+
 export const teamsApi = {
   getAll: async () => {
     const { data, error } = await supabase.from('teams').select('*, team_members(*)').order('created_at', { ascending: false });
     if (error) throw error;
-    return data || [];
+    return (data || []).map(mapTeam);
   },
   getByGame: async (game) => {
     const { data, error } = await supabase.from('teams').select('*, team_members(*)').eq('game', game);
     if (error) throw error;
-    return data || [];
+    return (data || []).map(mapTeam);
   },
   getById: async (id) => {
     const { data } = await supabase.from('teams').select('*, team_members(*)').eq('id', id).single();
-    return data || null;
+    return data ? mapTeam(data) : null;
   },
   getMyTeams: async (userId) => {
     const { data } = await supabase.from('team_members').select('team_id, teams(*, team_members(*))').eq('user_id', userId);
-    return (data || []).map(r => r.teams).filter(Boolean);
+    return (data || []).map(r => r.teams).filter(Boolean).map(mapTeam);
   },
   getByIds: async (ids) => {
     const { data } = await supabase.from('teams').select('*, team_members(*)').in('id', ids);
-    return data || [];
+    return (data || []).map(mapTeam);
   },
   create: async ({ name, game, maxSize, captainId, captainName, captainInitials, captainColor }) => {
     const size = maxSize || 5;
