@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { teamsApi, gameApi, searchPlayers } from '../api';
+import { teamsApi, gameApi, fetchPlayers } from '../api';
 import { Spinner, Badge } from '../components/UI';
 import RoleGate from '../components/RoleGate';
 import styles from './Teams.module.css';
@@ -176,27 +176,37 @@ function CreateTeamModal({ user, onClose, onCreate, gameList = [] }) {
 
 function InviteModal({ team, onClose, onInvite }) {
   const [query, setQuery]       = useState('');
-  const [results, setResults]   = useState([]);
+  const [players, setPlayers]   = useState([]);
+  const [total, setTotal]       = useState(0);
+  const [page, setPage]         = useState(0);
   const [selected, setSelected] = useState(null);
   const [email, setEmail]       = useState('');
   const [loading, setLoading]   = useState(false);
-  const [searching, setSearching] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const [sent, setSent]         = useState([]);
   const [error, setError]       = useState('');
   const searchTimeout           = useRef(null);
+  const PAGE_SIZE               = 10;
+
+  const load = async (q, p) => {
+    setFetching(true);
+    const res = await fetchPlayers({ query: q, page: p });
+    setPlayers(res.players);
+    setTotal(res.total);
+    setFetching(false);
+  };
+
+  useEffect(() => { load('', 0); }, []);
 
   const handleSearch = (val) => {
     setQuery(val);
     setSelected(null);
+    setPage(0);
     clearTimeout(searchTimeout.current);
-    if (val.trim().length < 2) { setResults([]); return; }
-    setSearching(true);
-    searchTimeout.current = setTimeout(async () => {
-      const res = await searchPlayers(val);
-      setResults(res);
-      setSearching(false);
-    }, 300);
+    searchTimeout.current = setTimeout(() => load(val, 0), 300);
   };
+
+  const handlePage = (p) => { setPage(p); load(query, p); };
 
   const handleInvite = async () => {
     const target = selected?.email || email.trim();
@@ -206,58 +216,77 @@ function InviteModal({ team, onClose, onInvite }) {
     const res = await teamsApi.invitePlayer(team.id, target);
     setLoading(false);
     if (res.success) {
-      setSent(prev => [...prev, target]);
+      setSent(prev => [...prev, selected?.name || target]);
       setSelected(null);
-      setQuery('');
       setEmail('');
-      setResults([]);
       if (onInvite) onInvite();
     } else {
       setError(res.error || 'Failed to send invite.');
     }
   };
 
-  const isFull = (team.members?.length ?? 0) >= team.maxSize;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const isFull     = (team.members?.length ?? 0) >= team.maxSize;
+  const alreadyIn  = new Set(team.members?.map(m => m.id) ?? []);
 
   return (
     <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className={styles.modal} style={{ maxWidth: 440 }}>
+      <div className={styles.modal} style={{ maxWidth: 480 }}>
         <div className={styles.modalHead}>
           <div>
             <div className={styles.modalTitle}>Invite a Player</div>
-            <div className={styles.modalSub}>{team.name} · {team.members?.length ?? 0}/{team.maxSize} players</div>
+            <div className={styles.modalSub}>{team.name} · {team.members?.length ?? 0}/{team.maxSize} spots filled</div>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
         <div className={styles.createBody}>
-          {sent.length > 0 && <div className={styles.successBox}>✓ Invite sent to: {sent.join(', ')}</div>}
+          {sent.length > 0 && <div className={styles.successBox}>✓ Invited: {sent.join(', ')}</div>}
           {error && <div className={styles.errorBox}>{error}</div>}
 
           <div className={styles.fg}>
-            <label>Search Players</label>
-            <input
-              value={selected ? selected.name : query}
-              onChange={e => handleSearch(e.target.value)}
-              placeholder="Search by name or email…"
-              autoComplete="off"
-            />
-            {searching && <div className={styles.searchHint}>Searching…</div>}
-            {!selected && results.length > 0 && (
-              <div className={styles.searchResults}>
-                {results.map(p => (
-                  <div key={p.id} className={styles.searchResult} onClick={() => { setSelected(p); setResults([]); setQuery(''); }}>
+            <label>Search Players ({total} total)</label>
+            <input value={query} onChange={e => handleSearch(e.target.value)}
+              placeholder="Filter by name or email…" autoComplete="off" />
+          </div>
+
+          <div className={styles.playerList}>
+            {fetching ? (
+              <div className={styles.searchHint}>Loading…</div>
+            ) : players.length === 0 ? (
+              <div className={styles.searchHint}>No players found.</div>
+            ) : players.map(p => {
+              const onTeam = alreadyIn.has(p.id);
+              const isSelected = selected?.id === p.id;
+              return (
+                <div key={p.id}
+                  className={`${styles.playerRow} ${isSelected ? styles.playerRowSelected : ''} ${onTeam ? styles.playerRowOnTeam : ''}`}
+                  onClick={() => !onTeam && setSelected(isSelected ? null : p)}>
+                  <div className={styles.playerRowInfo}>
                     <span className={styles.searchResultName}>{p.name}</span>
                     <span className={styles.searchResultEmail}>{p.email}</span>
                   </div>
-                ))}
-              </div>
-            )}
+                  {onTeam
+                    ? <span className={styles.playerRowBadge}>On Team</span>
+                    : isSelected
+                      ? <span className={styles.playerRowBadge} style={{color:'var(--accent)'}}>Selected ✓</span>
+                      : null}
+                </div>
+              );
+            })}
           </div>
 
-          <div className={styles.inviteDivider}>— or invite by email —</div>
+          {totalPages > 1 && (
+            <div className={styles.pagination}>
+              <button className={styles.pageBtn} onClick={() => handlePage(page - 1)} disabled={page === 0}>‹</button>
+              <span className={styles.pageInfo}>Page {page + 1} of {totalPages}</span>
+              <button className={styles.pageBtn} onClick={() => handlePage(page + 1)} disabled={page >= totalPages - 1}>›</button>
+            </div>
+          )}
 
+          <div className={styles.inviteDivider}>— or invite by email —</div>
           <div className={styles.fg}>
-            <input value={email} onChange={e => setEmail(e.target.value)} placeholder="player@email.com" type="email" disabled={!!selected} />
+            <input value={email} onChange={e => { setEmail(e.target.value); setSelected(null); }}
+              placeholder="player@email.com" type="email" disabled={!!selected} />
           </div>
 
           <button className="btn btn-primary" style={{ clipPath:'none', padding:'0.75rem', width:'100%' }}

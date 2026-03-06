@@ -158,19 +158,24 @@ export async function getGameNames() {
   return (data || []).map(g => g.name);
 }
 
-export async function searchPlayers(query) {
-  if (!query || query.trim().length < 2) return [];
+const PAGE_SIZE = 10;
+const mapPlayer = p => ({
+  id: p.id,
+  name: ((p.first_name || '') + ' ' + (p.last_name || '')).trim() || p.email,
+  email: p.email,
+});
+
+export async function fetchPlayers({ query = '', page = 0 } = {}) {
   const q = query.trim();
-  const { data } = await supabase
+  let req = supabase
     .from('profiles')
-    .select('id, first_name, last_name, email')
-    .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%`)
-    .limit(10);
-  return (data || []).map(p => ({
-    id: p.id,
-    name: ((p.first_name || '') + ' ' + (p.last_name || '')).trim() || p.email,
-    email: p.email,
-  }));
+    .select('id, first_name, last_name, email', { count: 'exact' })
+    .order('first_name')
+    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+  if (q.length >= 2)
+    req = req.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%`);
+  const { data, count } = await req;
+  return { players: (data || []).map(mapPlayer), total: count || 0, pageSize: PAGE_SIZE };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
