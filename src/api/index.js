@@ -244,7 +244,8 @@ export const teamsApi = {
       .from('team_invites')
       .select('id, team_id, email, created_at')
       .or(filter);
-    if (error) { console.error('[getPendingInvites] error:', error); return []; }
+    console.log('[getPendingInvites] filter:', filter, '| error:', error, '| rows:', invites?.length ?? 'null');
+    if (error) { console.error('[getPendingInvites] query failed:', error.message, error.details); return []; }
     if (!invites?.length) return [];
 
     // Step 2: look up team details separately
