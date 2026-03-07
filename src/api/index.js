@@ -236,25 +236,37 @@ export const teamsApi = {
     return error ? { success: false, error: error.message } : { success: true };
   },
   getPendingInvites: async (userId, userEmail) => {
-    // Match by user ID (new invites) or by email (invites created before invited_user_id column existed)
+    // Step 1: fetch invite rows (avoid embedded join which requires a FK to be defined)
     const filter = userEmail
       ? `invited_user_id.eq.${userId},email.eq.${userEmail}`
       : `invited_user_id.eq.${userId}`;
-    const { data } = await supabase
+    const { data: invites, error } = await supabase
       .from('team_invites')
-      .select('id, team_id, email, created_at, teams(name, game, captain_name)')
+      .select('id, team_id, email, created_at')
       .or(filter);
+    if (error) { console.error('[getPendingInvites] error:', error); return []; }
+    if (!invites?.length) return [];
+
+    // Step 2: look up team details separately
+    const teamIds = [...new Set(invites.map(i => i.team_id))];
+    const { data: teams } = await supabase
+      .from('teams')
+      .select('id, name, game, captain_name')
+      .in('id', teamIds);
+    const teamMap = Object.fromEntries((teams || []).map(t => [t.id, t]));
+
+    // Deduplicate by invite id
     const seen = new Set();
-    return (data || []).filter(inv => {
+    return invites.filter(inv => {
       if (seen.has(inv.id)) return false;
       seen.add(inv.id);
       return true;
     }).map(inv => ({
       id: inv.id,
       teamId: inv.team_id,
-      teamName: inv.teams?.name,
-      teamGame: inv.teams?.game,
-      captainName: inv.teams?.captain_name,
+      teamName: teamMap[inv.team_id]?.name,
+      teamGame: teamMap[inv.team_id]?.game,
+      captainName: teamMap[inv.team_id]?.captain_name,
       email: inv.email,
       createdAt: inv.created_at,
     }));
