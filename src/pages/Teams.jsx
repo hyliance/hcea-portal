@@ -13,7 +13,7 @@ function MemberAvatar({ member, size = 36 }) {
   );
 }
 
-function TeamCard({ team, myTeams, userId, onInvite, onLeave, onDelete, onViewRoster }) {
+function TeamCard({ team, myTeams, userId, onInvite, onLeave, onDelete, onViewRoster, pendingInvite, onAccept, onDecline, inviteActing }) {
   const isCaptain = team.captainId === userId;
   const isMine    = isCaptain || team.members.some(m => m.id === userId);
   const full      = team.members.length >= team.maxSize;
@@ -66,6 +66,15 @@ function TeamCard({ team, myTeams, userId, onInvite, onLeave, onDelete, onViewRo
             ) : (
               <button className={styles.dangerBtn} onClick={() => onLeave(team)}>Leave</button>
             )
+          ) : pendingInvite ? (
+            <>
+              <button className={styles.acceptBtn} onClick={() => onAccept(pendingInvite)} disabled={!!inviteActing}>
+                {inviteActing === 'accepting' ? '…' : 'Accept'}
+              </button>
+              <button className={styles.declineBtn} onClick={() => onDecline(pendingInvite)} disabled={!!inviteActing}>
+                {inviteActing === 'declining' ? '…' : 'Decline'}
+              </button>
+            </>
           ) : !full ? (
             <div className={styles.joinInfo}>Invite-only</div>
           ) : null}
@@ -399,12 +408,17 @@ export default function Teams() {
         <div className={styles.myTeamsSection}>
           <div className={styles.sectionTitle}>Your Teams</div>
           <div className={styles.grid}>
-            {myTeams.map(t => (
-              <TeamCard key={t.id} team={t} myTeams={myTeams} userId={user?.id}
-                onInvite={setInviteTeam} onLeave={handleLeave} onDelete={handleDelete}
-                onViewRoster={setRosterTeam}
-              />
-            ))}
+            {myTeams.map(t => {
+              const inv = pendingInvites.find(i => i.teamId === t.id);
+              return (
+                <TeamCard key={t.id} team={t} myTeams={myTeams} userId={user?.id}
+                  onInvite={setInviteTeam} onLeave={handleLeave} onDelete={handleDelete}
+                  onViewRoster={setRosterTeam}
+                  pendingInvite={inv} onAccept={handleAcceptInvite} onDecline={handleDeclineInvite}
+                  inviteActing={inviteActing[inv?.id]}
+                />
+              );
+            })}
           </div>
         </div>
       )}
@@ -431,12 +445,17 @@ export default function Teams() {
         </div>
       ) : (
         <div className={styles.grid}>
-          {filtered.map(t => (
-            <TeamCard key={t.id} team={t} myTeams={myTeams} userId={user?.id}
-              onInvite={setInviteTeam} onLeave={handleLeave} onDelete={handleDelete}
-              onViewRoster={setRosterTeam}
-            />
-          ))}
+          {filtered.map(t => {
+            const inv = pendingInvites.find(i => i.teamId === t.id);
+            return (
+              <TeamCard key={t.id} team={t} myTeams={myTeams} userId={user?.id}
+                onInvite={setInviteTeam} onLeave={handleLeave} onDelete={handleDelete}
+                onViewRoster={setRosterTeam}
+                pendingInvite={inv} onAccept={handleAcceptInvite} onDecline={handleDeclineInvite}
+                inviteActing={inviteActing[inv?.id]}
+              />
+            );
+          })}
         </div>
       )}
 
