@@ -26,7 +26,7 @@ export default function Profile() {
   const [inviteLoading, setInviteLoading] = useState({});
 
   useEffect(() => {
-    if (user?.id) teamsApi.getPendingInvites(user.id).then(setInvites);
+    if (user?.id) teamsApi.getPendingInvites(user.id, user.email).then(setInvites);
   }, [user?.id]);
 
   const handleAccept = async (inv) => {

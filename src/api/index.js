@@ -235,12 +235,21 @@ export const teamsApi = {
     }]);
     return error ? { success: false, error: error.message } : { success: true };
   },
-  getPendingInvites: async (userId) => {
+  getPendingInvites: async (userId, userEmail) => {
+    // Match by user ID (new invites) or by email (invites created before invited_user_id column existed)
+    const filter = userEmail
+      ? `invited_user_id.eq.${userId},email.eq.${userEmail}`
+      : `invited_user_id.eq.${userId}`;
     const { data } = await supabase
       .from('team_invites')
       .select('id, team_id, email, created_at, teams(name, game, captain_name)')
-      .eq('invited_user_id', userId);
-    return (data || []).map(inv => ({
+      .or(filter);
+    const seen = new Set();
+    return (data || []).filter(inv => {
+      if (seen.has(inv.id)) return false;
+      seen.add(inv.id);
+      return true;
+    }).map(inv => ({
       id: inv.id,
       teamId: inv.team_id,
       teamName: inv.teams?.name,

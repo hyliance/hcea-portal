@@ -305,7 +305,7 @@ export default function Teams() {
 
   const load = () => teamsApi.getAll().then(d => { setTeams(d); setLoading(false); });
   const loadInvites = () => {
-    if (user?.id) teamsApi.getPendingInvites(user.id).then(setPendingInvites);
+    if (user?.id) teamsApi.getPendingInvites(user.id, user.email).then(setPendingInvites);
   };
   useEffect(() => {
     load();
