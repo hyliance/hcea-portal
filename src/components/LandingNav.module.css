@@ -74,6 +74,22 @@
 .dropdownItem:last-child { border-bottom: none; }
 .dropdownItem:hover { color: #e8f0ff; background: rgba(59,130,246,0.08); padding-left: 1.3rem; }
 
+/* Logged-in user chip */
+.userChip {
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.userAvatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.75rem;
+  color: #fff; flex-shrink: 0;
+}
+.userName {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.88rem; font-weight: 600; letter-spacing: 0.06em;
+  color: var(--silver); white-space: nowrap;
+}
+
 /* Book a Session CTA link in nav */
 .navBookBtn {
   display: inline-block;

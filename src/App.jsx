@@ -42,7 +42,7 @@ export default function App() {
   // Landing page — shown to logged-out users or when logged-in user clicks Homepage
   return (
     <>
-      <LandingNav onLogin={openLogin} onJoin={openRegister} />
+      <LandingNav onLogin={openLogin} onJoin={openRegister} user={user} onGoToPortal={goToPortal} />
       <Landing onLoginClick={openLogin} onJoinClick={goToPortal} />
 
       {modal && (

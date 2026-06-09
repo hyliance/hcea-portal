@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import styles from './LandingNav.module.css';
 
-export default function LandingNav({ onLogin, onJoin }) {
+export default function LandingNav({ onLogin, onJoin, user, onGoToPortal }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [academyOpen, setAcademyOpen] = useState(false);
 
@@ -62,8 +62,24 @@ export default function LandingNav({ onLogin, onJoin }) {
           )}
         </li>
 
-        <li><button className="btn btn-ghost" onClick={onLogin}>Log In</button></li>
-        <li><button className="btn btn-primary" onClick={onJoin}>Join HCG</button></li>
+        {user ? (
+          <>
+            <li>
+              <div className={styles.userChip}>
+                <div className={styles.userAvatar} style={{ background: user.avatarColor || '#1d4ed8' }}>
+                  {user.initials}
+                </div>
+                <span className={styles.userName}>{user.firstName} {user.lastName}</span>
+              </div>
+            </li>
+            <li><button className="btn btn-primary" onClick={onGoToPortal}>⚡ Compete</button></li>
+          </>
+        ) : (
+          <>
+            <li><button className="btn btn-ghost" onClick={onLogin}>Log In</button></li>
+            <li><button className="btn btn-primary" onClick={onJoin}>Join HCG</button></li>
+          </>
+        )}
       </ul>
 
       <button className={styles.hamburger} onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
