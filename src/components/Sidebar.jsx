@@ -1,21 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import styles from './Sidebar.module.css';
-
-// ─────────────────────────────────────────────────────────────────
-//  NAV STRUCTURE
-//
-//  HCG Platform sections (all logged-in users):
-//    Community: Social Feed (16+), Clans
-//    Competitive: Teams, Tournaments, Leagues & Ladders, Cash Matches (18+)
-//    Coaching: Find a Coach, Sessions, Become a Coach
-//    HCEA Academy: Programs, Scholarships (separate from HCG)
-//    Account: My Profile
-//
-//  Admin roles:
-//    head_admin  — full access to all tabs including HCEA Orgs, Coach Apps, Scholarships, Players
-//    league_admin — Leagues, Tournaments, Flags, Flag History, Social Feed mod only
-//    admin       — legacy alias = head_admin behavior
-// ─────────────────────────────────────────────────────────────────
 
 const NAV_BY_ROLE = {
 
@@ -35,7 +20,7 @@ const NAV_BY_ROLE = {
     { id: 'coaches',      icon: '🎓', label: 'Coaches',             section: 'Coaching' },
     { id: 'sessions',     icon: '🎯', label: 'Sessions',            section: null },
     { id: 'coach_apply',  icon: '📝', label: 'Become a Coach',      section: null },
-    // HCEA Academy — organizations are HCEA-only
+    // HCEA Academy
     { id: 'hcea_programs',  icon: '📚', label: 'Programs',          section: 'HCEA Academy' },
     { id: 'scholarships',   icon: '🏅', label: 'Scholarships',      section: null },
     // Account
@@ -43,21 +28,15 @@ const NAV_BY_ROLE = {
   ],
 
   // ── LEAGUE ADMIN ──────────────────────────────────────────────
-  // Can: run leagues, tournaments, ladders, flagged matches, flag history, social feed mod
-  // Cannot: coach apps, scholarship apps, HCEA orgs, player/coach roster management
   league_admin: [
     { id: 'dashboard',    icon: '⬛', label: 'Dashboard',           section: 'HCG Platform' },
     { id: 'admin',        icon: '⚙️', label: 'League Admin Panel',  section: null },
-    // Community — social mod only
     { id: 'community',    icon: '💬', label: 'Social Feed',         section: 'Community' },
-    // Competitive — full access
     { id: 'leagues_ladders', icon: '🏅', label: 'Leagues & Ladders', section: 'Competitive' },
     { id: 'tournaments',  icon: '🏆', label: 'Tournaments',         section: null },
     { id: 'teams',        icon: '🛡️', label: 'Teams',               section: null },
-    // Coaching
     { id: 'coaches',      icon: '🎓', label: 'Find a Coach',        section: 'Coaching' },
     { id: 'coach_apply',  icon: '📝', label: 'Become a Coach',      section: null },
-    // No HCEA section — no orgs, no scholarships, no coach apps
     { id: 'profile',      icon: '👤', label: 'My Profile',          section: 'Account' },
   ],
 
@@ -104,7 +83,6 @@ const NAV_BY_ROLE = {
     { id: 'leagues_ladders', icon: '🏅', label: 'Leagues & Ladders', section: null },
     { id: 'org_scholarships', icon: '🏅', label: 'Scholarships',     section: null },
     { id: 'hcea_programs',    icon: '📚', label: 'HCEA Programs',    section: null },
-    // Coaching
     { id: 'coaches',          icon: '🎓', label: 'Find a Coach',     section: 'Coaching' },
     { id: 'coach_apply',      icon: '📝', label: 'Become a Coach',   section: null },
     { id: 'profile',          icon: '👤', label: 'My Profile',       section: 'Account' },
@@ -113,22 +91,17 @@ const NAV_BY_ROLE = {
   // ── PLAYER ───────────────────────────────────────────────────
   player: [
     { id: 'dashboard',    icon: '⬛', label: 'Dashboard',           section: 'HCG Platform' },
-    // Community — social feed 16+ age-gated, clans open to all
     { id: 'community',    icon: '💬', label: 'Social Feed',          section: 'Community', minAge: 16 },
     { id: 'clans',        icon: '⚔️', label: 'Clans',                section: null },
-    // Competitive
     { id: 'teams',        icon: '🛡️', label: 'My Teams',             section: 'Competitive' },
     { id: 'tournaments',  icon: '🏆', label: 'Tournaments',          section: null },
     { id: 'leagues_ladders', icon: '🏅', label: 'Leagues & Ladders', section: null },
     { id: 'cash_match',   icon: '💰', label: 'Cash Matches',          section: null, minAge: 18 },
-    // Coaching
     { id: 'coaches',      icon: '🎓', label: 'Find a Coach',         section: 'Coaching' },
     { id: 'sessions',     icon: '🎯', label: 'Book a Session',       section: null },
     { id: 'coach_apply',  icon: '📝', label: 'Become a Coach',       section: null },
-    // HCEA Academy
     { id: 'hcea_programs',  icon: '📚', label: 'HCEA Programs',      section: 'HCEA Academy' },
     { id: 'scholarships',   icon: '🏅', label: 'Scholarships',       section: null },
-    // Account
     { id: 'profile',      icon: '👤', label: 'My Profile',           section: 'Account' },
   ],
 };
@@ -142,31 +115,59 @@ const ROLE_COLORS = {
   coach: '#1d4ed8', player: '#059669', org_manager: '#6366f1',
 };
 
-// Sections that belong to HCEA (get tinted styling)
 const HCEA_SECTIONS = new Set(['HCEA Academy', 'HCEA Organization']);
+
+function buildSections(navItems) {
+  const sections = [];
+  let current = null;
+  navItems.forEach(item => {
+    if (item.section !== null) {
+      current = { name: item.section, isHcea: HCEA_SECTIONS.has(item.section), items: [] };
+      sections.push(current);
+    }
+    if (current) current.items.push(item);
+  });
+  return sections;
+}
 
 export default function Sidebar({ activeTab, onTabChange, onBackToSite, open, onClose }) {
   const { user, logout, userAge } = useAuth();
   const role = user?.role || 'player';
 
-  // Pick nav list — fall back to player if role not found
   const allItems = NAV_BY_ROLE[role] || NAV_BY_ROLE.player;
-
-  // Filter out age-gated items
   const navItems = allItems.filter(item => {
     if (item.minAge && userAge !== null && userAge < item.minAge) return false;
     return true;
   });
 
+  const sections = buildSections(navItems);
+
+  const [collapsed, setCollapsed] = useState(new Set());
+
+  // Auto-expand the section containing the active tab
+  useEffect(() => {
+    const activeSection = sections.find(s => s.items.some(i => i.id === activeTab))?.name;
+    if (activeSection) {
+      setCollapsed(prev => {
+        if (!prev.has(activeSection)) return prev;
+        const next = new Set(prev);
+        next.delete(activeSection);
+        return next;
+      });
+    }
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleSection = (name) => {
+    setCollapsed(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  };
+
   const handleLogout = async () => { await logout(); onBackToSite(); };
   const handleNav    = (id) => { onTabChange(id); onClose?.(); };
-
-  // Track which section is "current" for each item (for HCEA tint)
-  let currentSection = '';
-  const itemSections = navItems.map(item => {
-    if (item.section) currentSection = item.section;
-    return currentSection;
-  });
 
   return (
     <>
@@ -199,27 +200,32 @@ export default function Sidebar({ activeTab, onTabChange, onBackToSite, open, on
         )}
 
         <nav className={styles.nav}>
-          {navItems.map((item, idx) => {
-            const sectionForItem = itemSections[idx];
-            const isHceaItem     = HCEA_SECTIONS.has(sectionForItem);
-            const showSection    = item.section !== null;
-
+          {sections.map(section => {
+            const isCollapsed = collapsed.has(section.name);
             return (
-              <div key={item.id}>
-                {showSection && item.section && (
-                  <div className={`${styles.section} ${HCEA_SECTIONS.has(item.section) ? styles.sectionHcea : ''}`}>
-                    {HCEA_SECTIONS.has(item.section) && <span className={styles.sectionHceaIcon}>🎓</span>}
-                    {item.section}
-                  </div>
-                )}
+              <div key={section.name}>
                 <button
-                  className={`${styles.item} ${activeTab === item.id ? styles.active : ''} ${isHceaItem ? styles.itemHcea : ''}`}
-                  onClick={() => handleNav(item.id)}
+                  className={`${styles.section} ${section.isHcea ? styles.sectionHcea : ''} ${styles.sectionToggle}`}
+                  onClick={() => toggleSection(section.name)}
                 >
-                  <span className={styles.icon}>{item.icon}</span>
-                  {item.label}
-                  {item.id === 'admin' && <span className={styles.adminDot} />}
+                  {section.isHcea && <span className={styles.sectionHceaIcon}>🎓</span>}
+                  <span className={styles.sectionLabel}>{section.name}</span>
+                  <span className={`${styles.chevron} ${isCollapsed ? styles.chevronCollapsed : ''}`}>▾</span>
                 </button>
+
+                <div className={`${styles.sectionItems} ${isCollapsed ? styles.sectionItemsCollapsed : ''}`}>
+                  {section.items.map(item => (
+                    <button
+                      key={item.id}
+                      className={`${styles.item} ${activeTab === item.id ? styles.active : ''} ${section.isHcea ? styles.itemHcea : ''}`}
+                      onClick={() => handleNav(item.id)}
+                    >
+                      <span className={styles.icon}>{item.icon}</span>
+                      {item.label}
+                      {item.id === 'admin' && <span className={styles.adminDot} />}
+                    </button>
+                  ))}
+                </div>
               </div>
             );
           })}
