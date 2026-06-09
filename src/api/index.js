@@ -1041,15 +1041,15 @@ export const publicApi = {
   getAll:      async () => { return []; },
   getTopPosts: async () => { return []; },
   getUpcomingTournament: async () => {
-    const { data } = await supabase.from('tournaments').select('*').eq('status', 'open').order('created_at').limit(1).single();
+    const { data } = await supabase.from('tournaments').select('*').eq('status', 'open').order('created_at').limit(1).maybeSingle();
     return data || null;
   },
   getActiveleague: async () => {
-    const { data } = await supabase.from('leagues').select('*').eq('status', 'active').order('created_at').limit(1).single();
+    const { data } = await supabase.from('leagues').select('*').eq('status', 'active').order('created_at').limit(1).maybeSingle();
     return data || null;
   },
   getTopTeam: async () => {
-    const { data: league } = await supabase.from('leagues').select('id, name').eq('status', 'active').limit(1).single();
+    const { data: league } = await supabase.from('leagues').select('id, name').eq('status', 'active').limit(1).maybeSingle();
     if (!league) return null;
     const { data: standing } = await supabase.from('league_standings').select('*').eq('league_id', league.id).order('points', { ascending: false }).limit(1).single();
     return standing ? { ...standing, leagueName: league.name } : null;
