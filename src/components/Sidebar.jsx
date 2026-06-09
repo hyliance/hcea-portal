@@ -142,7 +142,10 @@ export default function Sidebar({ activeTab, onTabChange, onBackToSite, open, on
 
   const sections = buildSections(navItems);
 
-  const [collapsed, setCollapsed] = useState(new Set());
+  const DEFAULT_OPEN = new Set(['Community', 'Competitive', 'Account']);
+  const [collapsed, setCollapsed] = useState(() =>
+    new Set(sections.map(s => s.name).filter(n => !DEFAULT_OPEN.has(n)))
+  );
 
   // Auto-expand the section containing the active tab
   useEffect(() => {
