@@ -69,7 +69,7 @@ export default function LandingNav({ onLogin, onJoin, user, onGoToPortal }) {
                 <div className={styles.userAvatar} style={{ background: user.avatarColor || '#1d4ed8' }}>
                   {user.initials}
                 </div>
-                <span className={styles.userName}>{user.firstName} {user.lastName}</span>
+                <span className={styles.userName}>{user.displayName}</span>
               </div>
             </li>
             <li><button className="btn btn-primary" onClick={onGoToPortal}>⚡ Compete</button></li>

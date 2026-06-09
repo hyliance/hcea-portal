@@ -357,7 +357,7 @@ export default function MatchRoom({ match, tournament, myTeam, onClose }) {
     setSending(true);
     const text = message.trim();
     setMessage('');
-    await matchRoomApi.sendMessage(match.id, user.id, `${user.firstName} ${user.lastName}`, user.role, text);
+    await matchRoomApi.sendMessage(match.id, user.id, user.displayName, user.role, text);
     // Reload to get the new message
     const r = await matchRoomApi.getRoom(tournament.id, match.id);
     setRoom(r);

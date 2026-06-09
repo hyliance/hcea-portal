@@ -228,7 +228,7 @@ export default function Portal({ onBackToSite }) {
           </div>
           <div className={styles.topbarRight}>
             <RolePill role={user?.role} />
-            <div className={styles.topbarName}>{user?.firstName} {user?.lastName}</div>
+            <div className={styles.topbarName}>{user?.displayName}</div>
             <div className={styles.topbarAvatar} style={{ background: user?.avatarColor || '#1d4ed8' }}>
               {user?.initials}
             </div>

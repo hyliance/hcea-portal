@@ -191,7 +191,7 @@ export default function Sidebar({ activeTab, onTabChange, onBackToSite, open, on
               {user.initials}
             </div>
             <div className={styles.memberInfo}>
-              <div className={styles.memberName}>{user.firstName} {user.lastName}</div>
+              <div className={styles.memberName}>{user.displayName}</div>
               {role === 'org_manager' && user.orgName && (
                 <div className={styles.orgName}>{user.orgName}</div>
               )}

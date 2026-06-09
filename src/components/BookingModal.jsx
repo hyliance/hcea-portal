@@ -82,7 +82,7 @@ export default function BookingModal({ user, preselectedCoach, onClose, onComple
   const [notes, setNotes]             = useState('');
 
   // Step 3 — Payment
-  const [cardName, setCardName] = useState(user ? `${user.firstName} ${user.lastName}` : '');
+  const [cardName, setCardName] = useState(user ? user.displayName : '');
   const [cardNum, setCardNum]   = useState('');
   const [cardExp, setCardExp]   = useState('');
   const [cardCvv, setCardCvv]   = useState('');

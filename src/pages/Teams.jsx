@@ -139,7 +139,7 @@ function CreateTeamModal({ user, onClose, onCreate, gameList = [] }) {
     const res = await teamsApi.create({
       name: name.trim(), game,
       maxSize: selectedGame?.teamSize?.max || 5,
-      captainId: user.id, captainName: `${user.firstName} ${user.lastName}`,
+      captainId: user.id, captainName: user.displayName,
       captainInitials: user.initials, captainColor: user.avatarColor,
     });
     setLoading(false);
@@ -325,7 +325,7 @@ export default function Teams() {
   const handleAcceptInvite = async (inv) => {
     setInviteActing(p => ({ ...p, [inv.id]: 'accepting' }));
     await teamsApi.acceptInvite(inv.id, inv.teamId, user.id,
-      `${user.firstName} ${user.lastName}`, user.initials, user.avatarColor);
+      user.displayName, user.initials, user.avatarColor);
     setPendingInvites(prev => prev.filter(i => i.id !== inv.id));
     setInviteActing(p => ({ ...p, [inv.id]: null }));
     load();

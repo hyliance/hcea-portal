@@ -8,6 +8,7 @@ const ALL_GAMES = ['League of Legends', 'Valorant', 'TFT', 'Fortnite', 'Rocket L
 export default function Profile() {
   const { user, updateProfile, loading } = useAuth();
   const [form, setForm] = useState({
+    username:  user?.username  || '',
     firstName: user?.firstName || '',
     lastName:  user?.lastName  || '',
     email:     user?.email     || '',
@@ -32,7 +33,7 @@ export default function Profile() {
   const handleAccept = async (inv) => {
     setInviteLoading(p => ({ ...p, [inv.id]: 'accepting' }));
     await teamsApi.acceptInvite(inv.id, inv.teamId, user.id,
-      `${user.firstName} ${user.lastName}`, user.initials, user.avatarColor);
+      user.displayName, user.initials, user.avatarColor);
     setInvites(prev => prev.filter(i => i.id !== inv.id));
     setInviteLoading(p => ({ ...p, [inv.id]: null }));
   };
@@ -157,7 +158,8 @@ export default function Profile() {
             onChange={handleFileInput}
           />
 
-          <div className={styles.name}>{user?.firstName} {user?.lastName}</div>
+          <div className={styles.name}>{user?.displayName}</div>
+          {user?.username && <div className={styles.usernameTag}>@{user.username}</div>}
           <div className={styles.role}>⭐ Active Member · {user?.membershipYear}</div>
           <div className={styles.since}>Member since {user?.memberSince}</div>
 
@@ -171,7 +173,15 @@ export default function Profile() {
 
         {/* ── Details Card ── */}
         <div className={styles.detailsCard}>
-          <div className={styles.sectionTitle}>Personal Info</div>
+          <div className={styles.sectionTitle}>Account</div>
+          <div className={styles.fieldRow}>
+            <div className="fg">
+              <label>Username <span className={styles.fieldNote}>(shown publicly)</span></label>
+              <input name="username" value={form.username} onChange={handleChange} placeholder="e.g. xXSniper99Xx" />
+            </div>
+          </div>
+
+          <div className={styles.sectionTitle} style={{ marginTop: '1.5rem' }}>Personal Info <span className={styles.fieldNote}>(private)</span></div>
           <div className={styles.fieldRow}>
             <div className="fg"><label>First Name</label><input name="firstName" value={form.firstName} onChange={handleChange} /></div>
             <div className="fg"><label>Last Name</label><input name="lastName" value={form.lastName} onChange={handleChange} /></div>

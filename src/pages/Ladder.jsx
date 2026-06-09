@@ -369,7 +369,7 @@ function LadderMatchRoom({ matchId, myTeams, onClose }) {
   const handleSend = async () => {
     if (!msg.trim() || sending) return;
     setSending(true);
-    await ladderApi.sendMessage(matchId, user.id, `${user.firstName} ${user.lastName}`, user.role, msg);
+    await ladderApi.sendMessage(matchId, user.id, user.displayName, user.role, msg);
     setMsg('');
     await load();
     setSending(false);

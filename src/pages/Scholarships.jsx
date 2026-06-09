@@ -26,7 +26,7 @@ export default function Scholarships() {
 
   const handleApply = async (s) => {
     setApplying(s.id);
-    const res = await scholarshipsApi.apply(s.id, user?.id, { playerName: user?.firstName + ' ' + user?.lastName, school: user?.school || '' });
+    const res = await scholarshipsApi.apply(s.id, user?.id, { playerName: user?.displayName, school: user?.school || '' });
     if (res.success) {
       setMyApps(prev => [...prev, { id: res.applicationId, scholarshipId: s.id, status: 'pending', submittedAt: new Date().toISOString().split('T')[0] }]);
     }

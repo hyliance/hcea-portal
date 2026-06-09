@@ -48,12 +48,17 @@ function normalizeRolesFromProfile(profile) {
 function profileToUser(profile) {
   if (!profile) return null;
   const roles = normalizeRolesFromProfile(profile);
+  const firstName = profile.first_name || '';
+  const lastName  = profile.last_name  || '';
+  const username  = profile.username   || null;
   return {
     id:               profile.id,
-    roles,                              // ← NEW: full array e.g. ['head_admin','coach','player']
-    role:             getPrimaryRole(roles), // ← LEGACY: highest role string for compat
-    firstName:        profile.first_name,
-    lastName:         profile.last_name,
+    roles,
+    role:             getPrimaryRole(roles),
+    username,
+    displayName:      username || `${firstName} ${lastName}`.trim(),
+    firstName,
+    lastName,
     email:            profile.email,
     phone:            profile.phone,
     initials:         profile.initials ||
@@ -184,6 +189,7 @@ export function AuthProvider({ children }) {
     setLoading(true);
     try {
       const dbUpdates = {};
+      if (updates.username    !== undefined) dbUpdates.username     = updates.username;
       if (updates.firstName   !== undefined) dbUpdates.first_name   = updates.firstName;
       if (updates.lastName    !== undefined) dbUpdates.last_name    = updates.lastName;
       if (updates.phone       !== undefined) dbUpdates.phone        = updates.phone;
@@ -196,7 +202,11 @@ export function AuthProvider({ children }) {
       if (updates.avatarImg   !== undefined) dbUpdates.avatar_img   = updates.avatarImg;
       const { error: updateError } = await supabase.from('profiles').update(dbUpdates).eq('id', user.id);
       if (updateError) throw new Error(updateError.message);
-      setUser(prev => ({ ...prev, ...updates, age: calcAge(updates.dob ?? prev?.dob) }));
+      const newUsername  = updates.username  ?? user.username;
+      const newFirstName = updates.firstName ?? user.firstName;
+      const newLastName  = updates.lastName  ?? user.lastName;
+      const newDisplayName = newUsername || `${newFirstName} ${newLastName}`.trim();
+      setUser(prev => ({ ...prev, ...updates, displayName: newDisplayName, age: calcAge(updates.dob ?? prev?.dob) }));
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message };

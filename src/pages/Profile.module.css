@@ -74,7 +74,9 @@
   max-width: 200px;
 }
 .name { font-family: 'Barlow Condensed', sans-serif; font-size: 1.7rem; font-weight: 700; letter-spacing: 0.03em; }
+.usernameTag { font-size: 0.8rem; color: var(--muted); margin-top: 0.1rem; letter-spacing: 0.04em; }
 .role { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bright); margin-top: 0.2rem; }
+.fieldNote { font-size: 0.72rem; font-weight: 400; color: var(--muted); letter-spacing: 0; text-transform: none; margin-left: 0.3rem; }
 .since { font-size: 0.82rem; color: var(--muted); margin-top: 0.4rem; }
 .statsGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; margin-top: 1.5rem; }
 .statItem { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 0.9rem; }

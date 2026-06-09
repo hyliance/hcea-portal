@@ -24,7 +24,7 @@ function CreateClanModal({ user, onClose, onCreated }) {
   const handleCreate = async () => {
     if (!form.name.trim() || !form.game) { setError('Clan name and game are required.'); return; }
     setSaving(true);
-    const res = await clansApi.create(user.id, `${user.firstName} ${user.lastName}`, form);
+    const res = await clansApi.create(user.id, user.displayName, form);
     if (res.success) { onCreated(res.clan); onClose(); }
     else setError(res.error || 'Failed to create clan.');
     setSaving(false);
@@ -93,7 +93,7 @@ function ClanDetail({ clan, user, isAdmin, onClose, onUpdated }) {
 
   const handleJoin = async () => {
     setJoining(true);
-    const res = await clansApi.addMember(clan.id, user.id, `${user.firstName} ${user.lastName}`);
+    const res = await clansApi.addMember(clan.id, user.id, user.displayName);
     if (res.success) { const updated = await clansApi.getById(clan.id); onUpdated(updated); }
     else alert(res.error);
     setJoining(false);

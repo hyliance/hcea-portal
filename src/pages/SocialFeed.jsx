@@ -664,7 +664,7 @@ function CreatePostModal({ me, onClose, onPost, initialCategory = null, communit
       ? { id: category.id, name: category.name, icon: category.icon, color: category.color }
       : null;
     const res = await socialApi.createForumPost(
-      me.id, `${me.firstName} ${me.lastName}`,
+      me.id, me.displayName,
       me.role, me.initials, me.avatarColor,
       category.id, title.trim(), text, null, media, communityMeta
     );
@@ -824,7 +824,7 @@ export default function SocialFeed() {
     setAllPosts(p=>p.map(post=>post.id!==id?post:{...post, myUpvote:!post.myUpvote, score:post.myUpvote?post.score-1:post.score+1}));
   };
   const addComment = async (postId, text, media) => {
-    const res = await socialApi.addComment(postId, user.id, `${user.firstName} ${user.lastName}`, user.role, user.initials, user.avatarColor, text, userAge, media);
+    const res = await socialApi.addComment(postId, user.id, user.displayName, user.role, user.initials, user.avatarColor, text, userAge, media);
     if (res.success) setAllPosts(p=>p.map(post=>post.id!==postId?post:{...post, comments:[...post.comments,res.comment]}));
   };
   const deletePost = async (id) => { await socialApi.deletePost(id); setAllPosts(p=>p.filter(post=>post.id!==id)); };
