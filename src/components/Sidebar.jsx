@@ -155,7 +155,7 @@ export default function Sidebar({ activeTab, onTabChange, onBackToSite, open, on
         return next;
       });
     }
-  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const toggleSection = (name) => {
     setCollapsed(prev => {
