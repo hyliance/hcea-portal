@@ -8,40 +8,38 @@ import './styles/global.css';
 
 export default function App() {
   const { user, loading } = useAuth();
-  const [modal, setModal]     = useState(null); // null | 'login' | 'register'
+  const [modal, setModal]       = useState(null); // null | 'login' | 'register'
   const [inPortal, setInPortal] = useState(false);
-
-  // Auto-enter portal if user is already logged in (handles hard refresh + remember-me)
-  // Only runs once loading is done so we don't flash the landing page
-  const hasAutoEntered = useState(() => false);
+  const [showLanding, setShowLanding] = useState(false); // lets logged-in users visit homepage
 
   const openLogin    = () => setModal('login');
   const openRegister = () => setModal('register');
 
-  // After login/register, auto-enter portal
   const handleAuthSuccess = () => {
     setModal(null);
+    setShowLanding(false);
     setInPortal(true);
   };
 
-  // If user is logged in and clicked portal
   const goToPortal = () => {
-    if (user) { setInPortal(true); }
+    if (user) { setShowLanding(false); setInPortal(true); }
     else { openRegister(); }
   };
 
-  // Auto-enter portal when a persisted session is restored on page load
-  if (!loading && user && !inPortal) {
-    return <Portal onBackToSite={() => setInPortal(false)} />;
-  }
-
-  if (inPortal && user) {
-    return <Portal onBackToSite={() => setInPortal(false)} />;
-  }
+  const goToHomepage = () => {
+    setShowLanding(true);
+    setInPortal(false);
+  };
 
   // Show nothing while checking session to avoid flash of landing page
   if (loading) return null;
 
+  // Logged-in user in portal (default after login or session restore)
+  if (user && !showLanding) {
+    return <Portal onBackToSite={goToHomepage} />;
+  }
+
+  // Landing page — shown to logged-out users or when logged-in user clicks Homepage
   return (
     <>
       <LandingNav onLogin={openLogin} onJoin={openRegister} />
